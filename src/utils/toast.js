@@ -6,7 +6,7 @@ export function useToast() {
         const toast = appContext.config.globalProperties.$toast
         toast({
             text: message,
-            duration: 1000,
+            duration: 1500,
             gravity: "top",
             position: "center",
             style: {
@@ -25,7 +25,7 @@ export function useToast() {
         const toast = appContext.config.globalProperties.$toast
         toast({
             text: message,
-            duration: 1000,
+            duration: 3000,
             gravity: "top",
             position: "center",
             style: {

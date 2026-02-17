@@ -6,6 +6,7 @@ import AuthLayout from '@/layouts/AuthLayout.vue'
 import LoginView from '@/views/auth/LoginView.vue';
 import SignupView from '@/views/auth/SignupView.vue';
 import ForgotPasswordView from '@/views/auth/ForgotPasswordView.vue';
+import ResetPasswordView from '@/views/auth/ResetPasswordView.vue';
 
 import HomeView from '@/views/HomeView.vue';
 import PingsView from '@/views/PingsView.vue';
@@ -50,6 +51,11 @@ const routes = [
                 path: 'forgot-password',
                 name: 'forgot-password',
                 component: ForgotPasswordView,
+            },
+            {
+                path: 'reset-password',
+                name: 'reset-password',
+                component: ResetPasswordView,
             },
 
         ]

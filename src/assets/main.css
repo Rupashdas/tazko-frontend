@@ -1,0 +1,70 @@
+@import "tailwindcss";
+@theme {
+    --font-sans: 'Manrope Variable', ui-sans-serif, system-ui, sans-serif;
+    --font-display: 'Barlow Condensed', ui-serif, Georgia, serif;
+    --color-tazko-blue: oklch(44.3% 0.11 240.79);
+    --color-tazko-blue-hover: oklch(55% 0.12 240.79);
+}
+@layer components {
+    .tazko-btn {
+        @apply inline-flex items-center justify-center px-6 py-3
+        text-sm font-semibold tracking-wide text-white
+        bg-tazko-blue rounded-md shadow-md
+        transition-all duration-200 ease-in-out cursor-pointer
+
+        hover:bg-tazko-blue-hover hover:shadow-lg
+        active:scale-95 active:translate-y-0
+
+        focus-visible:outline-none focus-visible:ring-4
+        focus-visible:ring-offset-2 focus-visible:ring-tazko-blue;
+    }
+    .container {
+        @apply mx-auto;
+    }
+}
+@layer base {
+    body {
+        @apply font-sans antialiased;
+        color: #303030;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        @apply font-display text-tazko-blue;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+    }
+
+
+
+    img, svg, video {
+        max-width: 100%;
+        height: auto;
+    }
+}
+a{
+    @apply text-tazko-blue;
+}
+h1{
+    font-size: 56px;
+}
+h2{
+    font-size: 40px;
+}
+h3{
+    font-size: 36px;
+}
+h4{
+    font-size: 24px;
+}
+h5{
+    font-size: 20px;
+}
+h6{
+    font-size: 18px;
+}
+.input-field{
+    @apply w-full px-4 py-3 border border-gray-300 focus:border-[oklch(44.3%_0.11_240.79)] focus:outline-none text-sm leading-tight;
+}
+.toast-close{
+    color: var(--color-tazko-blue);
+}

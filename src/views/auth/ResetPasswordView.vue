@@ -24,16 +24,25 @@ const submit = async () => {
             password: password.value,
             password_confirmation: password_confirmation.value,
         })
-        console.log(data)
         if(data.status === "success"){
             successToast(data.message || 'Successfully reset!')
             await router.push({name: 'login'})
-        }else {
-            errorToast(data.message || 'Something went wrong!')
         }
-
     } catch (err) {
-        errorToast(err.response?.data?.message || 'Unable to reset password. Please try again.')
+        if (err.response && err.response.data) {
+            const response = err.response.data
+            if (response.errors && Object.keys(response.errors).length > 0) {
+                Object.values(response.errors).flat().forEach(message => {
+                    errorToast(message)
+                })
+            } else if (response.message) {
+                errorToast(response.message)
+            } else {
+                errorToast('Something went wrong')
+            }
+        } else {
+            errorToast('Network error')
+        }
     } finally {
         loading.value = false
     }

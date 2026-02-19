@@ -12,8 +12,8 @@ const router = useRouter()
 import { useToast } from '@/utils/toast'
 const { successToast, errorToast } = useToast()
 
-const email = ref('')
-const password = ref('')
+const email = ref('rupash.das.202@gmail.com')
+const password = ref('password')
 const loading = ref(false)
 
 const handleLogin = async () => {
@@ -33,7 +33,13 @@ const handleLogin = async () => {
             router.push({ name: 'home' })
         }, 1000)
     } else {
-        errorToast(response.message)
+        console.log(response)
+        if (response.errors && Object.keys(response.errors).length > 0) {
+            const messages = Object.values(response.errors).flat()
+            messages.forEach(msg => errorToast(msg))
+        } else {
+            errorToast(response.message || 'Something went wrong')
+        }
     }
 
     loading.value = false

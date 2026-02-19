@@ -39,7 +39,12 @@ const handleSignup = async () => {
             router.push({name : 'home'})
         }, 1000)
     } else {
-        errorToast(response.message)
+        if (response.errors && Object.keys(response.errors).length > 0) {
+            const messages = Object.values(response.errors).flat()
+            messages.forEach(msg => errorToast(msg))
+        } else {
+            errorToast(response.message || 'Something went wrong')
+        }
     }
 
     loading.value = false

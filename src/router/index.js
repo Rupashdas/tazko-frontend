@@ -8,8 +8,12 @@ import SignupView from '@/views/auth/SignupView.vue';
 import ForgotPasswordView from '@/views/auth/ForgotPasswordView.vue';
 import ResetPasswordView from '@/views/auth/ResetPasswordView.vue';
 
+import ProfileView from '@/views/user/ProfileView.vue';
+import SettingsView from '@/views/user/SettingsView.vue';
+
 import HomeView from '@/views/HomeView.vue';
 import PingsView from '@/views/PingsView.vue';
+
 
 
 const routes = [
@@ -28,6 +32,16 @@ const routes = [
                 path: 'pings',
                 name: 'pings',
                 component: PingsView,
+            },
+            {
+                path: 'profile',
+                name: 'profile',
+                component: ProfileView,
+            },
+            {
+                path: 'settings',
+                name: 'settings',
+                component: SettingsView,
             },
         ]
     },
@@ -57,7 +71,6 @@ const routes = [
                 name: 'reset-password',
                 component: ResetPasswordView,
             },
-
         ]
     },
 

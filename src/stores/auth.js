@@ -25,13 +25,11 @@ export const useAuthStore = defineStore('auth', {
                     }
                     return { success: true, message: data.message }
                 }
-
-
-                return { success: false, message: data.message || 'Login failed' }
             } catch (err) {
                 return {
                     success: false,
-                    message: err.response?.data?.message || 'Something went wrong. Please try again.'
+                    message: err.response?.data?.message || 'Something went wrong. Please try again.',
+                    errors: err.response?.data?.errors || null
                 }
             }
         },
@@ -40,7 +38,6 @@ export const useAuthStore = defineStore('auth', {
             try {
                 await axios.get('/sanctum/csrf-cookie')
                 const { data } = await axios.post('/api/register', { name, email, password })
-                console.log(data);
                 if (data.status === 'success') {
                     if (data.user) {
                         this.user = data.user
@@ -50,9 +47,12 @@ export const useAuthStore = defineStore('auth', {
                     }
                     return { success: true, message: data.message }
                 }
-                return { success: false, message: data.message || 'Registration failed' }
             } catch (err) {
-                return { success: false, message: err.response?.data?.message || 'Registration failed' }
+                return {
+                    success: false,
+                    message: err.response?.data?.message || 'Something went wrong. Please try again.',
+                    errors: err.response?.data?.errors || { general: ['Unknown error occurred'] }
+                }
             }
         },
 
@@ -64,10 +64,13 @@ export const useAuthStore = defineStore('auth', {
                 this.authChecked = true
                 return { success: true }
             } catch (err) {
-                console.error('Logout error', err)
                 this.user = null
                 this.authChecked = true
-                return { success: false, message: err.response?.data?.message }
+                return {
+                    success: false,
+                    message: err.response?.data?.message || 'Logout failed',
+                    errors: err.response?.data?.errors || { general: ['Unknown error occurred'] }
+                }
             }
         },
 
@@ -82,6 +85,21 @@ export const useAuthStore = defineStore('auth', {
                 return null
             } finally {
                 this.authChecked = true
+            }
+        },
+        async updateProfile(payload) {
+            try {
+                const { data } = await axios.post('/api/user', payload)
+                if (data.status === 'success') {
+                    this.user = data.user
+                    return { success: true, message: data.message || 'Profile updated' }
+                }
+            } catch (err) {
+                return {
+                    success: false,
+                    message: err.response?.data?.message || 'Update failed',
+                    errors: err.response?.data?.errors || { general: ['Unknown error occurred'] }
+                }
             }
         }
     }

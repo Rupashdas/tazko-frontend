@@ -23,9 +23,19 @@ const submit = async () => {
         email.value = ""
     } catch (err) {
         if (err.response && err.response.data) {
-            errorToast(err.response.data.message || "Something went wrong")
+            const response = err.response.data
+
+            if (response.errors && Object.keys(response.errors).length > 0) {
+                Object.values(response.errors).flat().forEach(message => {
+                    errorToast(message)
+                })
+            } else if (response.message) {
+                errorToast(response.message)
+            } else {
+                errorToast('Something went wrong')
+            }
         } else {
-            errorToast("Network error")
+            errorToast('Network error')
         }
     } finally {
         loading.value = false
@@ -46,7 +56,7 @@ const submit = async () => {
                     <span class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500">
                         <v-icon name="md-alternateemail-outlined" />
                     </span>
-                    <input v-model="email" type="email" placeholder="Enter your email" class="input-field" required/>
+                    <input v-model="email" type="email" placeholder="Enter your email" class="input-field"/>
                 </div>
             </div>
 

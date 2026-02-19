@@ -66,3 +66,9 @@ h6{
 .toast-close{
     color: var(--color-tazko-blue);
 }
+.os-scrollbar-handle {
+    background: var(--color-tazko-blue);
+}
+body>.os-scrollbar {
+    z-index: 9;
+}

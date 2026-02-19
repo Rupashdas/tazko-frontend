@@ -4,11 +4,16 @@ import AvatarCropModal from "@/components/profile/AvatarCropModal.vue";
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
 import { useToast } from '@/utils/toast'
-import {ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 
 const auth = useAuthStore()
 const router = useRouter()
+
 const showModal = ref(false)
+
+const avatarUrl = computed(() => {
+	return auth.user?.avatar ? auth.user.avatar: null
+})
 
 // Form fields
 const firstName = ref('')
@@ -21,12 +26,8 @@ const location = ref('')
 const password = ref('')
 const confirmPassword = ref('')
 
-// Avatar
-const avatarFile = ref(null)
-const avatarPreview = ref(null)
 
 const loading = ref(false)
-
 const { successToast, errorToast } = useToast()
 
 // Load user data
@@ -52,7 +53,6 @@ onMounted(async () => {
 	}
 })
 
-const user = computed(() => auth.user)
 
 // Submit handler
 const handleProfileSave = async () => {
@@ -83,15 +83,10 @@ const handleProfileSave = async () => {
 		formData.append('password_confirmation', confirmPassword.value)
 	}
 	
-	if(avatarFile.value){
-		formData.append('avatar', avatarFile.value)
-	}
-	
 	const response = await auth.updateProfile(formData)
 	
 	if (response.success) {
 		successToast(response.message)
-		
 		password.value = ''
 		confirmPassword.value = ''
 	} else {
@@ -109,30 +104,23 @@ const handleProfileSave = async () => {
 	loading.value = false
 }
 
-const processAvatar = async (file) => {
-	if (!file) return
-	avatarFile.value = file
-	avatarPreview.value = URL.createObjectURL(file)
-}
 </script>
 
 <template>
 	<base-card maxWidth="max-w-3xl" marginTop="mt-30">
 		<div class="relative -mt-30">
 			<div class="text-center">
-				<img v-if="avatarPreview" :src="avatarPreview" alt="Avatar Preview"
-					class="w-40 h-40 object-cover rounded-full border-tazko-blue border-3 mx-auto"/>
-				<img v-else-if="user?.avatar" :src="user.avatar" alt="Avatar"
-					class="w-40 h-40 object-cover rounded-full border-tazko-blue border-3 mx-auto"/>
-				<div v-else class="w-40 h-40 mx-auto block">
-					<v-icon class="w-40 h-40 bg-white rounded-full shadow-md shadow-tazko-blue/10"
+				<img v-if="avatarUrl" :src="avatarUrl"
+					class="w-60 h-60 object-cover rounded-full border-tazko-blue border-3 mx-auto"/>
+				<div v-else class="w-60 h-60 mx-auto block">
+					<v-icon class="w-60 h-60 bg-white rounded-full shadow-md shadow-tazko-blue/10"
 						name="la-user-circle-solid" />
 				</div>
 				
 				<button @click="showModal = true"
 					class="border px-4 py-2 border-tazko-blue rounded-3xl mt-5 cursor-pointer text-xs font-bold text-tazko-blue hover:bg-tazko-blue/10 transition">Change your avatar</button>
 				<Teleport to="body">
-					<AvatarCropModal :show="showModal" @closeModal="showModal = false" @submitAvatar="processAvatar"/>
+					<AvatarCropModal :show="showModal" @close="showModal = false"/>
 				</Teleport>
 			</div>
 			<div class="mt-8">

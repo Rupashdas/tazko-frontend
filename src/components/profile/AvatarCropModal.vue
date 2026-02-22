@@ -124,12 +124,12 @@ const triggerFileInput = () => {
 	<Transition name="fade">
 		<div v-if="show" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
 			@click="handleClickOutside" ref="modalContainer">
-			<div class="bg-white w-full max-w-2xl rounded-2xl p-6 relative">
+			<div class="bg-panel w-full max-w-2xl rounded-2xl p-6 relative">
 				<h3 class="text-xl font-semibold mb-4">Update Avatar</h3>
 				<input type="file" class="hidden" accept="image/*" ref="imageInput" @change="onFileChange"/>
 				<div
 					id="cropper-container"
-					class="border-2 min-h-80 border-dashed relative border-tazko-blue rounded-xl p-4" :class="{
+					class="border-2 min-h-80 border-dashed relative border-theme rounded-xl p-4" :class="{
 					'border-blue-500 bg-blue-50': dragActive, 'cursor-pointer' : !hasImage }"
 					@dragover.prevent="dragActive = true"
 					@dragleave="dragActive = false"
@@ -147,7 +147,8 @@ const triggerFileInput = () => {
 					></div>
 				</div>
 				<div class="flex mt-6 justify-end gap-4">
-					<button type="button" class="px-4 py-2 bg-gray-200 rounded-lg cursor-pointer hover:bg-gray-400"
+					<button type="button"
+						class="px-4 py-2 text-text dark:text-panel bg-gray-200 rounded-lg cursor-pointer hover:bg-gray-400"
 						@click="closeModal">Cancel
 					</button>
 					<button type="button" class="tazko-btn" @click="submitAvatar">Save</button>

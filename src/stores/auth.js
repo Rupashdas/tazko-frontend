@@ -59,7 +59,6 @@ export const useAuthStore = defineStore('auth', {
         async logout() {
             try {
                 const { data } = await axios.post('/api/logout')
-                console.log(data);
                 this.user = null
                 this.authChecked = true
                 return { success: true }
@@ -77,7 +76,6 @@ export const useAuthStore = defineStore('auth', {
         async fetchUser() {
             try {
                 const { data } = await axios.get('/api/user')
-                console.log(data)
                 this.user = data.user
                 return this.user
             } catch (err) {

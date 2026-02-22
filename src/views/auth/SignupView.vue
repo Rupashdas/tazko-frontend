@@ -5,6 +5,7 @@ import { MdAlternateemailOutlined, RiLockPasswordLine, CoUserPlus } from "oh-vue
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
 import { useToast } from '@/utils/toast'
+import BaseCard from '@/components/ui/BaseCard.vue';
 
 const router = useRouter()
 const { successToast, errorToast } = useToast()
@@ -53,62 +54,62 @@ const handleSignup = async () => {
 
 
 <template>
-    <div class="bg-white shadow-lg rounded-lg p-8">
+    <base-card maxWidth="max-w-md" marginTop="mt-0">
         <div class="mb-6 text-center">
             <h3 class="mb-2">Create Your Account</h3>
             <p class="text-sm">Join Tazko to collaborate with your team, track your projects, and turn your ideas
                 into actionable milestones</p>
         </div>
 
-        <form @submit.prevent="handleSignup" class="space-y-4">
+        <form @submit.prevent="handleSignup" class="space-y-5">
 
             <div>
-                <label class="block text-gray-700 mb-1 font-medium text-sm">First Name <span class="text-red-500">*</span></label>
+                <label class="block text-text mb-3 font-bold text-sm">First Name <span class="text-red-500">*</span></label>
                 <div class="flex">
-                    <span class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500">
+                    <span class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-heading bg-accent text-heading">
                         <v-icon name="co-user-plus" />
                     </span>
-                    <input v-model="firstName" type="text" placeholder="Enter your first name" class="input-field"/>
+                    <input v-model="firstName" type="text" placeholder="Enter your first name" class="input-field radius-left-0"/>
                 </div>
             </div>
 
             <div>
-                <label class="block text-gray-700 mb-1 font-medium text-sm">Last Name <span class="text-red-500">*</span></label>
+                <label class="block text-text mb-3 font-bold text-sm">Last Name <span class="text-red-500">*</span></label>
                 <div class="flex">
-                    <span class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500">
+                    <span class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-heading bg-accent text-heading">
                         <v-icon name="co-user-plus" />
                     </span>
-                    <input v-model="lastName" type="text" placeholder="Enter your last name" class="input-field"/>
+                    <input v-model="lastName" type="text" placeholder="Enter your last name" class="input-field radius-left-0"/>
                 </div>
             </div>
 
             <div>
-                <label class="block text-gray-700 mb-1 font-medium text-sm">Email <span class="text-red-500">*</span></label>
+                <label class="block text-text mb-3 font-bold text-sm">Email <span class="text-red-500">*</span></label>
                 <div class="flex">
-                    <span class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500">
+                    <span class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-heading bg-accent text-heading">
                         <v-icon name="md-alternateemail-outlined" />
                     </span>
-                    <input v-model="email" type="email" placeholder="Enter your email" class="input-field"/>
+                    <input v-model="email" type="email" placeholder="Enter your email" class="input-field radius-left-0"/>
                 </div>
             </div>
 
             <div>
-                <label class="block text-gray-700 mb-1 font-medium text-sm">Password <span class="text-red-500">*</span></label>
+                <label class="block text-text mb-3 font-bold text-sm">Password <span class="text-red-500">*</span></label>
                 <div class="flex">
-                    <span class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500">
+                    <span class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-heading bg-accent text-heading">
                         <v-icon name="ri-lock-password-line" />
                     </span>
-                    <input v-model="password" type="password" placeholder="Enter your password" class="input-field"/>
+                    <input v-model="password" type="password" placeholder="Enter your password" class="input-field radius-left-0"/>
                 </div>
             </div>
             <div>
-                <label class="block text-gray-700 mb-1 font-medium text-sm">Confirm Password <span class="text-red-500">*</span></label>
+                <label class="block text-text mb-3 font-bold text-sm">Confirm Password <span class="text-red-500">*</span></label>
                 <div class="flex">
-                    <span class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500">
+                    <span class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-heading bg-accent text-heading">
                         <v-icon name="ri-lock-password-line" />
                     </span>
                     <input type="password" v-model="confirmPassword" placeholder="Enter your password again"
-                        class="input-field"/>
+                        class="input-field radius-left-0"/>
                 </div>
             </div>
 
@@ -122,6 +123,5 @@ const handleSignup = async () => {
             Already have an account?
             <router-link :to="{name : 'login' }" class="text-blue-500 hover:underline">Login</router-link>
         </p>
-
-    </div>
+    </base-card>
 </template>

@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { usePreferencesStore } from '@/stores/preferences'
 import MainLayout from '@/layouts/MainLayout.vue'
 import AuthLayout from '@/layouts/AuthLayout.vue'
 
@@ -9,7 +10,7 @@ import ForgotPasswordView from '@/views/auth/ForgotPasswordView.vue';
 import ResetPasswordView from '@/views/auth/ResetPasswordView.vue';
 
 import ProfileView from '@/views/user/ProfileView.vue';
-import SettingsView from '@/views/user/SettingsView.vue';
+import PreferencesView from '@/views/user/PreferencesView.vue';
 
 import HomeView from '@/views/HomeView.vue';
 import PingsView from '@/views/PingsView.vue';
@@ -39,9 +40,9 @@ const routes = [
                 component: ProfileView,
             },
             {
-                path: 'settings',
-                name: 'settings',
-                component: SettingsView,
+                path: 'preferences',
+                name: 'preferences',
+                component: PreferencesView,
             },
         ]
     },
@@ -83,10 +84,21 @@ export default router;
 
 router.beforeEach(async (to, from, next) => {
     const auth = useAuthStore()
+    const preferencesStore = usePreferencesStore()
     if (!auth.authChecked) {
         try {
             await auth.fetchUser()
-        } catch (e) { }
+        } catch (e) {
+            // ignore
+        }
+    }
+
+    if (auth.isLoggedIn && !preferencesStore.loaded) {
+        try {
+            await preferencesStore.loadPreferences()
+        } catch (e) {
+            console.error('Failed to load preferences', e)
+        }
     }
 
     const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
@@ -95,10 +107,9 @@ router.beforeEach(async (to, from, next) => {
     if (requiresAuth && !auth.isLoggedIn) {
         return next({ name: 'login' })
     }
-    else if (guestOnly && auth.isLoggedIn) {
+    if (guestOnly && auth.isLoggedIn) {
         return next({ name: 'home' })
     }
-    else {
-        return next()
-    }
+
+    return next()
 })

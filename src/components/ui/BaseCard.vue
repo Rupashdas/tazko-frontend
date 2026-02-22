@@ -12,8 +12,7 @@ defineProps({
 </script>
 
 <template>
-    <div
-        class="bg-white border border-gray-200 transition duration-300 p-10 bg-white shadow-md rounded-2xl shadow-tazko-blue/10 mx-auto mb-10" :class="[maxWidth, marginTop]">
+    <div class="bg-panel transition duration-300 border border-accent/10 p-10 shadow-xl rounded-2xl mx-auto mb-10" :class="[maxWidth, marginTop]">
         <slot />
     </div>
 </template>

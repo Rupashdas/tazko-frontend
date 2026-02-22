@@ -98,16 +98,16 @@
                         <!-- Dropdown -->
                         <Transition name="fade-up">
                             <div v-if="dropdownOpen"
-                                class="absolute top-12 right-0 flex-col flex w-50 px-6 py-3 bg-white rounded-md shadow-lg shadow-tazko-blue/10">
-                                <div class="absolute -top-2 right-4 w-4 h-4 bg-white rotate-45 shadow-tazko-blue/10"></div>
+                                class="absolute top-12 right-0 flex-col flex w-50 px-6 py-3 bg-panel rounded-md shadow-lg shadow-tazko-blue/10">
+                                <div class="absolute -top-2 right-4 w-4 h-4 bg-panel rotate-45 shadow-tazko-blue/10"></div>
                                 <router-link :to="{name : 'profile'}"
                                     class="dropdown-item text-tazko-blue flex align-center gap-1">
                                     <v-icon class="w-5" name="la-user-edit-solid" /> Edit Profile
                                 </router-link>
 
-                                <router-link :to="{name : 'settings'}"
+                                <router-link :to="{name : 'preferences'}"
                                     class="dropdown-item text-tazko-blue flex align-center gap-1">
-                                    <v-icon class="w-5" name="co-settings" /> Settings
+                                    <v-icon class="w-5" name="co-settings" /> Preparences
                                 </router-link>
 
                                 <button class="dropdown-item text-tazko-blue flex align-center gap-1 logout"

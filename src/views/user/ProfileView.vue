@@ -4,7 +4,11 @@ import AvatarCropModal from "@/components/profile/AvatarCropModal.vue";
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
 import { useToast } from '@/utils/toast'
-import {ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed } from 'vue'
+import { addIcons } from 'oh-vue-icons'
+import { RiCloseFill   } from "oh-vue-icons/icons";
+import axios from '@/axios'
+addIcons(RiCloseFill )
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -31,9 +35,6 @@ const { successToast, errorToast } = useToast()
 
 // Load user data
 onMounted(async () => {
-	if (!auth.authChecked) {
-		await auth.fetchUser()
-	}
 	
 	if (!auth.isLoggedIn) {
 		await router.push('/login')
@@ -114,71 +115,105 @@ const processAvatar = async (file) => {
 	avatarFile.value = file
 	avatarPreview.value = URL.createObjectURL(file)
 }
+
+const removeAvatar = async () => {
+	if (!user.value) return
+	
+	try {
+		loading.value = true
+		
+		const response = await axios.post('/api/remove-avatar')
+		
+		if (response.data.status === 'success') {
+			user.value.avatar = null
+			avatarPreview.value = null
+			avatarFile.value = null
+			successToast(response.data.message || 'Avatar removed successfully')
+		} else {
+			errorToast(response.data.message || 'Failed to remove avatar')
+		}
+		
+	} catch (err) {
+		errorToast(err.response?.data?.message || 'Something went wrong')
+	} finally {
+		loading.value = false
+	}
+}
 </script>
 
 <template>
 	<base-card maxWidth="max-w-3xl" marginTop="mt-30">
 		<div class="relative -mt-30">
 			<div class="text-center">
-				<img v-if="avatarPreview" :src="avatarPreview" alt="Avatar Preview"
-					class="w-40 h-40 object-cover rounded-full border-tazko-blue border-3 mx-auto"/>
-				<img v-else-if="user?.avatar" :src="user.avatar" alt="Avatar"
-					class="w-40 h-40 object-cover rounded-full border-tazko-blue border-3 mx-auto"/>
-				<div v-else class="w-40 h-40 mx-auto block">
-					<v-icon class="w-40 h-40 bg-white rounded-full shadow-md shadow-tazko-blue/10"
-						name="la-user-circle-solid" />
+				<div class="relative w-40 h-40 mx-auto block group ">
+					<img v-if="avatarPreview" :src="avatarPreview" alt="Avatar Preview"
+						class="w-full object-cover rounded-full border-accent border-3 mx-auto"/>
+					<img v-else-if="user?.avatar" :src="user.avatar" alt="Avatar"
+						class="w-full object-cover rounded-full border-accent border-3 mx-auto"/>
+					<div v-else class="w-full h-full">
+						<v-icon class="w-40 h-40 bg-panel rounded-full shadow-md shadow-accent-10"
+							name="la-user-circle-solid" />
+					</div>
+					<button type="button" v-if="avatarPreview || user?.avatar" @click="removeAvatar"
+						class="absolute h-full w-full z-10 rounded-full bg-black/40 top-0 left-0 cursor-pointer text-white opacity-0 group-hover:opacity-100 transition">
+						<v-icon name="ri-close-fill" scale="1.5" fill="white" />
+					</button>
 				</div>
 				
 				<button @click="showModal = true"
-					class="border px-4 py-2 border-tazko-blue rounded-3xl mt-5 cursor-pointer text-xs font-bold text-tazko-blue hover:bg-tazko-blue/10 transition">Change your avatar</button>
+					class="border px-4 py-2 border-accent rounded-3xl mt-5 cursor-pointer text-xs font-bold text-accent hover:bg-accent-10 transition">Change your avatar</button>
 				<Teleport to="body">
 					<AvatarCropModal :show="showModal" @closeModal="showModal = false" @submitAvatar="processAvatar"/>
 				</Teleport>
 			</div>
 			<div class="mt-8">
-				<form action="#" class="space-y-4" @submit.prevent="handleProfileSave">
-					<div>
-						<label class="block text-gray-700 mb-1 font-medium text-sm">First Name <span class="text-red-500">*</span></label>
-						<input v-model="firstName" type="text" placeholder="Enter your first name" class="input-field"/>
+				<form action="#" class="space-y-5" @submit.prevent="handleProfileSave">
+					<div class="flex gap-4 flex-wrap w-full">
+						<div class="flex-1">
+							<label class="block text-text mb-3 font-bold text-sm">First Name <span class="text-red-500">*</span></label>
+							<input v-model="firstName" type="text" placeholder="Enter your first name" class="input-field"/>
+						</div>
+						<div class="flex-1">
+							<label class="block text-text mb-3 font-bold text-sm">Last Name <span
+								class="text-red-500">*</span></label>
+							<input v-model="lastName" type="text" placeholder="Enter your first name" class="input-field"/>
+						</div>
+					</div>
+					<div class="flex gap-4 flex-wrap w-full">
+						<div class="flex-1">
+							<label class="block text-text mb-3 font-bold text-sm">Email <span
+								class="text-red-500">*</span></label>
+							<input v-model="email" type="text" placeholder="Enter your email address"
+								class="input-field"/>
+						</div>
+						<div class="flex-1">
+							<label class="block text-text mb-3 font-bold text-sm">Phone</label>
+							<input v-model="phone" type="text" placeholder="Enter phone number"
+								class="input-field"/>
+						</div>
 					</div>
 					<div>
-						<label class="block text-gray-700 mb-1 font-medium text-sm">Last Name <span
-							class="text-red-500">*</span></label>
-						<input v-model="lastName" type="text" placeholder="Enter your first name" class="input-field"/>
-					</div>
-					<div>
-						<label class="block text-gray-700 mb-1 font-medium text-sm">Email <span
-							class="text-red-500">*</span></label>
-						<input v-model="email" type="text" placeholder="Enter your email address"
-							class="input-field"/>
-					</div>
-					<div>
-						<label class="block text-gray-700 mb-1 font-medium text-sm">Title</label>
+						<label class="block text-text mb-3 font-bold text-sm">Title</label>
 						<input v-model="title" type="text" placeholder="e.g. Web developer"
 							class="input-field"/>
 					</div>
 					<div>
-						<label class="block text-gray-700 mb-1 font-medium text-sm">Phone</label>
-						<input v-model="phone" type="text" placeholder="Enter phone number"
-							class="input-field"/>
-					</div>
-					<div>
-						<label class="block text-gray-700 mb-1 font-medium text-sm">Short bio or current status</label>
+						<label class="block text-text mb-3 font-bold text-sm">Short bio or current status</label>
 						<textarea v-model="bio" type="text" placeholder="e.g. Beleive in quality" rows="4"
 							class="input-field"></textarea>
 					</div>
 					<div>
-						<label class="block text-gray-700 mb-1 font-medium text-sm">Location</label>
+						<label class="block text-text mb-3 font-bold text-sm">Location</label>
 						<input v-model="location" type="text" placeholder="Enter your location"
 							class="input-field"/>
 					</div>
 					<div>
-						<label class="block text-gray-700 mb-1 font-medium text-sm">Password</label>
+						<label class="block text-text mb-3 font-bold text-sm">Password</label>
 						<input v-model="password" type="password" placeholder="Enter your password"
 							class="input-field"/>
 					</div>
 					<div>
-						<label class="block text-gray-700 mb-1 font-medium text-sm">Confirm Password</label>
+						<label class="block text-text mb-3 font-bold text-sm">Confirm Password</label>
 						<input v-model="confirmPassword" type="password" placeholder="Enter your password again"
 							class="input-field"/>
 					</div>

@@ -24,7 +24,6 @@ const submit = async () => {
     } catch (err) {
         if (err.response && err.response.data) {
             const response = err.response.data
-
             if (response.errors && Object.keys(response.errors).length > 0) {
                 Object.values(response.errors).flat().forEach(message => {
                     errorToast(message)
@@ -49,14 +48,14 @@ const submit = async () => {
             <p class="text-sm">Enter your email to receive a password reset link.</p>
         </div>
 
-        <form @submit.prevent="submit" class="space-y-4">
+        <form @submit.prevent="submit" class="space-y-5">
             <div>
-                <label class="block text-gray-700 mb-1 font-medium text-sm">Email <span class="text-red-500">*</span></label>
+                <label class="block text-text mb-3 font-bold text-sm">Email <span class="text-red-500">*</span></label>
                 <div class="flex">
-                    <span class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500">
+                    <span class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-heading bg-accent text-heading">
                         <v-icon name="md-alternateemail-outlined" />
                     </span>
-                    <input v-model="email" type="email" placeholder="Enter your email" class="input-field"/>
+                    <input v-model="email" type="email" placeholder="Enter your email" class="input-field radius-left-0"/>
                 </div>
             </div>
 

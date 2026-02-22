@@ -56,14 +56,14 @@ const submit = async () => {
             <p class="text-sm">Enter a new password for your account.</p>
         </div>
 
-        <form @submit.prevent="submit" class="space-y-4">
+        <form @submit.prevent="submit" class="space-y-5">
             <div>
-                <label class="block text-gray-700 mb-1 font-medium text-sm">New Password <span class="text-red-500">*</span></label>
+                <label class="block text-text mb-3 font-bold text-sm">New Password <span class="text-red-500">*</span></label>
                 <input v-model="password" type="password" placeholder="New password" class="input-field" required />
             </div>
 
             <div>
-                <label class="block text-gray-700 mb-1 font-medium text-sm">Confirm Password <span class="text-red-500">*</span></label>
+                <label class="block text-text mb-3 font-bold text-sm">Confirm Password <span class="text-red-500">*</span></label>
                 <input v-model="password_confirmation" type="password" placeholder="Confirm password" class="input-field" required />
             </div>
 

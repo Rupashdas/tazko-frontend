@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { addIcons } from "oh-vue-icons";
 import { MdAlternateemailOutlined } from "oh-vue-icons/icons";
 import axios from '@/axios'
+import BaseCard from '@/components/ui/BaseCard.vue';
 import { useToast } from '@/utils/toast'
 
 const { successToast, errorToast } = useToast()
@@ -15,9 +16,9 @@ const submit = async () => {
     loading.value = true
     try {
         const { data } = await axios.post('/api/password/email', { email: email.value })
-        if(data.status === "success") {
+        if (data.status === "success") {
             successToast(data.message)
-        }else{
+        } else {
             errorToast(data.message)
         }
         email.value = ""
@@ -42,7 +43,7 @@ const submit = async () => {
 }
 </script>
 <template>
-    <div class="bg-white shadow-lg rounded-lg p-8">
+    <base-card class="max-w-md mt-0 p-8">
         <div class="mb-6 text-center">
             <h3 class="mb-2">Reset Your Password</h3>
             <p class="text-sm">Enter your email to receive a password reset link.</p>
@@ -52,10 +53,12 @@ const submit = async () => {
             <div>
                 <label class="block text-text mb-3 font-bold text-sm">Email <span class="text-red-500">*</span></label>
                 <div class="flex">
-                    <span class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-heading bg-accent text-heading">
+                    <span
+                        class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-heading bg-accent text-heading">
                         <v-icon name="md-alternateemail-outlined" />
                     </span>
-                    <input v-model="email" type="email" placeholder="Enter your email" class="input-field radius-left-0"/>
+                    <input v-model="email" type="email" placeholder="Enter your email"
+                        class="input-field radius-left-0" />
                 </div>
             </div>
 
@@ -63,5 +66,5 @@ const submit = async () => {
                 {{ loading ? 'Submitting...' : 'Submit' }}
             </button>
         </form>
-    </div>
+    </base-card>
 </template>

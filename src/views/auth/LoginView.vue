@@ -47,20 +47,30 @@ const handleLogin = async () => {
 </script>
 
 <template>
-    <base-card maxWidth="max-w-md" marginTop="mt-0">
+    <base-card class="max-w-md mt-0 p-8">
         <div class="mb-6 text-center">
             <h3 class="mb-2">Let’s Get Things Done</h3>
             <p class="text-sm">Log in to sync with your team and turn your big ideas into actionable milestones.</p>
         </div>
-
+        <h4> Login as :</h4>
+        <div class="flex gap-4 mb-6">
+            <button class="tazko-btn flex-1" @click="email = 'admin@example.com'; password = 'password1234'">
+                Super Admin
+            </button>
+            <button class="tazko-btn flex-1" @click="email = 'rupash.das.202@gmail.com'; password = '123123'">
+                Login as Admin
+            </button>
+        </div>
         <form @submit.prevent="handleLogin" class="space-y-5">
             <div>
                 <label class="block text-text mb-3 font-bold text-sm">Email <span class="text-red-500">*</span></label>
                 <div class="flex">
-                    <span class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-heading bg-accent text-heading">
+                    <span
+                        class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-heading bg-accent text-heading">
                         <v-icon name="md-alternateemail-outlined" />
                     </span>
-                    <input v-model="email" type="email" placeholder="Enter your email" class="input-field radius-left-0"/>
+                    <input v-model="email" type="email" placeholder="Enter your email"
+                        class="input-field radius-left-0" />
                 </div>
             </div>
 
@@ -75,10 +85,12 @@ const handleLogin = async () => {
                     </router-link>
                 </div>
                 <div class="flex">
-                    <span class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-heading bg-accent text-heading">
+                    <span
+                        class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-heading bg-accent text-heading">
                         <v-icon name="ri-lock-password-line" />
                     </span>
-                    <input v-model="password" type="password" placeholder="Enter your password" class="input-field radius-left-0"/>
+                    <input v-model="password" type="password" placeholder="Enter your password"
+                        class="input-field radius-left-0" />
                 </div>
 
             </div>
@@ -90,7 +102,7 @@ const handleLogin = async () => {
 
         <p class="mt-4 text-center text-text text-sm">
             Don't have an account?
-            <router-link :to="{name : 'signup'}" class="text-blue-500 hover:underline">Sign Up</router-link>
+            <router-link :to="{ name: 'signup' }" class="text-blue-500 hover:underline">Sign Up</router-link>
         </p>
     </base-card>
 </template>

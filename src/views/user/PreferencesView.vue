@@ -86,7 +86,7 @@ const saveDateTime = async () => {
 </script>
 
 <template>
-	<base-card maxWidth="max-w-3xl" marginTop="mt-10">
+	<base-card class="max-w-3xl mt-10 mb-20 p-8">
 		<div class="space-y-6 p-6">
 
 			<!-- Palette -->
@@ -99,13 +99,21 @@ const saveDateTime = async () => {
 				<div class="grid grid-cols-2 md:grid-cols-3 gap-6 mt-6">
 					<div v-for="key in paletteKeys" :key="key" @click="changePalette(key)"
 						class="cursor-pointer rounded-md border p-2 transition hover:shadow-md" :class="palette === key
-							? 'border-accent ring-2 ring-accent'
+							? 'border-accent bg-accent'
 							: 'border-gray-300'">
-						<div class="h-10 flex">
-							<div v-for="(colorValue, colorKey) in previewColor(key)" :key="colorKey" class="flex-1"
-								:style="{ background: colorValue }" />
+						<div class="h-10 flex border" :class="palette === key ? 'border-white' : 'border-gray-300'
+						 " >
+							<div v-for="(colorValue, colorKey) in previewColor(key)" :key="colorKey"
+								class="flex-1 relative group"
+								:style="{ background: colorValue }" >
+								<span
+									class="absolute -top-7 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1  rounded opacity-0 group-hover:opacity-100 transition pointer-events-none whitespace-nowrap">
+							      {{ colorKey }}
+							    </span>
+							</div>
 						</div>
-						<div class="p-2 pb-0 text-sm font-bold capitalize text-center">
+						<div class="p-2 pb-0 text-sm font-bold capitalize text-center" :class="palette === key ?
+						'text-white':'text-text'">
 							{{ key.replace('_', ' ') }}
 						</div>
 					</div>

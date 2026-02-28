@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from '@/axios'
 import { useToast } from '@/utils/toast'
+import BaseCard from '@/components/ui/BaseCard.vue'
 
 const { successToast, errorToast } = useToast()
 
@@ -24,9 +25,9 @@ const submit = async () => {
             password: password.value,
             password_confirmation: password_confirmation.value,
         })
-        if(data.status === "success"){
+        if (data.status === "success") {
             successToast(data.message || 'Successfully reset!')
-            await router.push({name: 'login'})
+            await router.push({ name: 'login' })
         }
     } catch (err) {
         if (err.response && err.response.data) {
@@ -50,7 +51,7 @@ const submit = async () => {
 </script>
 
 <template>
-    <div class="bg-white shadow-lg rounded-lg p-8">
+    <base-card class="max-w-md mt-0 p-8">
         <div class="mb-6 text-center">
             <h3 class="mb-2">Set a New Password</h3>
             <p class="text-sm">Enter a new password for your account.</p>
@@ -58,18 +59,22 @@ const submit = async () => {
 
         <form @submit.prevent="submit" class="space-y-5">
             <div>
-                <label class="block text-text mb-3 font-bold text-sm">New Password <span class="text-red-500">*</span></label>
+                <label class="block text-text mb-3 font-bold text-sm">New Password <span
+                        class="text-red-500">*</span></label>
                 <input v-model="password" type="password" placeholder="New password" class="input-field" required />
             </div>
 
             <div>
-                <label class="block text-text mb-3 font-bold text-sm">Confirm Password <span class="text-red-500">*</span></label>
-                <input v-model="password_confirmation" type="password" placeholder="Confirm password" class="input-field" required />
+                <label class="block text-text mb-3 font-bold text-sm">Confirm Password <span
+                        class="text-red-500">*</span></label>
+                <input v-model="password_confirmation" type="password" placeholder="Confirm password"
+                    class="input-field" required />
             </div>
 
             <button type="submit" class="tazko-btn w-full" :disabled="loading">
                 {{ loading ? 'Resetting...' : 'Reset Password' }}
             </button>
         </form>
-    </div>
+    </base-card>
+
 </template>

@@ -11,6 +11,10 @@ import ResetPasswordView from '@/views/auth/ResetPasswordView.vue';
 
 import ProfileView from '@/views/user/ProfileView.vue';
 import PreferencesView from '@/views/user/PreferencesView.vue';
+import SystemSettingsView from '@/views/admin/SystemSettingsView.vue';
+import RolesView from '@/views/admin/RolesView.vue'
+import UsersView from '@/views/admin/UsersView.vue'
+
 
 import HomeView from '@/views/HomeView.vue';
 import PingsView from '@/views/PingsView.vue';
@@ -44,6 +48,25 @@ const routes = [
                 name: 'preferences',
                 component: PreferencesView,
             },
+            {
+                path: 'system-settings',
+                name: 'system-settings',
+                redirect: { name: 'system-settings-roles' },
+                component: SystemSettingsView,
+                children: [
+                    {
+                        path: 'roles',
+                        name: 'system-settings-roles',
+                        component: RolesView,
+                    },
+                    {
+                        path: 'users',
+                        name: 'system-settings-users',
+                        component: UsersView,
+                    },
+                ]
+            },
+
         ]
     },
 

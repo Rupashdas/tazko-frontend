@@ -142,7 +142,7 @@ const removeAvatar = async () => {
 </script>
 
 <template>
-	<base-card maxWidth="max-w-3xl" marginTop="mt-30">
+	<base-card class="max-w-3xl mt-30 mb-20 p-8">
 		<div class="relative -mt-30">
 			<div class="text-center">
 				<div class="relative w-40 h-40 mx-auto block group ">

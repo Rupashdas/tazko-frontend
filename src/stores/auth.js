@@ -13,22 +13,17 @@ export const useAuthStore = defineStore('auth', {
         async login(email, password) {
             try {
                 await axios.get('/sanctum/csrf-cookie')
-
                 const { data } = await axios.post('/api/login', { email, password })
 
                 if (data.status === 'success') {
-                    if (data.user) {
-                        this.user = data.user
-                        this.authChecked = true
-                    } else {
-                        await this.fetchUser()
-                    }
+                    this.user = data.user ?? await this.fetchUser()
+                    this.authChecked = true
                     return { success: true, message: data.message }
                 }
             } catch (err) {
                 return {
                     success: false,
-                    message: err.response?.data?.message || 'Something went wrong. Please try again.',
+                    message: err.response?.data?.message || 'Something went wrong',
                     errors: err.response?.data?.errors || null
                 }
             }
@@ -38,19 +33,16 @@ export const useAuthStore = defineStore('auth', {
             try {
                 await axios.get('/sanctum/csrf-cookie')
                 const { data } = await axios.post('/api/register', { name, email, password })
+
                 if (data.status === 'success') {
-                    if (data.user) {
-                        this.user = data.user
-                        this.authChecked = true
-                    } else {
-                        await this.fetchUser()
-                    }
+                    this.user = data.user ?? await this.fetchUser()
+                    this.authChecked = true
                     return { success: true, message: data.message }
                 }
             } catch (err) {
                 return {
                     success: false,
-                    message: err.response?.data?.message || 'Something went wrong. Please try again.',
+                    message: err.response?.data?.message || 'Something went wrong',
                     errors: err.response?.data?.errors || { general: ['Unknown error occurred'] }
                 }
             }
@@ -58,7 +50,7 @@ export const useAuthStore = defineStore('auth', {
 
         async logout() {
             try {
-                const { data } = await axios.post('/api/logout')
+                await axios.post('/api/logout')
                 this.user = null
                 this.authChecked = true
                 return { success: true }
@@ -78,13 +70,14 @@ export const useAuthStore = defineStore('auth', {
                 const { data } = await axios.get('/api/user')
                 this.user = data.user
                 return this.user
-            } catch (err) {
+            } catch {
                 this.user = null
                 return null
             } finally {
                 this.authChecked = true
             }
         },
+
         async updateProfile(payload) {
             try {
                 const { data } = await axios.post('/api/user', payload)

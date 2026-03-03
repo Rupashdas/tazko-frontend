@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import axios from '@/axios'
+import { usePreferencesStore } from '@/stores/usePreferencesStore'
 
 export const useAuthStore = defineStore('auth', {
     state: () => ({
@@ -103,10 +104,18 @@ export const useAuthStore = defineStore('auth', {
                 await axios.post('/api/logout')
                 this.user = null
                 this.authChecked = true
+
+                const preferencesStore = usePreferencesStore()
+                preferencesStore.$reset()
+
                 return { success: true }
             } catch (err) {
                 this.user = null
                 this.authChecked = true
+
+                const preferencesStore = usePreferencesStore()
+                preferencesStore.$reset()
+
                 return {
                     success: false,
                     message: err.response?.data?.message || 'Logout failed',

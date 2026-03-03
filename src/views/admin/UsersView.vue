@@ -10,7 +10,6 @@ const { successToast, errorToast } = useToast()
 
 /* ── Capabilities ──────────────────────────────────────── */
 const canCreate = computed(() => authStore.hasCapability('users.create'))
-const canUpdate = computed(() => authStore.hasCapability('users.update'))
 const canDelete = computed(() => authStore.hasCapability('users.delete'))
 const canAssignRole = computed(() => authStore.hasCapability('users.role.assign'))
 
@@ -31,7 +30,7 @@ const pendingRoleId = ref(null)
 
 /* ── Computed ──────────────────────────────────────────── */
 const users = computed(() => userStore.users)
-const roles = computed(() => userStore.roles)
+const roles = computed(() => userStore.roles.filter(r => r.name !== 'super-admin'))
 
 const filteredUsers = computed(() => {
 	let list = users.value
@@ -50,6 +49,8 @@ const filteredUsers = computed(() => {
 })
 
 /* ── Helpers ───────────────────────────────────────────── */
+const isOwnAccount = (userId) => authStore.user?.id === userId
+
 const getInitials = (name) =>
 	name?.split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase() || '?'
 
@@ -94,9 +95,7 @@ const handleAssignRole = async () => {
 	const res = await userStore.assignRole(selectedUser.value.id, pendingRoleId.value)
 	if (res.success) {
 		successToast(res.message)
-		// Sync updated user into popup
-		const updated = userStore.users.find(u => u.id === selectedUser.value.id)
-		if (updated) { selectedUser.value = { ...updated }; pendingRoleId.value = updated.roles?.[0]?.id ?? null }
+		closeUserPopup()
 	} else {
 		errorToast(res.message)
 	}
@@ -269,8 +268,14 @@ onMounted(() => userStore.init())
 										{{ getInitials(user.name) }}
 									</div>
 									<div class="min-w-0">
-										<p class="text-sm font-semibold text-heading leading-tight truncate">{{
-											user.name }}</p>
+										<div class="flex items-center gap-1.5">
+											<p class="text-sm font-semibold text-heading leading-tight truncate">{{
+												user.name }}</p>
+											<span v-if="isOwnAccount(user.id)"
+												class="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-accent/15 text-accent">
+												You
+											</span>
+										</div>
 										<p class="text-xs text-text/45 mt-0.5 truncate">{{ user.email }}</p>
 									</div>
 								</div>
@@ -301,7 +306,7 @@ onMounted(() => userStore.init())
 											<path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
 										</svg>
 									</button>
-									<button v-if="canDelete" @click="confirmDelete(user.id)"
+									<button v-if="canDelete && !isOwnAccount(user.id)" @click="confirmDelete(user.id)"
 										class="w-8 h-8 rounded-lg flex items-center justify-center text-text/40 hover:text-red-500 hover:bg-red-50 transition-all"
 										title="Remove">
 										<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24"
@@ -348,8 +353,14 @@ onMounted(() => userStore.init())
 									{{ getInitials(selectedUser.name) }}
 								</div>
 								<div class="min-w-0">
-									<p class="text-sm font-bold text-heading leading-tight truncate">{{
-										selectedUser.name }}</p>
+									<div class="flex items-center gap-1.5">
+										<p class="text-sm font-bold text-heading leading-tight truncate">{{
+											selectedUser.name }}</p>
+										<span v-if="isOwnAccount(selectedUser.id)"
+											class="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-accent/15 text-accent">
+											You
+										</span>
+									</div>
 									<p class="text-xs text-text/45 mt-0.5 truncate">{{ selectedUser.email }}</p>
 								</div>
 							</div>
@@ -387,8 +398,8 @@ onMounted(() => userStore.init())
 								</div>
 							</div>
 
-							<!-- Change Role -->
-							<div v-if="canAssignRole">
+							<!-- Change Role — hidden for own account -->
+							<div v-if="canAssignRole && !isOwnAccount(selectedUser.id)">
 								<p class="text-[11px] font-bold uppercase tracking-widest text-text/35 mb-2">Assign Role
 								</p>
 								<div class="grid grid-cols-1 gap-1.5">
@@ -410,8 +421,9 @@ onMounted(() => userStore.init())
 								</button>
 							</div>
 
-							<!-- Danger Zone -->
-							<div v-if="canDelete" class="border-t border-heading/6 pt-4">
+							<!-- Danger Zone — hidden for own account -->
+							<div v-if="canDelete && !isOwnAccount(selectedUser.id)"
+								class="border-t border-heading/6 pt-4">
 								<p class="text-[11px] font-bold uppercase tracking-widest text-text/35 mb-2">Danger Zone
 								</p>
 								<button @click="confirmDelete(selectedUser.id)"

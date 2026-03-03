@@ -10,6 +10,7 @@ export const useUserStore = defineStore('users', {
 			save: false,
 			delete: false,
 			invite: false,
+			resend: false,
 		},
 		loaded: false,
 	}),
@@ -33,20 +34,44 @@ export const useUserStore = defineStore('users', {
 			}
 		},
 
-		async inviteUser({ name, email, role_id }) {
+		/*── Invitations ─────────────────────────────────────*/
+
+		async sendInvitation({ name, email, role_id }) {
 			this.loading.invite = true
 			try {
-				const { data } = await axios.post('/api/users', { name, email, role_id })
-				this.users.unshift(data.data)
+				const { data } = await axios.post('/api/invitations', { name, email, role_id })
 				return { success: true, message: data.message }
 			} catch (err) {
 				const errors = err.response?.data?.errors ?? {}
-				const message = err.response?.data?.message ?? 'Failed to invite user.'
+				const message = err.response?.data?.message ?? 'Failed to send invitation.'
 				return { success: false, message, errors }
 			} finally {
 				this.loading.invite = false
 			}
 		},
+
+		async resendInvitation(invitationId) {
+			this.loading.resend = true
+			try {
+				const { data } = await axios.post(`/api/invitations/${invitationId}/resend`)
+				return { success: true, message: data.message }
+			} catch (err) {
+				return { success: false, message: err.response?.data?.message ?? 'Failed to resend.' }
+			} finally {
+				this.loading.resend = false
+			}
+		},
+
+		async cancelInvitation(invitationId) {
+			try {
+				const { data } = await axios.delete(`/api/invitations/${invitationId}`)
+				return { success: true, message: data.message }
+			} catch (err) {
+				return { success: false, message: err.response?.data?.message ?? 'Failed to cancel.' }
+			}
+		},
+
+		/*── Users ───────────────────────────────────────────*/
 
 		async assignRole(userId, roleId) {
 			this.loading.save = true
@@ -72,6 +97,12 @@ export const useUserStore = defineStore('users', {
 			} finally {
 				this.loading.delete = false
 			}
+		},
+
+		// force-reload (e.g. after invitation accepted)
+		async refresh() {
+			this.loaded = false
+			await this.init()
 		},
 
 		// internal

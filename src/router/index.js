@@ -14,10 +14,12 @@ import PreferencesView from '@/views/user/PreferencesView.vue';
 import SystemSettingsView from '@/views/admin/SystemSettingsView.vue';
 import RolesView from '@/views/admin/RolesView.vue';
 import UsersView from '@/views/admin/UsersView.vue';
-import UnauthorizedView from '@/views/errors/UnauthorizedView.vue';
+import UnauthorizedView from '@/views/errors/Unauthorizedview.vue';
 
 import HomeView from '@/views/HomeView.vue';
 import PingsView from '@/views/PingsView.vue';
+
+import AcceptInvitationView from '@/views/auth/AcceptInvitationView.vue';
 
 const routes = [
     {
@@ -113,6 +115,11 @@ const routes = [
                 path: 'reset-password',
                 name: 'reset-password',
                 component: ResetPasswordView,
+            },
+            {
+                path: 'accept-invitation',
+                name: 'accept-invitation',
+                component: AcceptInvitationView,
             },
         ]
     },

@@ -131,19 +131,24 @@ const validateInvite = () => {
 
 const handleInvite = async () => {
 	if (!validateInvite()) return
-	const res = await userStore.inviteUser({
+
+	const res = await userStore.sendInvitation({
 		name: newUser.value.name,
 		email: newUser.value.email,
 		role_id: newUser.value.role_id || null,
 	})
+
 	if (res.success) {
 		successToast(res.message)
 		closeInviteModal()
 	} else {
-		if (res.errors) inviteErrors.value = Object.fromEntries(
-			Object.entries(res.errors).map(([k, v]) => [k, Array.isArray(v) ? v[0] : v])
-		)
-		else errorToast(res.message)
+		if (res.errors) {
+			inviteErrors.value = Object.fromEntries(
+				Object.entries(res.errors).map(([k, v]) => [k, Array.isArray(v) ? v[0] : v])
+			)
+		} else {
+			errorToast(res.message)
+		}
 	}
 }
 

@@ -1,20 +1,18 @@
 <script setup>
-import BaseCard from '@/components/ui/BaseCard.vue'
 import AvatarCropModal from "@/components/profile/AvatarCropModal.vue";
-import { useAuthStore } from '@/stores/auth'
+import { useAuthStore } from '@/stores/useAuthStore'
 import { useRouter } from 'vue-router'
 import { useToast } from '@/utils/toast'
 import { ref, onMounted, computed } from 'vue'
 import { addIcons } from 'oh-vue-icons'
-import { RiCloseFill   } from "oh-vue-icons/icons";
+import { RiCloseFill } from "oh-vue-icons/icons";
 import axios from '@/axios'
-addIcons(RiCloseFill )
+addIcons(RiCloseFill)
 
 const auth = useAuthStore()
 const router = useRouter()
 const showModal = ref(false)
 
-// Form fields
 const firstName = ref('')
 const lastName = ref('')
 const email = ref('')
@@ -25,22 +23,19 @@ const location = ref('')
 const password = ref('')
 const confirmPassword = ref('')
 
-// Avatar
+const showPassword = ref(false)
+const showConfirmPassword = ref(false)
 const avatarFile = ref(null)
 const avatarPreview = ref(null)
-
 const loading = ref(false)
 
 const { successToast, errorToast } = useToast()
 
-// Load user data
 onMounted(async () => {
-	
 	if (!auth.isLoggedIn) {
 		await router.push('/login')
 		return
 	}
-	
 	if (auth.user) {
 		const nameParts = auth.user.name?.split(' ') || []
 		firstName.value = nameParts[0] || ''
@@ -55,58 +50,56 @@ onMounted(async () => {
 
 const user = computed(() => auth.user)
 
-// Submit handler
+const displayName = computed(() =>
+	[firstName.value, lastName.value].filter(Boolean).join(' ') || 'Your Name'
+)
+
+const userInitials = computed(() => {
+	const f = firstName.value?.charAt(0) || ''
+	const l = lastName.value?.charAt(0) || ''
+	return (f + l).toUpperCase() || '?'
+})
+
+const hasAvatar = computed(() => avatarPreview.value || user.value?.avatar)
+
 const handleProfileSave = async () => {
-	
 	if (!firstName.value || !lastName.value || !email.value) {
 		errorToast('Please fill in all required fields.')
 		return
 	}
-	
 	if (password.value && password.value !== confirmPassword.value) {
 		errorToast('Passwords do not match.')
 		return
 	}
-	
 	loading.value = true
-	
 	const formData = new FormData()
-	
 	formData.append('name', `${firstName.value} ${lastName.value}`)
 	formData.append('email', email.value)
 	formData.append('title', title.value || '')
 	formData.append('phone', phone.value || '')
 	formData.append('bio', bio.value || '')
 	formData.append('location', location.value || '')
-	
 	if (password.value) {
 		formData.append('password', password.value)
 		formData.append('password_confirmation', confirmPassword.value)
 	}
-	
-	if(avatarFile.value){
+	if (avatarFile.value) {
 		formData.append('avatar', avatarFile.value)
 	}
-	
 	const response = await auth.updateProfile(formData)
-	
 	if (response.success) {
 		successToast(response.message)
-		
 		password.value = ''
 		confirmPassword.value = ''
 	} else {
 		if (response.errors && Object.keys(response.errors).length > 0) {
-			Object.values(response.errors).flat().forEach(message => {
-				errorToast(message)
-			})
+			Object.values(response.errors).flat().forEach(msg => errorToast(msg))
 		} else if (response.message) {
 			errorToast(response.message)
 		} else {
 			errorToast('Something went wrong')
 		}
 	}
-	
 	loading.value = false
 }
 
@@ -118,21 +111,17 @@ const processAvatar = async (file) => {
 
 const removeAvatar = async () => {
 	if (!user.value) return
-	
 	try {
 		loading.value = true
-		
 		const response = await axios.post('/api/remove-avatar')
-		
 		if (response.data.status === 'success') {
 			user.value.avatar = null
 			avatarPreview.value = null
 			avatarFile.value = null
-			successToast(response.data.message || 'Avatar removed successfully')
+			successToast(response.data.message || 'Avatar removed')
 		} else {
 			errorToast(response.data.message || 'Failed to remove avatar')
 		}
-		
 	} catch (err) {
 		errorToast(err.response?.data?.message || 'Something went wrong')
 	} finally {
@@ -142,86 +131,397 @@ const removeAvatar = async () => {
 </script>
 
 <template>
-	<base-card class="max-w-3xl mt-30 mb-20 p-8">
-		<div class="relative -mt-30">
-			<div class="text-center">
-				<div class="relative w-40 h-40 mx-auto block group ">
-					<img v-if="avatarPreview" :src="avatarPreview" alt="Avatar Preview"
-						class="w-full object-cover rounded-full border-accent border-3 mx-auto"/>
-					<img v-else-if="user?.avatar" :src="user.avatar" alt="Avatar"
-						class="w-full object-cover rounded-full border-accent border-3 mx-auto"/>
-					<div v-else class="w-full h-full">
-						<v-icon class="w-40 h-40 bg-panel rounded-full shadow-md shadow-accent-10"
-							name="la-user-circle-solid" />
-					</div>
-					<button type="button" v-if="avatarPreview || user?.avatar" @click="removeAvatar"
-						class="absolute h-full w-full z-10 rounded-full bg-black/40 top-0 left-0 cursor-pointer text-white opacity-0 group-hover:opacity-100 transition">
-						<v-icon name="ri-close-fill" scale="1.5" fill="white" />
-					</button>
-				</div>
-				
-				<button @click="showModal = true"
-					class="border px-4 py-2 border-accent rounded-3xl mt-5 cursor-pointer text-xs font-bold text-accent hover:bg-accent-10 transition">Change your avatar</button>
-				<Teleport to="body">
-					<AvatarCropModal :show="showModal" @closeModal="showModal = false" @submitAvatar="processAvatar"/>
-				</Teleport>
-			</div>
-			<div class="mt-8">
-				<form action="#" class="space-y-5" @submit.prevent="handleProfileSave">
-					<div class="flex gap-4 flex-wrap w-full">
-						<div class="flex-1">
-							<label class="block text-text mb-3 font-bold text-sm">First Name <span class="text-red-500">*</span></label>
-							<input v-model="firstName" type="text" placeholder="Enter your first name" class="input-field"/>
-						</div>
-						<div class="flex-1">
-							<label class="block text-text mb-3 font-bold text-sm">Last Name <span
-								class="text-red-500">*</span></label>
-							<input v-model="lastName" type="text" placeholder="Enter your first name" class="input-field"/>
-						</div>
-					</div>
-					<div class="flex gap-4 flex-wrap w-full">
-						<div class="flex-1">
-							<label class="block text-text mb-3 font-bold text-sm">Email <span
-								class="text-red-500">*</span></label>
-							<input v-model="email" type="text" placeholder="Enter your email address"
-								class="input-field"/>
-						</div>
-						<div class="flex-1">
-							<label class="block text-text mb-3 font-bold text-sm">Phone</label>
-							<input v-model="phone" type="text" placeholder="Enter phone number"
-								class="input-field"/>
-						</div>
-					</div>
-					<div>
-						<label class="block text-text mb-3 font-bold text-sm">Title</label>
-						<input v-model="title" type="text" placeholder="e.g. Web developer"
-							class="input-field"/>
-					</div>
-					<div>
-						<label class="block text-text mb-3 font-bold text-sm">Short bio or current status</label>
-						<textarea v-model="bio" type="text" placeholder="e.g. Beleive in quality" rows="4"
-							class="input-field"></textarea>
-					</div>
-					<div>
-						<label class="block text-text mb-3 font-bold text-sm">Location</label>
-						<input v-model="location" type="text" placeholder="Enter your location"
-							class="input-field"/>
-					</div>
-					<div>
-						<label class="block text-text mb-3 font-bold text-sm">Password</label>
-						<input v-model="password" type="password" placeholder="Enter your password"
-							class="input-field"/>
-					</div>
-					<div>
-						<label class="block text-text mb-3 font-bold text-sm">Confirm Password</label>
-						<input v-model="confirmPassword" type="password" placeholder="Enter your password again"
-							class="input-field"/>
-					</div>
-					<button type="submit" class="tazko-btn w-full" :disabled="loading">
-						{{ loading ? 'Saving...' : 'Save Changes' }}
-					</button>
-				</form>
-			</div>
+	<div class="max-w-5xl mx-auto mt-10 mb-24 px-4">
+
+		<!-- Page Header -->
+		<div class="mb-8">
+			<h1 class="text-3xl font-bold text-heading">My Profile</h1>
+			<p class="text-text/50 mt-1 text-sm">Manage your personal information and account security.</p>
 		</div>
-	</base-card>
+
+		<form @submit.prevent="handleProfileSave">
+			<div class="flex flex-col lg:flex-row gap-6">
+
+				<!-- ── LEFT COLUMN: Avatar Card ─────────────────── -->
+				<div class="lg:w-72 shrink-0 space-y-4">
+
+					<!-- Avatar Card -->
+					<div class="bg-panel border border-heading/8 rounded-2xl p-6 shadow-sm text-center">
+
+						<!-- Avatar display -->
+						<div class="relative w-28 h-28 mx-auto mb-4 group">
+							<!-- Avatar image / initials fallback -->
+							<div
+								class="w-28 h-28 rounded-full overflow-hidden ring-4 ring-accent/20 ring-offset-2 ring-offset-panel">
+								<img v-if="avatarPreview" :src="avatarPreview" alt="Avatar Preview"
+									class="w-full h-full object-cover" />
+								<img v-else-if="user?.avatar" :src="user.avatar" alt="Avatar"
+									class="w-full h-full object-cover" />
+								<div v-else
+									class="w-full h-full flex items-center justify-center text-3xl font-bold text-white"
+									:style="{ background: 'var(--color-accent)' }">
+									{{ userInitials }}
+								</div>
+							</div>
+
+							<!-- Remove hover overlay -->
+							<button v-if="hasAvatar" type="button" @click="removeAvatar"
+								class="absolute inset-0 rounded-full bg-black/50 backdrop-blur-sm flex flex-col items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200 cursor-pointer">
+								<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" viewBox="0 0 24 24"
+									fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+									<line x1="18" y1="6" x2="6" y2="18" />
+									<line x1="6" y1="6" x2="18" y2="18" />
+								</svg>
+								<span class="text-white text-xs font-semibold">Remove</span>
+							</button>
+						</div>
+
+						<!-- Name preview -->
+						<h3 class="font-bold text-heading text-base leading-tight">{{ displayName }}</h3>
+						<p class="text-sm text-text/50 mt-0.5">{{ title || 'No title set' }}</p>
+
+						<!-- Change avatar button -->
+						<button type="button" @click="showModal = true"
+							class="mt-4 w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed border-accent/30 text-accent text-xs font-bold hover:bg-accent/5 hover:border-accent/60 transition-all duration-200 cursor-pointer">
+							<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
+								stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+								<path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+								<circle cx="12" cy="13" r="4" />
+							</svg>
+							Change Avatar
+						</button>
+					</div>
+
+					<!-- Quick Info Card -->
+					<div class="bg-panel border border-heading/8 rounded-2xl p-4 shadow-sm space-y-3">
+						<p class="text-xs font-bold text-text/40 uppercase tracking-widest">Quick Info</p>
+
+						<div class="flex items-center gap-3">
+							<div class="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+								<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-blue-400"
+									viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+									stroke-linecap="round">
+									<path
+										d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+									<polyline points="22,6 12,13 2,6" />
+								</svg>
+							</div>
+							<div class="min-w-0">
+								<p class="text-xs text-text/40">Email</p>
+								<p class="text-xs font-semibold text-heading truncate">{{ email || '—' }}</p>
+							</div>
+						</div>
+
+						<div class="flex items-center gap-3">
+							<div class="w-7 h-7 rounded-lg bg-green-50 flex items-center justify-center shrink-0">
+								<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-green-400"
+									viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+									stroke-linecap="round">
+									<path
+										d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.67A2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z" />
+								</svg>
+							</div>
+							<div class="min-w-0">
+								<p class="text-xs text-text/40">Phone</p>
+								<p class="text-xs font-semibold text-heading truncate">{{ phone || '—' }}</p>
+							</div>
+						</div>
+
+						<div class="flex items-center gap-3">
+							<div class="w-7 h-7 rounded-lg bg-orange-50 flex items-center justify-center shrink-0">
+								<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-orange-400"
+									viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+									stroke-linecap="round">
+									<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
+									<circle cx="12" cy="10" r="3" />
+								</svg>
+							</div>
+							<div class="min-w-0">
+								<p class="text-xs text-text/40">Location</p>
+								<p class="text-xs font-semibold text-heading truncate">{{ location || '—' }}</p>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- ── RIGHT COLUMN: Form ───────────────────────── -->
+				<div class="flex-1 space-y-5">
+
+					<!-- Section: Basic Info -->
+					<div class="bg-panel border border-heading/8 rounded-2xl shadow-sm overflow-hidden">
+						<div class="px-6 py-4 border-b border-heading/6 flex items-center gap-3">
+							<div class="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
+								<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-accent" viewBox="0 0 24 24"
+									fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+									<path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+									<circle cx="12" cy="7" r="4" />
+								</svg>
+							</div>
+							<div>
+								<h2 class="text-sm font-bold text-heading leading-none">Basic Information</h2>
+								<p class="text-xs text-text/40 mt-0.5">Your public profile details</p>
+							</div>
+						</div>
+
+						<div class="p-6 space-y-4">
+							<!-- Name row -->
+							<div class="grid grid-cols-2 gap-4">
+								<div>
+									<label class="block text-xs font-bold text-text/60 mb-1.5 uppercase tracking-wide">
+										First Name <span class="text-red-400 normal-case tracking-normal">*</span>
+									</label>
+									<input v-model="firstName" type="text" placeholder="John"
+										class="input-field text-sm" />
+								</div>
+								<div>
+									<label class="block text-xs font-bold text-text/60 mb-1.5 uppercase tracking-wide">
+										Last Name <span class="text-red-400 normal-case tracking-normal">*</span>
+									</label>
+									<input v-model="lastName" type="text" placeholder="Doe"
+										class="input-field text-sm" />
+								</div>
+							</div>
+
+							<!-- Title -->
+							<div>
+								<label class="block text-xs font-bold text-text/60 mb-1.5 uppercase tracking-wide">Job
+									Title</label>
+								<input v-model="title" type="text" placeholder="e.g. Senior Web Developer"
+									class="input-field text-sm" />
+							</div>
+
+							<!-- Bio -->
+							<div>
+								<label class="block text-xs font-bold text-text/60 mb-1.5 uppercase tracking-wide">
+									Bio
+									<span class="normal-case tracking-normal text-text/30 font-normal ml-1">— optional
+										short intro</span>
+								</label>
+								<textarea v-model="bio" rows="3" placeholder="Tell your team a bit about yourself…"
+									class="input-field text-sm resize-none"></textarea>
+								<p class="text-xs text-text/30 mt-1 text-right">{{ bio?.length || 0 }} chars</p>
+							</div>
+						</div>
+					</div>
+
+					<!-- Section: Contact -->
+					<div class="bg-panel border border-heading/8 rounded-2xl shadow-sm overflow-hidden">
+						<div class="px-6 py-4 border-b border-heading/6 flex items-center gap-3">
+							<div class="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+								<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-blue-500"
+									viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+									stroke-linecap="round">
+									<path
+										d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+									<polyline points="22,6 12,13 2,6" />
+								</svg>
+							</div>
+							<div>
+								<h2 class="text-sm font-bold text-heading leading-none">Contact & Location</h2>
+								<p class="text-xs text-text/40 mt-0.5">How others can reach you</p>
+							</div>
+						</div>
+
+						<div class="p-6 space-y-4">
+							<div class="grid grid-cols-2 gap-4">
+								<!-- Email -->
+								<div>
+									<label class="block text-xs font-bold text-text/60 mb-1.5 uppercase tracking-wide">
+										Email <span class="text-red-400 normal-case tracking-normal">*</span>
+									</label>
+									<div class="relative">
+										<span class="absolute left-3 top-1/2 -translate-y-1/2 text-text/30">
+											<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24"
+												fill="none" stroke="currentColor" stroke-width="2"
+												stroke-linecap="round">
+												<path
+													d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+												<polyline points="22,6 12,13 2,6" />
+											</svg>
+										</span>
+										<input v-model="email" type="email" placeholder="john@example.com"
+											class="input-field text-sm pl-9" />
+									</div>
+								</div>
+
+								<!-- Phone -->
+								<div>
+									<label
+										class="block text-xs font-bold text-text/60 mb-1.5 uppercase tracking-wide">Phone</label>
+									<div class="relative">
+										<span class="absolute left-3 top-1/2 -translate-y-1/2 text-text/30">
+											<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24"
+												fill="none" stroke="currentColor" stroke-width="2"
+												stroke-linecap="round">
+												<path
+													d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.67A2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z" />
+											</svg>
+										</span>
+										<input v-model="phone" type="tel" placeholder="+1 (555) 000-0000"
+											class="input-field text-sm pl-9" />
+									</div>
+								</div>
+							</div>
+
+							<!-- Location -->
+							<div>
+								<label
+									class="block text-xs font-bold text-text/60 mb-1.5 uppercase tracking-wide">Location</label>
+								<div class="relative">
+									<span class="absolute left-3 top-1/2 -translate-y-1/2 text-text/30">
+										<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24"
+											fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+											<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
+											<circle cx="12" cy="10" r="3" />
+										</svg>
+									</span>
+									<input v-model="location" type="text" placeholder="City, Country"
+										class="input-field text-sm pl-9" />
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- Section: Security -->
+					<div class="bg-panel border border-heading/8 rounded-2xl shadow-sm overflow-hidden">
+						<div class="px-6 py-4 border-b border-heading/6 flex items-center gap-3">
+							<div class="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
+								<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-amber-500"
+									viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+									stroke-linecap="round">
+									<rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+									<path d="M7 11V7a5 5 0 0110 0v4" />
+								</svg>
+							</div>
+							<div>
+								<h2 class="text-sm font-bold text-heading leading-none">Change Password</h2>
+								<p class="text-xs text-text/40 mt-0.5">Leave blank to keep current password</p>
+							</div>
+						</div>
+
+						<div class="p-6 grid grid-cols-2 gap-4">
+							<!-- New Password -->
+							<div>
+								<label class="block text-xs font-bold text-text/60 mb-1.5 uppercase tracking-wide">New
+									Password</label>
+								<div class="relative">
+									<input v-model="password" :type="showPassword ? 'text' : 'password'"
+										placeholder="••••••••" autocomplete="new-password"
+										class="input-field text-sm pr-10" />
+									<button type="button" @click="showPassword = !showPassword"
+										class="absolute right-3 top-1/2 -translate-y-1/2 text-text/30 hover:text-text transition-colors">
+										<!-- Eye open -->
+										<svg v-if="!showPassword" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4"
+											viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+											stroke-linecap="round">
+											<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+											<circle cx="12" cy="12" r="3" />
+										</svg>
+										<!-- Eye closed -->
+										<svg v-else xmlns="http://www.w3.org/2000/svg" class="w-4 h-4"
+											viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+											stroke-linecap="round">
+											<path
+												d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24" />
+											<line x1="1" y1="1" x2="23" y2="23" />
+										</svg>
+									</button>
+								</div>
+							</div>
+
+							<!-- Confirm Password -->
+							<div>
+								<label
+									class="block text-xs font-bold text-text/60 mb-1.5 uppercase tracking-wide">Confirm
+									Password</label>
+								<div class="relative">
+									<input v-model="confirmPassword" :type="showConfirmPassword ? 'text' : 'password'"
+										placeholder="••••••••" autocomplete="new-password"
+										class="input-field text-sm pr-10" :class="{
+											'border-red-400 focus:border-red-400': confirmPassword && password !== confirmPassword,
+											'border-green-400 focus:border-green-400': confirmPassword && password === confirmPassword && password
+										}" />
+									<button type="button" @click="showConfirmPassword = !showConfirmPassword"
+										class="absolute right-3 top-1/2 -translate-y-1/2 text-text/30 hover:text-text transition-colors">
+										<svg v-if="!showConfirmPassword" xmlns="http://www.w3.org/2000/svg"
+											class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+											stroke-width="2" stroke-linecap="round">
+											<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+											<circle cx="12" cy="12" r="3" />
+										</svg>
+										<svg v-else xmlns="http://www.w3.org/2000/svg" class="w-4 h-4"
+											viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+											stroke-linecap="round">
+											<path
+												d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24" />
+											<line x1="1" y1="1" x2="23" y2="23" />
+										</svg>
+									</button>
+								</div>
+								<!-- Match indicator -->
+								<Transition name="slide-down">
+									<p v-if="confirmPassword && password !== confirmPassword"
+										class="text-xs text-red-400 mt-1 flex items-center gap-1">
+										<svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" viewBox="0 0 24 24"
+											fill="currentColor">
+											<path
+												d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+										</svg>
+										Passwords don't match
+									</p>
+									<p v-else-if="confirmPassword && password === confirmPassword && password"
+										class="text-xs text-green-500 mt-1 flex items-center gap-1">
+										<svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" viewBox="0 0 24 24"
+											fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
+											<polyline points="20 6 9 17 4 12" />
+										</svg>
+										Passwords match
+									</p>
+								</Transition>
+							</div>
+						</div>
+					</div>
+
+					<!-- Save Button -->
+					<div class="flex justify-end">
+						<button type="submit" :disabled="loading"
+							class="inline-flex items-center gap-2.5 px-8 py-3 bg-accent text-white text-sm font-semibold rounded-xl shadow-md shadow-accent/25 hover:bg-accent/85 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50">
+							<svg v-if="loading" class="w-4 h-4 animate-spin" xmlns="http://www.w3.org/2000/svg"
+								fill="none" viewBox="0 0 24 24">
+								<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+									stroke-width="4" />
+								<path class="opacity-75" fill="currentColor"
+									d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+							</svg>
+							<svg v-else xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24"
+								fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+								<path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
+								<polyline points="17 21 17 13 7 13 7 21" />
+								<polyline points="7 3 7 8 15 8" />
+							</svg>
+							{{ loading ? 'Saving…' : 'Save Changes' }}
+						</button>
+					</div>
+
+				</div>
+			</div>
+		</form>
+		<!-- Avatar Crop Modal -->
+		<Teleport to="body">
+			<AvatarCropModal :show="showModal" @closeModal="showModal = false" @submitAvatar="processAvatar" />
+		</Teleport>
+	</div>
 </template>
+
+<style scoped>
+.slide-down-enter-active,
+.slide-down-leave-active {
+	transition: all 0.2s ease;
+}
+
+.slide-down-enter-from,
+.slide-down-leave-to {
+	opacity: 0;
+	transform: translateY(-4px);
+}
+</style>

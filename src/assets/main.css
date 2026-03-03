@@ -5,11 +5,11 @@
     --font-sans: 'Manrope Variable', ui-sans-serif, system-ui, sans-serif;
     --font-display: 'Barlow Condensed', ui-serif, Georgia, serif;
 
-    --color-body: #fcf8f3;
-    --color-heading: #2b373e;
-    --color-text: #334b5c;
-    --color-accent: #FF9B51;
-    --color-panel: #f9f9f9;
+    --color-body: #f0f4ff;
+    --color-heading: #1a1f4e;
+    --color-text: #3d4a7a;
+    --color-accent: #6c63ff;
+    --color-panel: #ffffff;
 }
 @layer components {
     .tazko-btn {
@@ -70,22 +70,27 @@
     select option {
         background: var(--color-panel);
     }
+    .input-field{
+        @apply w-full px-4 py-3 rounded-sm border focus:border-accent border-heading focus:outline-none text-sm leading-tight;
+    }
+    .input-field.radius-left-0{
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+    }
 
 }
 
-.input-field{
-    @apply w-full px-4 py-3 rounded-sm border focus:border-accent border-heading focus:outline-none text-sm leading-tight;
-}
-.input-field.radius-left-0{
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-}
 .toast-close{
-    color: var(--color-theme);
+    color: var(--color-heading);
 }
 .os-scrollbar-handle {
-    background: var(--color-theme);
+    background: var(--color-accent);
+}
+.os-scrollbar-handle:hover{
+    background: var(--color-accent);
+    cursor: grabbing;
 }
 body>.os-scrollbar {
-    z-index: 9;
+    z-index: 9999;
+    background-color: var(--color-panel)
 }

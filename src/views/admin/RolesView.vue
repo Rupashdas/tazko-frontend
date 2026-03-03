@@ -1,350 +1,515 @@
 <script setup>
-import { reactive, ref, computed, onMounted } from 'vue'
-import axios from '@/axios'
-import { useAuthStore } from '@/stores/auth'
-const authStore = useAuthStore()
+import { ref, computed, onMounted } from 'vue'
+import { useRoleStore } from '@/stores/useRoleStore'
+import { useRolePermissions } from '@/composables/useRolePermissions'
+import { useToast } from '@/utils/toast'
 
-const can = (permission) => {
-	return authStore.hasCapability(permission)
-}
 /*-----------------------
-| STATE
+| Store & composables
 ------------------------*/
-const errors = ref({})
-const roles = reactive([])
-const capabilities = reactive({})
-const selectedRole = ref(null)
-const selectedPermissions = reactive({})
-const collapsedModules = reactive({})
+const roleStore = useRoleStore()
+const { successToast, errorToast } = useToast()
+const {
+	togglePermission,
+	toggleSelectAll,
+	isPermissionSelected,
+	isModuleFullySelected,
+	moduleSelectedCount,
+} = useRolePermissions()
+
+/*-----------------------
+| Local UI state
+------------------------*/
 const searchQuery = ref('')
 const showAddRole = ref(false)
 const newRoleName = ref('')
 const newRoleLabel = ref('')
-const loading = reactive({
-	page: false,
-	roles: false,
-	capabilities: false,
-	save: false,
-	delete: false,
-	create: false
-})
-/*-----------------------
-| FETCH DATA
-------------------------*/
-const fetchRoles = async () => {
-	loading.roles = true
-	try {
-		const { data } = await axios.get('/api/roles')
-		roles.length = 0
-		roles.push(...data)
-
-		if (roles.length) selectRole(roles[0])
-	} catch (err) {
-		console.error(err)
-	} finally {
-		loading.roles = false
-	}
-}
-
-const fetchCapabilities = async () => {
-	loading.capabilities = true
-	try {
-		const { data } = await axios.get('/api/capabilities')
-		Object.assign(capabilities, data)
-
-		Object.keys(capabilities).forEach(module => {
-			collapsedModules[module] = false
-			if (!selectedPermissions[module])
-				selectedPermissions[module] = []
-		})
-	} catch (err) {
-		console.error(err)
-	} finally {
-		loading.capabilities = false
-	}
-}
-const isPageLoading = computed(() => {
-	return loading.roles || loading.capabilities
-})
-onMounted(() => {
-	fetchCapabilities()
-	fetchRoles()
-})
+const showDeleteConfirm = ref(false)
 
 /*-----------------------
-| ROLE SELECT
+| Computed
 ------------------------*/
-const selectRole = (role) => {
-	selectedRole.value = role
+const filteredCapabilities = computed(() =>
+	roleStore.filteredCapabilities(searchQuery.value)
+)
 
-	// Reset selectedPermissions
-	Object.keys(capabilities).forEach(module => {
-		if (!selectedPermissions[module]) selectedPermissions[module] = []
-		else selectedPermissions[module].length = 0
-	})
+const totalPermissions = computed(() => {
+	if (!roleStore.capabilities) return 0
+	return Object.values(roleStore.capabilities).reduce((sum, caps) => sum + caps.length, 0)
+})
 
-	// Populate selectedPermissions using IDs
-	role.capabilities.forEach(roleCap => {
-		// Find the module this capability belongs to
-		const moduleEntry = Object.entries(capabilities).find(([module, caps]) =>
-			caps.some(c => c.id === roleCap.id)
-		)
-		if (moduleEntry) {
-			const [module] = moduleEntry
-			selectedPermissions[module].push(roleCap.id)
-		}
-	})
-}
+const selectedPermissionsCount = computed(() => {
+	if (!roleStore.selectedPermissions) return 0
+	return Object.values(roleStore.selectedPermissions).reduce((sum, list) => sum + list.length, 0)
+})
+
+const coveragePercent = computed(() => {
+	if (!totalPermissions.value) return 0
+	return Math.round((selectedPermissionsCount.value / totalPermissions.value) * 100)
+})
+
+const moduleList = computed(() => Object.keys(filteredCapabilities.value || {}))
 
 /*-----------------------
-| TOGGLE PERMISSIONS
+| Lifecycle
 ------------------------*/
-const togglePermission = (module, capId) => {
-	const idx = selectedPermissions[module].indexOf(capId)
-	if (idx > -1) selectedPermissions[module].splice(idx, 1)
-	else selectedPermissions[module].push(capId)
+onMounted(() => roleStore.init())
+
+/*-----------------------
+| Handlers
+------------------------*/
+async function handleSave() {
+	const result = await roleStore.saveChanges()
+	result.success ? successToast('Changes saved!') : errorToast('Failed to save changes.')
 }
 
-const toggleSelectAll = (module) => {
-	const allCaps = capabilities[module].map(c => c.id)
-	if (selectedPermissions[module].length === allCaps.length) {
-		selectedPermissions[module] = []
+async function handleDelete() {
+	const result = await roleStore.deleteRole()
+	if (result.success) {
+		showDeleteConfirm.value = false
 	} else {
-		selectedPermissions[module] = [...allCaps]
+		errorToast('Failed to delete role.')
 	}
 }
 
-/*-----------------------
-| FILTERED CAPABILITIES
-------------------------*/
-const filteredCapabilities = computed(() => {
-	if (!searchQuery.value) return capabilities
+const generateRoleName = () => {
+	newRoleName.value = newRoleLabel.value
+		.toLowerCase()
+		.replace(/[^a-z0-9]+/g, '-')
+		.replace(/^-+|-+$/g, '')
+}
 
-	const result = {}
-	Object.entries(capabilities).forEach(([module, caps]) => {
-		const filtered = caps.filter(c =>
-			c.label.toLowerCase().includes(searchQuery.value.toLowerCase())
-		)
-		if (filtered.length) result[module] = filtered
+async function handleAddRole() {
+	const result = await roleStore.createRole({
+		name: newRoleName.value,
+		label: newRoleLabel.value,
 	})
-	return result
-})
-
-/*-----------------------
-| ADD ROLE
-------------------------*/
-const addRole = async () => {
-	errors.value = {}
-
-	try {
-		const res = await axios.post('/api/roles', {
-			name: newRoleName.value,
-			label: newRoleLabel.value,
-			capabilities: []
-		})
-
-		roles.push(res.data)
-		selectRole(res.data)
+	if (result.success) {
 		closeModal()
-
-	} catch (err) {
-		if (err.response?.status === 422) {
-			errors.value = err.response.data.errors
-		}
 	}
 }
 
-
-const isSuperAdmin = computed(() => {
-	return selectedRole.value?.name === 'super-admin'
-})
-/*-----------------------
-| DELETE ROLE
-------------------------*/
-const deleteRole = async () => {
-	if (!selectedRole.value) return
-	try {
-		await axios.delete(`/api/roles/${selectedRole.value.id}`)
-		const idx = roles.findIndex(r => r.id === selectedRole.value.id)
-		roles.splice(idx, 1)
-		if (roles.length) selectRole(roles[0])
-		else selectedRole.value = null
-	} catch (err) {
-		console.error(err)
-	}
-}
-
-/*-----------------------
-| SAVE CHANGES
-------------------------*/
-const saveChanges = async () => {
-	if (!selectedRole.value) return
-	try {
-		await axios.put(`/api/roles/${selectedRole.value.id}`, {
-			name: selectedRole.value.name,
-			label: selectedRole.value.label,
-			capabilities: Object.values(selectedPermissions).flat()
-		})
-		alert('Changes saved!')
-	} catch (err) {
-		console.error(err)
-	}
-}
-
-/*-----------------------
-| MODAL
-------------------------*/
-const closeModal = () => {
+function closeModal() {
 	showAddRole.value = false
 	newRoleName.value = ''
 	newRoleLabel.value = ''
 }
+
+function getRoleInitial(label) {
+	return label?.charAt(0)?.toUpperCase() || '?'
+}
+
+function getModuleIcon(module) {
+	const icons = {
+		users: '👥', projects: '📁', tasks: '✅', settings: '⚙️',
+		reports: '📊', billing: '💳', roles: '🛡️', teams: '🤝',
+		dashboard: '🏠', files: '📄', messages: '💬', analytics: '📈',
+	}
+	return icons[module?.toLowerCase()] || '🔧'
+}
 </script>
 
 <template>
-	<div class="flex h-screen bg-body font-sans text-text relative">
-		<div v-if="isPageLoading"
-			class="absolute inset-0 bg-white/60 backdrop-blur-sm flex items-center justify-center z-40">
-			<div class="animate-spin rounded-full h-12 w-12 border-4 border-accent border-t-transparent"></div>
-		</div>
-		<!-- SIDEBAR -->
-		<div class="w-72 border-r bg-white p-6 flex flex-col">
-			<div class="flex justify-between items-center mb-6">
-				<h2 class="text-xl font-semibold text-heading">Roles</h2>
-				<button @click="showAddRole = true"
-					class="text-sm bg-accent text-white px-3 py-1.5 rounded-lg hover:opacity-90 transition">
-					+ Add
-				</button>
+	<div class="flex bg-body text-text relative min-h-[600px]">
+
+		<!-- PAGE LOADING OVERLAY -->
+		<Transition name="fade">
+			<div v-if="roleStore.isPageLoading"
+				class="absolute inset-0 bg-panel/80 backdrop-blur-sm flex flex-col items-center justify-center z-40 rounded-xl gap-3">
+				<div class="w-10 h-10 rounded-full border-3 border-accent border-t-transparent animate-spin" />
+				<p class="text-sm text-text/60 font-medium">Loading roles…</p>
+			</div>
+		</Transition>
+
+		<!-- ── SIDEBAR ──────────────────────────────────────── -->
+		<aside class="w-64 border-r border-heading/10 bg-panel flex flex-col shrink-0 rounded-l-xl overflow-hidden">
+
+			<!-- Sidebar Header -->
+			<div class="px-5 pt-5 pb-4 border-b border-heading/10">
+				<div class="flex justify-between items-center">
+					<div>
+						<p class="text-xs font-semibold uppercase tracking-widest text-text/40 mb-1">System</p>
+						<h2 class="text-lg font-bold text-heading leading-tight">Roles</h2>
+					</div>
+					<button @click="showAddRole = true"
+						class="w-8 h-8 rounded-lg bg-accent text-white flex items-center justify-center hover:bg-accent/80 transition-all active:scale-95 shadow-sm"
+						title="Add new role">
+						<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
+							stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+							<line x1="12" y1="5" x2="12" y2="19" />
+							<line x1="5" y1="12" x2="19" y2="12" />
+						</svg>
+					</button>
+				</div>
 			</div>
 
-			<!-- ROLE LIST -->
-			<ul class="space-y-2 flex-1 overflow-auto">
-				<li v-for="role in roles" :key="role.id">
-					<button @click="selectRole(role)" class="w-full text-left px-4 py-2.5 rounded-lg transition text-sm"
-						:class="selectedRole?.id === role.id
-							? 'bg-accent/10 text-heading font-semibold'
-							: 'hover:bg-gray-100'">
-						{{ role.label }}
+			<!-- Role List -->
+			<ul class="flex-1 overflow-auto py-3 px-3 space-y-1">
+				<li v-for="role in roleStore.roles" :key="role.id">
+					<button @click="roleStore.selectRole(role)"
+						class="w-full text-left px-3 py-2.5 rounded-lg transition-all duration-150 flex items-center gap-3 group"
+						:class="roleStore.selectedRole?.id === role.id
+							? 'bg-accent/15 text-heading'
+							: 'hover:bg-heading/5 text-text'">
+						<!-- Avatar initial -->
+						<span
+							class="w-7 h-7 rounded-md flex items-center justify-center text-xs font-bold shrink-0 transition-colors"
+							:class="roleStore.selectedRole?.id === role.id
+								? 'bg-accent text-white'
+								: 'bg-heading/10 text-heading group-hover:bg-accent/20'">
+							{{ getRoleInitial(role.label) }}
+						</span>
+						<span class="text-sm font-medium truncate">{{ role.label }}</span>
+						<!-- Active indicator -->
+						<span v-if="roleStore.selectedRole?.id === role.id"
+							class="ml-auto w-1.5 h-1.5 rounded-full bg-accent shrink-0" />
+					</button>
+				</li>
+
+				<!-- Empty state -->
+				<li v-if="!roleStore.roles?.length" class="px-3 py-8 text-center">
+					<p class="text-sm text-text/40">No roles yet</p>
+					<button @click="showAddRole = true" class="mt-2 text-xs text-accent hover:underline">
+						Create one →
 					</button>
 				</li>
 			</ul>
-		</div>
 
-		<!-- MAIN CONTENT -->
-		<div class="flex-1 p-10 overflow-auto">
-
-			<!-- HEADER -->
-			<div class="flex justify-between items-start mb-8">
-				<div>
-					<h1 class="text-3xl font-semibold text-heading">{{ selectedRole?.label || 'Select Role' }}</h1>
-					<p class="text-sm mt-1 text-gray-500">Manage permissions assigned to this role</p>
-				</div>
-
-				<div class="flex gap-3">
-					<button @click="deleteRole" :disabled="isSuperAdmin"
-						class="bg-red-500 text-white px-5 py-2 rounded-lg text-sm hover:bg-red-600 transition">
-						Delete Role
-					</button>
-					<button @click="saveChanges"
-						class="bg-green-600 text-white px-6 py-2 rounded-lg text-sm hover:bg-green-700 transition">
-						Save Changes
-					</button>
-				</div>
+			<!-- Sidebar Footer -->
+			<div class="px-5 py-4 border-t border-heading/10">
+				<p class="text-xs text-text/40">
+					{{ roleStore.roles?.length || 0 }} role{{ roleStore.roles?.length !== 1 ? 's' : '' }} total
+				</p>
 			</div>
+		</aside>
 
-			<!-- SEARCH -->
-			<div class="mb-8 max-w-md">
-				<input v-model="searchQuery" type="text" placeholder="Search capabilities..."
-					class="w-full border px-4 py-2.5 rounded-lg shadow-sm focus:ring-2 focus:ring-accent outline-none" />
-			</div>
+		<!-- ── MAIN CONTENT ─────────────────────────────────── -->
+		<div class="flex-1 flex flex-col overflow-hidden">
 
-			<!-- MODULE CARDS -->
-			<div v-for="(caps, module) in filteredCapabilities" :key="module"
-				class="mb-6 bg-white border rounded-2xl shadow-sm overflow-hidden">
+			<!-- Top Bar -->
+			<div class="px-8 py-5 border-b border-heading/10 bg-panel/50">
+				<div class="flex justify-between items-center">
 
-				<!-- Module Header -->
-				<div class="flex justify-between items-center px-6 py-4 bg-panel cursor-pointer"
-					@click="collapsedModules[module] = !collapsedModules[module]">
+					<!-- Role title + meta -->
 					<div class="flex items-center gap-4">
-						<h3 class="font-semibold capitalize text-heading">{{ module }}</h3>
-						<span class="text-xs bg-gray-200 px-2 py-1 rounded-full">
-							{{ selectedPermissions[module]?.length || 0 }} / {{ capabilities[module].length }}
-						</span>
+						<div v-if="roleStore.selectedRole">
+							<div class="flex items-center gap-3">
+								<h1 class="text-2xl font-bold text-heading leading-tight">
+									{{ roleStore.selectedRole.label }}
+								</h1>
+								<!-- SuperAdmin badge -->
+								<span v-if="roleStore.isSuperAdmin"
+									class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 border border-amber-200">
+									<svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" viewBox="0 0 24 24"
+										fill="currentColor">
+										<path
+											d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+									</svg>
+									Super Admin
+								</span>
+							</div>
+							<p class="text-sm text-text/50 mt-0.5">Manage permissions for this role</p>
+						</div>
+						<div v-else>
+							<h1 class="text-2xl font-bold text-heading/30">Select a Role</h1>
+							<p class="text-sm text-text/30 mt-0.5">Choose a role from the sidebar</p>
+						</div>
 					</div>
 
-					<div class="flex items-center gap-6 text-sm">
-						<label @click.stop class="flex items-center gap-2 cursor-pointer">
-							<input type="checkbox" :disabled="isSuperAdmin"
-								:checked="selectedPermissions[module]?.length === capabilities[module]?.length"
-								@change="toggleSelectAll(module)" />
-							Select All
-						</label>
-						<span class="text-lg">{{ collapsedModules[module] ? '+' : '-' }}</span>
+					<!-- Action Buttons -->
+					<div v-if="roleStore.selectedRole" class="flex items-center gap-3">
+						<!-- Coverage pill -->
+						<div class="flex items-center gap-2 px-3 py-1.5 bg-heading/5 rounded-lg">
+							<div class="w-16 h-1.5 bg-heading/10 rounded-full overflow-hidden">
+								<div class="h-full bg-accent rounded-full transition-all duration-500"
+									:style="{ width: coveragePercent + '%' }" />
+							</div>
+							<span class="text-xs font-semibold text-text/60">{{ coveragePercent }}%</span>
+						</div>
+
+						<button @click="showDeleteConfirm = true"
+							:disabled="roleStore.isSuperAdmin || roleStore.loading.delete"
+							class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-red-50 text-red-600 hover:bg-red-100 transition-all disabled:opacity-40 disabled:cursor-not-allowed border border-red-100">
+							<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
+								stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+								<polyline points="3 6 5 6 21 6" />
+								<path d="M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2" />
+							</svg>
+							{{ roleStore.loading.delete ? 'Deleting…' : 'Delete' }}
+						</button>
+
+						<button @click="handleSave" :disabled="roleStore.loading.save"
+							class="flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold bg-accent text-white hover:bg-accent/85 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed active:scale-95">
+							<svg v-if="!roleStore.loading.save" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4"
+								viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+								stroke-linecap="round" stroke-linejoin="round">
+								<polyline points="20 6 9 17 4 12" />
+							</svg>
+							<svg v-else class="w-4 h-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none"
+								viewBox="0 0 24 24">
+								<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+									stroke-width="4" />
+								<path class="opacity-75" fill="currentColor"
+									d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+							</svg>
+							{{ roleStore.loading.save ? 'Saving…' : 'Save Changes' }}
+						</button>
 					</div>
 				</div>
+			</div>
 
-				<!-- MODULE BODY -->
-				<div v-show="!collapsedModules[module]" class="px-6 py-5 grid grid-cols-2 gap-4">
-					<label v-for="cap in caps" :key="cap.id"
-						class="flex items-center gap-3 text-sm cursor-pointer p-2 rounded-lg hover:bg-gray-50 transition">
-						<input type="checkbox" :disabled="isSuperAdmin"
-							:checked="selectedPermissions[module]?.includes(cap.id)"
-							@change="togglePermission(module, cap.id)" />
-						<span>{{ cap.label }}</span>
-					</label>
+			<!-- Search Bar -->
+			<div v-if="roleStore.selectedRole" class="px-8 py-4 border-b border-heading/10">
+				<div class="relative">
+					<svg xmlns="http://www.w3.org/2000/svg"
+						class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text/30" viewBox="0 0 24 24"
+						fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+						stroke-linejoin="round">
+						<circle cx="11" cy="11" r="8" />
+						<line x1="21" y1="21" x2="16.65" y2="16.65" />
+					</svg>
+					<input v-model="searchQuery" type="text" placeholder="Search capabilities…"
+						class="w-full pl-10 pr-4 py-2.5 rounded-lg border border-heading/15 bg-panel focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none text-sm transition-all placeholder:text-text/30" />
+					<button v-if="searchQuery" @click="searchQuery = ''"
+						class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text/40 hover:text-text transition-colors">
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+							stroke-width="2.5" stroke-linecap="round">
+							<line x1="18" y1="6" x2="6" y2="18" />
+							<line x1="6" y1="6" x2="18" y2="18" />
+						</svg>
+					</button>
+				</div>
+			</div>
+
+			<!-- Module Cards Area -->
+			<div class="flex-1 overflow-auto px-8 py-6">
+
+				<!-- No role selected -->
+				<div v-if="!roleStore.selectedRole" class="flex flex-col items-center justify-center h-64 text-center">
+					<div class="w-16 h-16 rounded-2xl bg-heading/5 flex items-center justify-center mb-4">
+						<svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-heading/20" viewBox="0 0 24 24"
+							fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+							stroke-linejoin="round">
+							<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+						</svg>
+					</div>
+					<p class="text-heading/40 font-medium">No role selected</p>
+					<p class="text-sm text-text/30 mt-1">Pick a role from the sidebar to manage its permissions</p>
 				</div>
 
+				<!-- No results from search -->
+				<div v-else-if="moduleList.length === 0 && searchQuery"
+					class="flex flex-col items-center justify-center h-48 text-center">
+					<p class="text-heading/40 font-medium">No results for "{{ searchQuery }}"</p>
+					<button @click="searchQuery = ''" class="text-sm text-accent hover:underline mt-2">
+						Clear search
+					</button>
+				</div>
+
+				<!-- Module Cards -->
+				<div v-else class="space-y-3">
+					<div v-for="(caps, module) in filteredCapabilities" :key="module"
+						class="bg-panel border border-heading/10 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200">
+
+						<!-- Module Header -->
+						<button type="button"
+							class="w-full flex justify-between items-center px-5 py-4 hover:bg-heading/3 transition-colors"
+							@click="roleStore.collapsedModules[module] = !roleStore.collapsedModules[module]">
+							<div class="flex items-center gap-3">
+								<!-- Module icon -->
+								<span class="text-lg leading-none">{{ getModuleIcon(module) }}</span>
+								<div class="text-left">
+									<h3 class="font-semibold capitalize text-heading text-sm">{{ module }}</h3>
+									<p class="text-xs text-text/40 mt-0.5">
+										{{ moduleSelectedCount(module) }} of {{ roleStore.capabilities[module]?.length
+										}}
+										permission{{ roleStore.capabilities[module]?.length !== 1 ? 's' : '' }}
+									</p>
+								</div>
+							</div>
+
+							<div class="flex items-center gap-4">
+								<!-- Mini progress bar -->
+								<div class="flex items-center gap-2">
+									<div class="w-20 h-1.5 bg-heading/10 rounded-full overflow-hidden">
+										<div class="h-full bg-accent rounded-full transition-all duration-300" :style="{
+											width: roleStore.capabilities[module]?.length
+												? (moduleSelectedCount(module) / roleStore.capabilities[module].length * 100) + '%'
+												: '0%'
+										}" />
+									</div>
+									<span class="text-xs font-medium text-text/40 w-8 text-right">
+										{{ roleStore.capabilities[module]?.length
+											? Math.round(moduleSelectedCount(module) / roleStore.capabilities[module].length
+												* 100)
+											: 0 }}%
+									</span>
+								</div>
+
+								<!-- Select All toggle -->
+								<label @click.stop
+									class="flex items-center gap-1.5 text-xs font-medium text-text/50 hover:text-text cursor-pointer select-none"
+									:class="{ 'opacity-40 cursor-not-allowed': roleStore.isSuperAdmin }">
+									<div class="relative w-8 h-4 rounded-full transition-colors duration-200"
+										:class="isModuleFullySelected(module) ? 'bg-accent' : 'bg-heading/15'">
+										<div class="absolute top-0.5 w-3 h-3 rounded-full bg-white shadow-sm transition-transform duration-200"
+											:class="isModuleFullySelected(module) ? 'translate-x-4' : 'translate-x-0.5'" />
+									</div>
+									<input type="checkbox" class="sr-only" :disabled="roleStore.isSuperAdmin"
+										:checked="isModuleFullySelected(module)" @change="toggleSelectAll(module)" />
+									All
+								</label>
+
+								<!-- Chevron -->
+								<svg xmlns="http://www.w3.org/2000/svg"
+									class="w-4 h-4 text-text/30 transition-transform duration-200"
+									:class="{ 'rotate-180': !roleStore.collapsedModules[module] }" viewBox="0 0 24 24"
+									fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+									stroke-linejoin="round">
+									<polyline points="6 9 12 15 18 9" />
+								</svg>
+							</div>
+						</button>
+
+						<!-- Module Body -->
+						<div v-show="!roleStore.collapsedModules[module]"
+							class="px-5 pb-4 pt-1 grid grid-cols-2 md:grid-cols-3 gap-2 border-t border-heading/5">
+							<label v-for="cap in caps" :key="cap.id"
+								class="flex items-center gap-2.5 text-sm cursor-pointer px-3 py-2.5 rounded-lg transition-all duration-150 group select-none"
+								:class="[
+									isPermissionSelected(module, cap.id)
+										? 'bg-accent/8 text-heading'
+										: 'hover:bg-heading/4 text-text',
+									roleStore.isSuperAdmin ? 'cursor-not-allowed opacity-60' : ''
+								]">
+								<!-- Custom checkbox -->
+								<div class="w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-all duration-150"
+									:class="isPermissionSelected(module, cap.id)
+										? 'bg-accent border-accent'
+										: 'border-heading/20 group-hover:border-accent/40'">
+									<svg v-if="isPermissionSelected(module, cap.id)" xmlns="http://www.w3.org/2000/svg"
+										class="w-2.5 h-2.5 text-white" viewBox="0 0 24 24" fill="none"
+										stroke="currentColor" stroke-width="3.5" stroke-linecap="round"
+										stroke-linejoin="round">
+										<polyline points="20 6 9 17 4 12" />
+									</svg>
+								</div>
+								<input type="checkbox" class="sr-only" :disabled="roleStore.isSuperAdmin"
+									:checked="isPermissionSelected(module, cap.id)"
+									@change="togglePermission(module, cap.id)" />
+								<span class="text-sm leading-snug">{{ cap.label }}</span>
+							</label>
+						</div>
+					</div>
+				</div>
 			</div>
 		</div>
 
-		<!-- ADD ROLE MODAL -->
+		<!-- ── DELETE CONFIRM MODAL ──────────────────────────── -->
 		<Teleport to="body">
-			<Transition enter-active-class="transition duration-300 ease-out"
-				leave-active-class="transition duration-200 ease-in" enter-from-class="opacity-0 scale-105"
-				enter-to-class="opacity-100 scale-100" leave-from-class="opacity-100 scale-100"
-				leave-to-class="opacity-0 scale-105">
-				<div v-if="showAddRole" class="fixed inset-0 z-50 flex items-center justify-center">
-
-					<!-- Overlay -->
-					<div class="absolute inset-0 bg-accent/10" @click="closeModal"></div>
-
-					<!-- Modal Panel -->
-					<div class="relative w-full max-w-md bg-white rounded-2xl shadow-2xl p-8">
-
-						<!-- Header -->
-						<div class="flex justify-between items-center mb-6">
-							<h2 class="text-xl font-semibold text-heading">Create New Role</h2>
-							<button @click="closeModal"
-								class="text-gray-400 hover:text-gray-600 transition text-lg">×</button>
+			<Transition name="modal">
+				<div v-if="showDeleteConfirm" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+					<div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="showDeleteConfirm = false" />
+					<div class="relative w-full max-w-sm bg-panel rounded-2xl shadow-2xl p-6 border border-heading/10">
+						<div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+							<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-red-500" viewBox="0 0 24 24"
+								fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+								stroke-linejoin="round">
+								<polyline points="3 6 5 6 21 6" />
+								<path d="M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2" />
+							</svg>
 						</div>
-
-						<!-- Body -->
-						<div class="space-y-4">
-							<div>
-								<label class="text-sm font-medium text-gray-600">Role Name</label>
-								<input v-model="newRoleLabel" type="text" placeholder="e.g Project Manager"
-									class="w-full mt-1 border px-4 py-2.5 rounded-lg focus:ring-2 focus:ring-accent outline-none" />
-							</div>
-
-							<div>
-								<label class="text-sm font-medium text-gray-600">Role Slug</label>
-								<input v-model="newRoleName" type="text" placeholder="e.g project_manager"
-									class="w-full mt-1 border px-4 py-2.5 rounded-lg focus:ring-2 focus:ring-accent outline-none" />
-							</div>
-						</div>
-
-						<!-- Footer -->
-						<div class="flex justify-end gap-3 mt-8">
-							<button @click="closeModal"
-								class="px-5 py-2.5 rounded-lg text-sm bg-gray-100 hover:bg-gray-200 transition">
+						<h3 class="text-lg font-bold text-heading text-center mb-1">Delete Role?</h3>
+						<p class="text-sm text-text/60 text-center mb-6">
+							Are you sure you want to delete
+							<strong class="text-heading">{{ roleStore.selectedRole?.label }}</strong>?
+							This action cannot be undone.
+						</p>
+						<div class="flex gap-3">
+							<button @click="showDeleteConfirm = false"
+								class="flex-1 py-2.5 rounded-lg text-sm font-medium bg-heading/8 hover:bg-heading/12 transition-colors text-text">
 								Cancel
 							</button>
-							<button @click="addRole"
-								class="px-6 py-2.5 rounded-lg text-sm bg-accent text-white hover:opacity-90 transition shadow-sm">
-								Create Role
+							<button @click="handleDelete" :disabled="roleStore.loading.delete"
+								class="flex-1 py-2.5 rounded-lg text-sm font-semibold bg-red-500 text-white hover:bg-red-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+								{{ roleStore.loading.delete ? 'Deleting…' : 'Yes, Delete' }}
+							</button>
+						</div>
+					</div>
+				</div>
+			</Transition>
+		</Teleport>
+
+		<!-- ── ADD ROLE MODAL ────────────────────────────────── -->
+		<Teleport to="body">
+			<Transition name="modal">
+				<div v-if="showAddRole" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+					<div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="closeModal" />
+
+					<div
+						class="relative w-full max-w-md bg-panel rounded-2xl shadow-2xl border border-heading/10 overflow-hidden">
+
+						<!-- Modal Header -->
+						<div class="px-6 py-5 border-b border-heading/10 flex items-center justify-between">
+							<div class="flex items-center gap-3">
+								<div class="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
+									<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-accent"
+										viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+										stroke-linecap="round" stroke-linejoin="round">
+										<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+									</svg>
+								</div>
+								<h2 class="text-lg font-bold text-heading">Create New Role</h2>
+							</div>
+							<button @click="closeModal"
+								class="w-7 h-7 rounded-lg flex items-center justify-center text-text/40 hover:text-text hover:bg-heading/8 transition-all">
+								<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
+									stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+									<line x1="18" y1="6" x2="6" y2="18" />
+									<line x1="6" y1="6" x2="18" y2="18" />
+								</svg>
 							</button>
 						</div>
 
+						<!-- Modal Body -->
+						<div class="p-6 space-y-5">
+							<div>
+								<label class="block text-sm font-semibold text-heading mb-1.5">
+									Role Display Name <span class="text-red-400">*</span>
+								</label>
+								<input @input="generateRoleName" v-model="newRoleLabel" type="text"
+									placeholder="e.g. Project Manager"
+									class="w-full border px-4 py-2.5 rounded-lg text-sm focus:ring-2 focus:ring-accent/30 focus:border-accent outline-none transition-all bg-panel"
+									:class="roleStore.errors?.label ? 'border-red-400 bg-red-50/30' : 'border-heading/15'" />
+								<p v-if="roleStore.errors?.label"
+									class="text-red-500 text-xs mt-1.5 flex items-center gap-1">
+									<svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" viewBox="0 0 24 24"
+										fill="currentColor">
+										<path
+											d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+									</svg>
+									{{ roleStore.errors.label[0] }}
+								</p>
+							</div>
+
+							<!-- Role slug preview -->
+							<div v-if="newRoleName" class="flex items-center gap-2 px-3 py-2 bg-heading/5 rounded-lg">
+								<span class="text-xs text-text/40 font-medium">Slug:</span>
+								<code class="text-xs font-mono text-accent">{{ newRoleName }}</code>
+							</div>
+						</div>
+
+						<!-- Modal Footer -->
+						<div class="px-6 py-4 border-t border-heading/10 flex justify-end gap-3">
+							<button @click="closeModal"
+								class="px-5 py-2.5 rounded-lg text-sm font-medium bg-heading/8 hover:bg-heading/12 text-text transition-colors">
+								Cancel
+							</button>
+							<button @click="handleAddRole" :disabled="roleStore.loading.create || !newRoleLabel"
+								class="px-6 py-2.5 rounded-lg text-sm font-semibold bg-accent text-white hover:bg-accent/85 transition-all shadow-sm disabled:opacity-40 disabled:cursor-not-allowed active:scale-95">
+								{{ roleStore.loading.create ? 'Creating…' : 'Create Role' }}
+							</button>
+						</div>
 					</div>
 				</div>
 			</Transition>
@@ -352,3 +517,30 @@ const closeModal = () => {
 
 	</div>
 </template>
+
+<style scoped>
+.modal-enter-active,
+.modal-leave-active {
+	transition: all 0.2s ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+	opacity: 0;
+}
+
+.modal-enter-from .relative,
+.modal-leave-to .relative {
+	transform: translateY(8px) scale(0.97);
+}
+
+.fade-enter-active,
+.fade-leave-active {
+	transition: opacity 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+	opacity: 0;
+}
+</style>

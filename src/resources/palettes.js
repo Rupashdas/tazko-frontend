@@ -1,103 +1,111 @@
 export const PALETTES = {
-    harbor_mist: {
+
+    // 1. Soft lavender-white + electric violet — cosmic & modern
+    aurora: {
         light: {
-            body: '#f2f7f9',
-            heading: '#1f2e35',
-            text: '#3c5663',
-            accent: '#FF9B51',
+            body: '#f0f4ff',
+            heading: '#1a1f4e',
+            text: '#3d4a7a',
+            accent: '#6c63ff',
             panel: '#ffffff',
         },
         dark: {
-            body: '#0e1c22',
-            heading: '#e6edf1',
-            text: '#b8c7cf',
-            accent: '#FF9B51',
-            panel: '#16262d',
-        }
+            body: '#0d0f1f',
+            heading: '#e8ecff',
+            text: '#9aa3d4',
+            accent: '#6c63ff',
+            panel: '#161828',
+        },
     },
 
-    purple: {
+    // 2. Deep espresso + vivid ember orange — bold & warm
+    ember: {
         light: {
-            body: '#faf8ff',
-            heading: '#2a1f3d',
-            text: '#4a3f63',
-            accent: '#8c5bd1',
+            body: '#fdf6ee',
+            heading: '#2d1a0e',
+            text: '#6b4226',
+            accent: '#e85d26',
             panel: '#ffffff',
         },
         dark: {
-            body: '#141020',
-            heading: '#f0ebff',
-            text: '#c6b8e6',
-            accent: '#8c5bd1',
-            panel: '#1e1830',
-        }
+            body: '#140c06',
+            heading: '#f5e6d8',
+            text: '#c49a7a',
+            accent: '#ff6b35',
+            panel: '#1f1209',
+        },
     },
 
-    blue: {
+    // 3. Mint-white + vibrant emerald — fresh botanical
+    verdant: {
         light: {
-            body: '#eef5ff',
-            heading: '#1c2e4a',
-            text: '#3b5a86',
-            accent: '#2377d2',
+            body: '#eef7f1',
+            heading: '#0f2d1f',
+            text: '#2a5c40',
+            accent: '#1db954',
             panel: '#ffffff',
         },
         dark: {
-            body: '#0c1726',
-            heading: '#e3efff',
-            text: '#a8c4ea',
-            accent: '#2377d2',
-            panel: '#142235',
-        }
+            body: '#06110b',
+            heading: '#d4f0e0',
+            text: '#7abf99',
+            accent: '#1db954',
+            panel: '#0d1f14',
+        },
     },
 
-    green: {
+    // 4. Blush cream + electric rose — elegant & striking
+    sakura: {
         light: {
-            body: '#eefaf3',
-            heading: '#183d2b',
-            text: '#2f6b4a',
-            accent: '#19874d',
+            body: '#fef0f4',
+            heading: '#2e0a1f',
+            text: '#7d3a5a',
+            accent: '#e8196e',
             panel: '#ffffff',
         },
         dark: {
-            body: '#0d1e16',
-            heading: '#e4f5ec',
-            text: '#a7d8bf',
-            accent: '#19874d',
-            panel: '#142a20',
-        }
+            body: '#130610',
+            heading: '#fce4ef',
+            text: '#c97fa3',
+            accent: '#ff2d78',
+            panel: '#1e0c19',
+        },
     },
 
-    orange: {
+    // 5. Clean off-white + deep electric violet — premium minimal
+    obsidian: {
         light: {
-            body: '#fff3ed',
-            heading: '#4a251c',
-            text: '#7a4335',
-            accent: '#cf432e',
+            body: '#f5f5f7',
+            heading: '#111111',
+            text: '#444444',
+            accent: '#7c3aed',
             panel: '#ffffff',
         },
         dark: {
-            body: '#1c100c',
-            heading: '#ffe9e4',
-            text: '#f2b8ad',
-            accent: '#cf432e',
-            panel: '#2a1712',
-        }
+            body: '#090909',
+            heading: '#f5f5f5',
+            text: '#a0a0a0',
+            accent: '#8b5cf6',
+            panel: '#111111',
+        },
     },
 
-    charcoal: {
+    // 6. Pale sky-blue + deep ocean navy + electric blue — crisp & trustworthy
+    pacific: {
         light: {
-            body: '#f2f3f4',
-            heading: '#2b2f31',
-            text: '#4b5154',
-            accent: '#6f787c',
+            body: '#eaf4fd',
+            heading: '#0a2540',
+            text: '#2c5f8a',
+            accent: '#0070f3',
             panel: '#ffffff',
         },
         dark: {
-            body: '#121415',
-            heading: '#e6e8e9',
-            text: '#b5bbbe',
-            accent: '#6f787c',
-            panel: '#1b1f21',
-        }
+            body: '#050f1a',
+            heading: '#d6eeff',
+            text: '#7ab0d4',
+            accent: '#0070f3',
+            panel: '#0a1929',
+        },
     },
+
 }

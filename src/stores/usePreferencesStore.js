@@ -1,12 +1,12 @@
 import { defineStore } from 'pinia'
 import axios from '@/axios'
 import { PALETTES } from '@/resources/palettes'
-import { useAuthStore } from '@/stores/auth'
+import { useAuthStore } from '@/stores/useAuthStore'
 
 
 export const usePreferencesStore = defineStore('preferences', {
     state: () => ({
-        palette: 'harbor_mist',
+        palette: PALETTES[Object.keys(PALETTES)[0]] ? Object.keys(PALETTES)[0] : null,
         appearance: 'os',
         timezone: 'UTC',
         week_start: 'monday',

@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import { addIcons } from "oh-vue-icons";
 import { MdAlternateemailOutlined, RiLockPasswordLine, CoUserPlus } from "oh-vue-icons/icons";
-import { useAuthStore } from '@/stores/auth'
+import { useAuthStore } from '@/stores/useAuthStore'
 import { useRouter } from 'vue-router'
 import { useToast } from '@/utils/toast'
 import BaseCard from '@/components/ui/BaseCard.vue';

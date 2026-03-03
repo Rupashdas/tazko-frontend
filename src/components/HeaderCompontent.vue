@@ -2,7 +2,7 @@
 import { RouterLink } from "vue-router";
 import Logo from "./icons/Logo.vue";
 import { addIcons } from "oh-vue-icons";
-import { useAuthStore } from '@/stores/auth'
+import { useAuthStore } from '@/stores/useAuthStore'
 import { SiHomeadvisor, BiChatDots, LaUserCircleSolid, CoSettings, MdLogoutOutlined, LaUserEditSolid, BiPalette } from
     "oh-vue-icons/icons";
 import { useRouter } from 'vue-router'

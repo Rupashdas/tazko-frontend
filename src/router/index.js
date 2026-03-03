@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
-import { usePreferencesStore } from '@/stores/preferences'
+import { useAuthStore } from '@/stores/useAuthStore'
+import { usePreferencesStore } from '@/stores/usePreferencesStore'
 import MainLayout from '@/layouts/MainLayout.vue'
 import AuthLayout from '@/layouts/AuthLayout.vue'
 

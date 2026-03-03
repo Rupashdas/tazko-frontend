@@ -1,13 +1,11 @@
 <script setup>
-import BaseCard from '@/components/ui/BaseCard.vue'
 import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useToast } from '@/utils/toast'
 import { TIMEZONES } from '@/resources/timezones'
 import { PALETTES } from '@/resources/palettes'
-import { usePreferencesStore } from '@/stores/preferences'
+import { usePreferencesStore } from '@/stores/usePreferencesStore'
 
-// Icons
 import { addIcons } from 'oh-vue-icons'
 import {
 	BiPalette,
@@ -36,9 +34,30 @@ const { palette, appearance, timezone, week_start, time_format, saving } =
 const paletteKeys = computed(() => Object.keys(PALETTES))
 
 const APPEARANCE_OPTIONS = [
-	{ icon: 'bi-sun', label: 'Light', value: 'light' },
-	{ icon: 'md-darkmode-outlined', label: 'Dark', value: 'dark' },
-	{ icon: 'ri-computer-line', label: 'Same as OS', value: 'os' },
+	{
+		icon: 'bi-sun',
+		label: 'Light',
+		value: 'light',
+		desc: 'Bright & clear',
+		bg: '#f8fafc',
+		fg: '#1e293b',
+	},
+	{
+		icon: 'md-darkmode-outlined',
+		label: 'Dark',
+		value: 'dark',
+		desc: 'Easy on the eyes',
+		bg: '#0f172a',
+		fg: '#e2e8f0',
+	},
+	{
+		icon: 'ri-computer-line',
+		label: 'System',
+		value: 'os',
+		desc: 'Follow OS setting',
+		bg: 'linear-gradient(135deg, #f8fafc 50%, #0f172a 50%)',
+		fg: '#64748b',
+	},
 ]
 
 const WEEK_START_OPTIONS = [
@@ -52,132 +71,307 @@ const WEEK_START_OPTIONS = [
 ]
 
 const TIME_FORMAT_OPTIONS = [
-	{ label: '12-hour clock', value: '12' },
-	{ label: '24-hour clock', value: '24' },
+	{ label: '12-hour  (1:30 PM)', value: '12' },
+	{ label: '24-hour  (13:30)', value: '24' },
 ]
 
-const previewColor = (name) => {
-	const selected = PALETTES[name]
-	if (!selected) return {}
-	return selected[store.currentMode]
+// Palette helpers
+const getPaletteColors = (name, forceMode = null) => {
+	const mode = forceMode || store.currentMode
+	return PALETTES[name]?.[mode] || {}
 }
 
-const changePalette = (key) => {
-	store.updatePalette(key)
-}
+const getPaletteName = (key) =>
+	key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
 
-const changeAppearance = (mode) => {
-	store.updateAppearance(mode)
-}
+const changePalette = (key) => store.updatePalette(key)
+const changeAppearance = (mode) => store.updateAppearance(mode)
 
 const saveDateTime = async () => {
 	const { data } = await store.updateDateTimePreferences()
 	if (data.status === 'success') {
-        successToast(data.message)
-    } else {
-        if (data.errors && Object.keys(data.errors).length > 0) {
-            const messages = Object.values(data.errors).flat()
-            messages.forEach(msg => errorToast(msg))
-        } else {
-            errorToast(data.message || 'Something went wrong')
-        }
-    }
+		successToast(data.message)
+	} else {
+		if (data.errors && Object.keys(data.errors).length > 0) {
+			Object.values(data.errors).flat().forEach(msg => errorToast(msg))
+		} else {
+			errorToast(data.message || 'Something went wrong')
+		}
+	}
 }
 </script>
 
 <template>
-	<base-card class="max-w-3xl mt-10 mb-20 p-8">
-		<div class="space-y-6 p-6">
+	<div class="max-w-3xl mx-auto mt-10 mb-24 px-4">
 
-			<!-- Palette -->
-			<div>
-				<div class="flex items-center gap-2 mb-2">
-					<v-icon name="bi-palette" scale="1.5" />
-					<h3 class="font-semibold">Color Palettes</h3>
+		<!-- Page Header -->
+		<div class="mb-8">
+			<h1 class="text-3xl font-bold text-heading leading-tight">Preferences</h1>
+			<p class="text-text/50 mt-1 text-sm">Customize your workspace to feel just right.</p>
+		</div>
+
+		<!-- ─────────────────────────────────────────────
+		     SECTION 1: COLOR PALETTE
+		──────────────────────────────────────────────── -->
+		<section class="mb-6">
+			<div class="flex items-center gap-2.5 mb-4">
+				<div class="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
+					<v-icon name="bi-palette" class="text-accent" scale="0.9" />
 				</div>
-
-				<div class="grid grid-cols-2 md:grid-cols-3 gap-6 mt-6">
-					<div v-for="key in paletteKeys" :key="key" @click="changePalette(key)"
-						class="cursor-pointer rounded-md border p-2 transition hover:shadow-md" :class="palette === key
-							? 'border-accent bg-accent'
-							: 'border-gray-300'">
-						<div class="h-10 flex border" :class="palette === key ? 'border-white' : 'border-gray-300'
-						 " >
-							<div v-for="(colorValue, colorKey) in previewColor(key)" :key="colorKey"
-								class="flex-1 relative group"
-								:style="{ background: colorValue }" >
-								<span
-									class="absolute -top-7 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1  rounded opacity-0 group-hover:opacity-100 transition pointer-events-none whitespace-nowrap">
-							      {{ colorKey }}
-							    </span>
-							</div>
-						</div>
-						<div class="p-2 pb-0 text-sm font-bold capitalize text-center" :class="palette === key ?
-						'text-white':'text-text'">
-							{{ key.replace('_', ' ') }}
-						</div>
-					</div>
+				<div>
+					<h2 class="text-base font-bold text-heading leading-none">Color Palette</h2>
+					<p class="text-xs text-text/40 mt-0.5">Choose a theme that fits your style</p>
 				</div>
 			</div>
 
-			<!-- Appearance -->
-			<div>
-				<div class="flex items-center gap-2 mb-2">
-					<v-icon name="md-disabledvisible-outlined" scale="1.5" />
-					<h3 class="font-semibold">Appearance</h3>
+			<div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+				<button v-for="key in paletteKeys" :key="key" type="button" @click="changePalette(key)"
+					class="group relative rounded-2xl overflow-hidden border-2 transition-all duration-200 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+					:class="palette === key
+						? 'border-accent shadow-lg shadow-accent/20 scale-[1.02]'
+						: 'border-heading/8 hover:border-heading/20 hover:scale-[1.01]'"
+					:style="{ background: getPaletteColors(key).body }">
+
+					<!-- Mini UI preview -->
+					<div class="p-3 pb-2" :style="{ background: getPaletteColors(key).body }">
+						<!-- Fake header bar -->
+						<div class="rounded-lg px-2.5 py-1.5 mb-2 flex items-center gap-1.5"
+							:style="{ background: getPaletteColors(key).panel }">
+							<div class="w-2 h-2 rounded-full" :style="{ background: getPaletteColors(key).accent }" />
+							<div class="flex-1 h-1.5 rounded-full"
+								:style="{ background: getPaletteColors(key).heading + '20' }" />
+							<div class="w-4 h-1.5 rounded-full"
+								:style="{ background: getPaletteColors(key).accent + 'aa' }" />
+						</div>
+						<!-- Fake content lines -->
+						<div class="space-y-1 px-1">
+							<div class="h-1.5 rounded-full w-3/4"
+								:style="{ background: getPaletteColors(key).heading + '60' }" />
+							<div class="h-1 rounded-full w-full"
+								:style="{ background: getPaletteColors(key).text + '40' }" />
+							<div class="h-1 rounded-full w-5/6"
+								:style="{ background: getPaletteColors(key).text + '30' }" />
+						</div>
+					</div>
+
+					<!-- Color strip -->
+					<div class="flex h-2">
+						<div class="flex-1" :style="{ background: getPaletteColors(key).body }" />
+						<div class="flex-1" :style="{ background: getPaletteColors(key).heading }" />
+						<div class="flex-1" :style="{ background: getPaletteColors(key).accent }" />
+						<div class="flex-1" :style="{ background: getPaletteColors(key).text }" />
+						<div class="flex-1" :style="{ background: getPaletteColors(key).panel }" />
+					</div>
+
+					<!-- Palette label -->
+					<div class="px-3 py-2 flex items-center justify-between"
+						:style="{ background: getPaletteColors(key).panel }">
+						<span class="text-xs font-semibold capitalize"
+							:style="{ color: getPaletteColors(key).heading }">
+							{{ getPaletteName(key) }}
+						</span>
+						<!-- Active checkmark -->
+						<Transition name="pop">
+							<span v-if="palette === key" class="w-4 h-4 rounded-full flex items-center justify-center"
+								:style="{ background: getPaletteColors(key).accent }">
+								<svg xmlns="http://www.w3.org/2000/svg" class="w-2.5 h-2.5" viewBox="0 0 24 24"
+									fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round"
+									stroke-linejoin="round">
+									<polyline points="20 6 9 17 4 12" />
+								</svg>
+							</span>
+						</Transition>
+					</div>
+				</button>
+			</div>
+		</section>
+
+		<!-- ─────────────────────────────────────────────
+		     SECTION 2: APPEARANCE
+		──────────────────────────────────────────────── -->
+		<section class="mb-6">
+			<div class="bg-panel border border-heading/8 rounded-2xl p-5 shadow-sm">
+				<div class="flex items-center gap-2.5 mb-5">
+					<div class="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
+						<v-icon name="md-disabledvisible-outlined" class="text-accent" scale="0.9" />
+					</div>
+					<div>
+						<h2 class="text-base font-bold text-heading leading-none">Appearance</h2>
+						<p class="text-xs text-text/40 mt-0.5">How the interface looks</p>
+					</div>
 				</div>
 
-				<div class="flex gap-4 mt-4">
+				<div class="grid grid-cols-3 gap-3">
 					<button v-for="option in APPEARANCE_OPTIONS" :key="option.value" type="button"
 						@click="changeAppearance(option.value)"
-						class="px-5 py-2 border rounded-md font-semibold transition" :class="appearance === option.value
-							? 'bg-accent text-white border-accent'
-							: 'border-gray-300'">
-						<v-icon :name="option.icon" class="mr-1" />
-						{{ option.label }}
+						class="group relative rounded-xl overflow-hidden border-2 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+						:class="appearance === option.value
+							? 'border-accent shadow-md shadow-accent/15'
+							: 'border-heading/8 hover:border-heading/20'">
+
+						<!-- Visual preview box -->
+						<div class="h-16 w-full relative overflow-hidden" :style="{ background: option.bg }">
+							<!-- Fake window chrome -->
+							<div class="absolute inset-x-3 top-2.5 rounded h-2.5 opacity-70"
+								:style="{ background: option.value === 'dark' ? '#1e293b' : '#e2e8f0' }" />
+							<div class="absolute inset-x-3 bottom-2.5 rounded h-1.5 opacity-40"
+								:style="{ background: option.value === 'dark' ? '#334155' : '#cbd5e1' }" />
+							<!-- Mode icon overlay -->
+							<div class="absolute inset-0 flex items-center justify-center">
+								<v-icon :name="option.icon" scale="1.1"
+									:fill="option.value === 'dark' ? '#94a3b8' : '#64748b'" class="opacity-50" />
+							</div>
+						</div>
+
+						<!-- Label -->
+						<div class="py-2 px-3 flex items-center justify-between bg-panel">
+							<div>
+								<p class="text-xs font-bold text-heading leading-none">{{ option.label }}</p>
+								<p class="text-xs text-text/40 mt-0.5 leading-none">{{ option.desc }}</p>
+							</div>
+							<!-- Radio dot -->
+							<div class="w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center transition-colors"
+								:class="appearance === option.value ? 'border-accent' : 'border-heading/20'">
+								<div v-if="appearance === option.value" class="w-1.5 h-1.5 rounded-full bg-accent" />
+							</div>
+						</div>
 					</button>
 				</div>
 			</div>
+		</section>
 
-			<!-- Date/Time -->
-			<form @submit.prevent="saveDateTime" class="space-y-6">
-				<div class="flex items-center gap-2 mb-2">
-					<v-icon name="md-avtimer" scale="1.5" />
-					<h3 class="font-semibold">Date/Time</h3>
+		<!-- ─────────────────────────────────────────────
+		     SECTION 3: DATE & TIME
+		──────────────────────────────────────────────── -->
+		<section>
+			<form @submit.prevent="saveDateTime">
+				<div class="bg-panel border border-heading/8 rounded-2xl p-5 shadow-sm">
+					<div class="flex items-center gap-2.5 mb-5">
+						<div class="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
+							<v-icon name="md-avtimer" class="text-accent" scale="0.9" />
+						</div>
+						<div>
+							<h2 class="text-base font-bold text-heading leading-none">Date & Time</h2>
+							<p class="text-xs text-text/40 mt-0.5">Regional formatting preferences</p>
+						</div>
+					</div>
+
+					<div class="space-y-4">
+
+						<!-- Timezone -->
+						<div class="flex items-center gap-4">
+							<div class="w-36 shrink-0">
+								<p class="text-sm font-semibold text-heading">Timezone</p>
+								<p class="text-xs text-text/40 mt-0.5">Your local time</p>
+							</div>
+							<div class="flex-1 relative">
+								<select v-model="timezone"
+									class="w-full appearance-none bg-body border border-heading/12 text-text text-sm rounded-xl px-4 py-2.5 pr-9 focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all cursor-pointer">
+									<option v-for="tz in TIMEZONES" :key="tz.value" :value="tz.value">
+										{{ tz.label }}
+									</option>
+								</select>
+								<div class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
+									<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-text/30"
+										viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+										stroke-linecap="round">
+										<polyline points="6 9 12 15 18 9" />
+									</svg>
+								</div>
+							</div>
+						</div>
+
+						<div class="border-t border-heading/6" />
+
+						<!-- First Day of Week -->
+						<div class="flex items-center gap-4">
+							<div class="w-36 shrink-0">
+								<p class="text-sm font-semibold text-heading">Week starts</p>
+								<p class="text-xs text-text/40 mt-0.5">First day of week</p>
+							</div>
+							<div class="flex gap-1.5 flex-wrap">
+								<button v-for="opt in WEEK_START_OPTIONS" :key="opt.value" type="button"
+									@click="week_start = opt.value"
+									class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 border"
+									:class="week_start === opt.value
+										? 'bg-accent text-white border-accent shadow-sm'
+										: 'bg-body text-text/60 border-heading/10 hover:border-accent/40 hover:text-text'">
+									{{ opt.label.slice(0, 3) }}
+								</button>
+							</div>
+						</div>
+
+						<div class="border-t border-heading/6" />
+
+						<!-- Time Format -->
+						<div class="flex items-center gap-4">
+							<div class="w-36 shrink-0">
+								<p class="text-sm font-semibold text-heading">Time format</p>
+								<p class="text-xs text-text/40 mt-0.5">Clock display style</p>
+							</div>
+							<div class="flex gap-2">
+								<button v-for="opt in TIME_FORMAT_OPTIONS" :key="opt.value" type="button"
+									@click="time_format = opt.value"
+									class="px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-150 border"
+									:class="time_format === opt.value
+										? 'bg-accent text-white border-accent shadow-sm'
+										: 'bg-body text-text/60 border-heading/10 hover:border-accent/40 hover:text-text'">
+									{{ opt.label }}
+								</button>
+							</div>
+						</div>
+
+					</div>
+
+					<!-- Save Button -->
+					<div class="mt-6 pt-5 border-t border-heading/6 flex justify-end">
+						<button type="submit" :disabled="saving"
+							class="inline-flex items-center gap-2 px-6 py-2.5 bg-accent text-white text-sm font-semibold rounded-xl shadow-sm hover:bg-accent/85 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50">
+							<svg v-if="saving" class="w-4 h-4 animate-spin" xmlns="http://www.w3.org/2000/svg"
+								fill="none" viewBox="0 0 24 24">
+								<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+									stroke-width="4" />
+								<path class="opacity-75" fill="currentColor"
+									d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+							</svg>
+							<svg v-else xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24"
+								fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+								stroke-linejoin="round">
+								<polyline points="20 6 9 17 4 12" />
+							</svg>
+							{{ saving ? 'Saving…' : 'Save Date & Time' }}
+						</button>
+					</div>
 				</div>
-
-				<div>
-					<label class="block mb-1 text-sm">Time zone</label>
-					<select v-model="timezone" class="input-field">
-						<option v-for="tz in TIMEZONES" :key="tz.value" :value="tz.value">
-							{{ tz.label }}
-						</option>
-					</select>
-				</div>
-
-				<div>
-					<label class="block mb-1 text-sm">First day of week</label>
-					<select v-model="week_start" class="input-field">
-						<option v-for="opt in WEEK_START_OPTIONS" :key="opt.value" :value="opt.value">
-							{{ opt.label }}
-						</option>
-					</select>
-				</div>
-
-				<div>
-					<label class="block mb-1 text-sm">Time format</label>
-					<select v-model="time_format" class="input-field">
-						<option v-for="opt in TIME_FORMAT_OPTIONS" :key="opt.value" :value="opt.value">
-							{{ opt.label }}
-						</option>
-					</select>
-				</div>
-
-				<button type="submit" class="tazko-btn w-full" :disabled="saving">
-					{{ saving ? 'Saving...' : 'Save My Date/Time Changes' }}
-				</button>
 			</form>
+		</section>
 
-		</div>
-	</base-card>
+	</div>
 </template>
+
+<style scoped>
+/* Palette card pop animation */
+.pop-enter-active {
+	transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.pop-leave-active {
+	transition: all 0.1s ease;
+}
+
+.pop-enter-from {
+	opacity: 0;
+	transform: scale(0.5);
+}
+
+.pop-leave-to {
+	opacity: 0;
+	transform: scale(0.5);
+}
+
+/* Remove default select arrow on some browsers */
+select {
+	-webkit-appearance: none;
+	-moz-appearance: none;
+}
+</style>

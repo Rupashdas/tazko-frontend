@@ -97,7 +97,7 @@ function getModuleIcon(module) {
 
 <template>
 	<!-- Outer wrapper: fixed height on desktop so the two panels can each scroll independently -->
-	<div class="flex flex-col bg-body text-text relative h-full min-h-[600px]">
+	<div class="flex flex-col bg-body text-text relative min-h-[600px]">
 
 		<!-- PAGE LOADING OVERLAY -->
 		<Transition name="fade">
@@ -151,10 +151,11 @@ function getModuleIcon(module) {
 		</div>
 
 		<!-- ── BODY: SIDEBAR + MAIN (desktop side-by-side, full height) ── -->
-		<div class="flex flex-1 overflow-hidden">
+		<div class="flex flex-1">
 
 			<!-- ── SIDEBAR (desktop: always visible & self-scrolling) ───── -->
-			<aside class="hidden lg:flex w-64 border-r border-heading/10 bg-panel flex-col shrink-0 overflow-hidden">
+			<aside
+				class="hidden lg:flex w-64 border-r border-heading/10 bg-panel flex-col shrink-0 sticky top-24 self-start max-h-[calc(100vh-7rem)] overflow-hidden">
 
 				<!-- Sidebar Header -->
 				<div class="px-5 pt-5 pb-4 border-b border-heading/10 shrink-0">

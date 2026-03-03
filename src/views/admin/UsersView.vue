@@ -1,63 +1,125 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useUserStore } from '@/stores/useUserStore'
+import { useAuthStore } from '@/stores/useAuthStore'
+import { useToast } from '@/utils/toast'
 
-/* ── Mock Data ─────────────────────────────────────────── */
-const users = ref([
-	{ id: 1, name: 'John Doe', email: 'john@mail.com', role: 'Admin', joined: '2024-01-12' },
-	{ id: 2, name: 'Sara Khan', email: 'sara@mail.com', role: 'Project Manager', joined: '2024-02-05' },
-	{ id: 3, name: 'Rakib Hasan', email: 'rakib@mail.com', role: 'Member', joined: '2024-03-19' },
-	{ id: 4, name: 'Emily Carter', email: 'emily@mail.com', role: 'Member', joined: '2024-04-01' },
-	{ id: 5, name: 'David Nguyen', email: 'david@mail.com', role: 'Project Manager', joined: '2024-05-22' },
-])
+const userStore = useUserStore()
+const authStore = useAuthStore()
+const { successToast, errorToast } = useToast()
 
-const roles = ['Admin', 'Project Manager', 'Member']
+/* ── Capabilities ──────────────────────────────────────── */
+const canCreate = computed(() => authStore.hasCapability('users.create'))
+const canUpdate = computed(() => authStore.hasCapability('users.update'))
+const canDelete = computed(() => authStore.hasCapability('users.delete'))
+const canAssignRole = computed(() => authStore.hasCapability('users.role.assign'))
 
 /* ── State ─────────────────────────────────────────────── */
-const selectedUser = ref(null)
 const searchQuery = ref('')
 const roleFilter = ref('All')
+const selectedUser = ref(null)   // user clicked → opens popup
 const showInviteModal = ref(false)
-const newUser = ref({ name: '', email: '', role: 'Member' })
+const showDeleteConfirm = ref(false)
+const pendingDeleteId = ref(null)
+
+// Invite form
+const newUser = ref({ name: '', email: '', role_id: null })
 const inviteErrors = ref({})
 
-/* ── Computed ───────────────────────────────────────────── */
-const filteredUsers = computed(() =>
-	users.value.filter(u => {
+// Role change (inside popup)
+const pendingRoleId = ref(null)
+
+/* ── Computed ──────────────────────────────────────────── */
+const users = computed(() => userStore.users)
+const roles = computed(() => userStore.roles)
+
+const filteredUsers = computed(() => {
+	let list = users.value
+	if (roleFilter.value !== 'All') {
+		list = list.filter(u =>
+			u.roles?.some(r => r.label === roleFilter.value || r.name === roleFilter.value)
+		)
+	}
+	if (searchQuery.value.trim()) {
 		const q = searchQuery.value.toLowerCase()
-		const matchSearch = u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)
-		const matchRole = roleFilter.value === 'All' || u.role === roleFilter.value
-		return matchSearch && matchRole
-	})
-)
+		list = list.filter(u =>
+			u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)
+		)
+	}
+	return list
+})
 
-/* ── Helpers ────────────────────────────────────────────── */
+/* ── Helpers ───────────────────────────────────────────── */
 const getInitials = (name) =>
-	name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()
+	name?.split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase() || '?'
 
-const avatarPalette = [
+const avatarColors = [
 	{ bg: 'bg-violet-100', text: 'text-violet-600' },
 	{ bg: 'bg-sky-100', text: 'text-sky-600' },
 	{ bg: 'bg-emerald-100', text: 'text-emerald-600' },
 	{ bg: 'bg-amber-100', text: 'text-amber-600' },
 	{ bg: 'bg-rose-100', text: 'text-rose-600' },
+	{ bg: 'bg-indigo-100', text: 'text-indigo-600' },
 ]
-const getAvatar = (id) => avatarPalette[id % avatarPalette.length]
+const getAvatar = (id) => avatarColors[id % avatarColors.length]
 
-const roleBadge = {
-	'Admin': 'bg-violet-50 text-violet-700 border border-violet-200/80',
-	'Project Manager': 'bg-sky-50 text-sky-700 border border-sky-200/80',
-	'Member': 'bg-emerald-50 text-emerald-700 border border-emerald-200/80',
+const getPrimaryRole = (user) => user.roles?.[0] ?? null
+
+const getRoleBadge = (roleName) => {
+	const map = {
+		'super-admin': 'bg-violet-100 text-violet-700',
+		'admin': 'bg-blue-100 text-blue-700',
+		'manager': 'bg-emerald-100 text-emerald-700',
+		'member': 'bg-heading/8 text-text/60 border border-heading/10',
+	}
+	return map[roleName] ?? 'bg-heading/8 text-text/60 border border-heading/10'
 }
-const getRoleBadge = (role) => roleBadge[role] ?? 'bg-heading/8 text-text/60 border border-heading/10'
 
 const formatDate = (d) =>
-	new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+	d ? new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '—'
 
-/* ── Actions ────────────────────────────────────────────── */
-const selectUser = (user) => {
-	selectedUser.value = selectedUser.value?.id === user.id ? null : { ...user }
+/* ── Actions ───────────────────────────────────────────── */
+const openUserPopup = (user) => {
+	selectedUser.value = { ...user }
+	pendingRoleId.value = user.roles?.[0]?.id ?? null
 }
 
+const closeUserPopup = () => {
+	selectedUser.value = null
+	pendingRoleId.value = null
+}
+
+const handleAssignRole = async () => {
+	if (!pendingRoleId.value) return
+	const res = await userStore.assignRole(selectedUser.value.id, pendingRoleId.value)
+	if (res.success) {
+		successToast(res.message)
+		// Sync updated user into popup
+		const updated = userStore.users.find(u => u.id === selectedUser.value.id)
+		if (updated) { selectedUser.value = { ...updated }; pendingRoleId.value = updated.roles?.[0]?.id ?? null }
+	} else {
+		errorToast(res.message)
+	}
+}
+
+const confirmDelete = (userId) => {
+	pendingDeleteId.value = userId
+	showDeleteConfirm.value = true
+}
+
+const handleDelete = async () => {
+	const res = await userStore.deleteUser(pendingDeleteId.value)
+	if (res.success) {
+		successToast(res.message)
+		showDeleteConfirm.value = false
+		if (selectedUser.value?.id === pendingDeleteId.value) closeUserPopup()
+		pendingDeleteId.value = null
+	} else {
+		errorToast(res.message)
+	}
+}
+
+/* ── Invite ────────────────────────────────────────────── */
 const validateInvite = () => {
 	const e = {}
 	if (!newUser.value.name.trim()) e.name = 'Name is required'
@@ -67,35 +129,38 @@ const validateInvite = () => {
 	return !Object.keys(e).length
 }
 
-const inviteUser = () => {
+const handleInvite = async () => {
 	if (!validateInvite()) return
-	users.value.push({ id: Date.now(), joined: new Date().toISOString().split('T')[0], ...newUser.value })
-	closeInviteModal()
+	const res = await userStore.inviteUser({
+		name: newUser.value.name,
+		email: newUser.value.email,
+		role_id: newUser.value.role_id || null,
+	})
+	if (res.success) {
+		successToast(res.message)
+		closeInviteModal()
+	} else {
+		if (res.errors) inviteErrors.value = Object.fromEntries(
+			Object.entries(res.errors).map(([k, v]) => [k, Array.isArray(v) ? v[0] : v])
+		)
+		else errorToast(res.message)
+	}
 }
 
 const closeInviteModal = () => {
 	showInviteModal.value = false
-	newUser.value = { name: '', email: '', role: 'Member' }
+	newUser.value = { name: '', email: '', role_id: null }
 	inviteErrors.value = {}
 }
 
-const deleteUser = (id) => {
-	users.value = users.value.filter(u => u.id !== id)
-	if (selectedUser.value?.id === id) selectedUser.value = null
-}
-
-const saveUser = () => {
-	const idx = users.value.findIndex(u => u.id === selectedUser.value.id)
-	if (idx !== -1) users.value[idx] = { ...selectedUser.value }
-}
+onMounted(() => userStore.init())
 </script>
 
 <template>
-	<div class="flex gap-5 bg-body text-text min-h-[600px]">
+	<div class="bg-body text-text min-h-[600px]">
 
 		<!-- ══ MAIN PANEL ════════════════════════════════ -->
-		<div
-			class="flex-1 min-w-0 flex flex-col bg-panel border border-heading/8 rounded-2xl shadow-sm overflow-hidden">
+		<div class="flex flex-col bg-panel border border-heading/8 rounded-2xl shadow-sm overflow-hidden">
 
 			<!-- Top Bar -->
 			<div class="px-7 py-5 border-b border-heading/8 flex items-center justify-between gap-4 shrink-0">
@@ -121,7 +186,7 @@ const saveUser = () => {
 					</div>
 				</div>
 
-				<button @click="showInviteModal = true"
+				<button v-if="canCreate" @click="showInviteModal = true"
 					class="inline-flex items-center gap-2 px-4 py-2.5 bg-accent text-white text-sm font-semibold rounded-xl shadow-sm hover:bg-accent/88 active:scale-95 transition-all shrink-0">
 					<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
 						stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
@@ -134,7 +199,6 @@ const saveUser = () => {
 
 			<!-- Filter Bar -->
 			<div class="px-7 py-3.5 border-b border-heading/6 flex items-center gap-3 shrink-0 bg-body/40">
-				<!-- Search -->
 				<div class="relative flex-1 max-w-xs">
 					<svg xmlns="http://www.w3.org/2000/svg"
 						class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text/35 pointer-events-none"
@@ -156,12 +220,10 @@ const saveUser = () => {
 
 				<div class="h-5 w-px bg-heading/10" />
 
-				<!-- Role pill tabs -->
 				<div class="flex items-center gap-1">
-					<button v-for="opt in ['All', ...roles]" :key="opt" @click="roleFilter = opt"
-						class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all" :class="roleFilter === opt
-							? 'bg-accent text-white shadow-sm'
-							: 'text-text/55 hover:text-heading hover:bg-heading/6'">
+					<button v-for="opt in ['All', ...roles.map(r => r.label)]" :key="opt" @click="roleFilter = opt"
+						class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+						:class="roleFilter === opt ? 'bg-accent text-white shadow-sm' : 'text-text/55 hover:text-heading hover:bg-heading/6'">
 						{{ opt }}
 					</button>
 				</div>
@@ -171,8 +233,13 @@ const saveUser = () => {
 				</div>
 			</div>
 
+			<!-- Loading state -->
+			<div v-if="userStore.loading.page" class="flex items-center justify-center py-24">
+				<div class="w-7 h-7 border-2 border-accent/30 border-t-accent rounded-full animate-spin" />
+			</div>
+
 			<!-- Table -->
-			<div class="flex-1 overflow-auto">
+			<div v-else class="flex-1 overflow-auto">
 				<table class="w-full text-left">
 					<thead class="sticky top-0 z-10 bg-panel/95 backdrop-blur-sm">
 						<tr class="border-b border-heading/8">
@@ -187,9 +254,8 @@ const saveUser = () => {
 						</tr>
 					</thead>
 					<tbody class="divide-y divide-heading/5">
-						<tr v-for="user in filteredUsers" :key="user.id" @click="selectUser(user)"
-							class="group cursor-pointer transition-colors duration-100"
-							:class="selectedUser?.id === user.id ? 'bg-accent/5 hover:bg-accent/7' : 'hover:bg-heading/3'">
+						<tr v-for="user in filteredUsers" :key="user.id" @click="openUserPopup(user)"
+							class="group cursor-pointer transition-colors duration-100 hover:bg-heading/3">
 
 							<td class="px-7 py-3.5">
 								<div class="flex items-center gap-3">
@@ -206,31 +272,33 @@ const saveUser = () => {
 							</td>
 
 							<td class="px-4 py-3.5">
-								<span class="inline-flex px-2.5 py-1 rounded-lg text-xs font-semibold"
-									:class="getRoleBadge(user.role)">
-									{{ user.role }}
+								<span v-if="getPrimaryRole(user)"
+									class="inline-flex px-2.5 py-1 rounded-lg text-xs font-semibold"
+									:class="getRoleBadge(getPrimaryRole(user).name)">
+									{{ getPrimaryRole(user).label }}
 								</span>
+								<span v-else class="text-xs text-text/30 italic">No role</span>
 							</td>
 
 							<td class="px-4 py-3.5">
-								<span class="text-sm text-text/50">{{ formatDate(user.joined) }}</span>
+								<span class="text-sm text-text/50">{{ formatDate(user.created_at) }}</span>
 							</td>
 
 							<td class="px-7 py-3.5 text-right">
 								<div class="flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
 									@click.stop>
-									<button @click="selectUser(user)"
-										class="p-2 rounded-lg text-text/45 hover:text-accent hover:bg-accent/8 transition-all"
-										title="View details">
+									<button @click="openUserPopup(user)"
+										class="w-8 h-8 rounded-lg flex items-center justify-center text-text/40 hover:text-accent hover:bg-accent/10 transition-all"
+										title="Edit">
 										<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24"
 											fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-											<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-											<circle cx="12" cy="12" r="3" />
+											<path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+											<path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
 										</svg>
 									</button>
-									<button @click="deleteUser(user.id)"
-										class="p-2 rounded-lg text-text/45 hover:text-red-500 hover:bg-red-50 transition-all"
-										title="Remove user">
+									<button v-if="canDelete" @click="confirmDelete(user.id)"
+										class="w-8 h-8 rounded-lg flex items-center justify-center text-text/40 hover:text-red-500 hover:bg-red-50 transition-all"
+										title="Remove">
 										<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24"
 											fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
 											<polyline points="3 6 5 6 21 6" />
@@ -241,160 +309,47 @@ const saveUser = () => {
 							</td>
 						</tr>
 
-						<tr v-if="filteredUsers.length === 0">
-							<td colspan="4" class="px-7 py-20 text-center">
-								<div class="flex flex-col items-center gap-3">
-									<div class="w-14 h-14 rounded-2xl bg-heading/5 flex items-center justify-center">
-										<svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-heading/20"
-											viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
-											stroke-linecap="round">
-											<path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
-											<circle cx="9" cy="7" r="4" />
-											<path d="M23 21v-2a4 4 0 00-3-3.87" />
-											<path d="M16 3.13a4 4 0 010 7.75" />
-										</svg>
-									</div>
-									<div>
-										<p class="text-sm font-semibold text-heading/35">No users found</p>
-										<p class="text-xs text-text/30 mt-0.5">Try adjusting your search or filters</p>
-									</div>
-									<button v-if="searchQuery || roleFilter !== 'All'"
-										@click="searchQuery = ''; roleFilter = 'All'"
-										class="text-xs text-accent font-semibold hover:underline mt-1">Clear
-										filters</button>
-								</div>
+						<tr v-if="!filteredUsers.length">
+							<td colspan="4" class="px-7 py-16 text-center text-text/35 text-sm">
+								No users found.
 							</td>
 						</tr>
 					</tbody>
 				</table>
 			</div>
 
-			<!-- Table Footer -->
-			<div class="px-7 py-3 border-t border-heading/6 flex items-center justify-between shrink-0 bg-body/30">
+			<!-- Footer -->
+			<div class="px-7 py-3.5 border-t border-heading/6 flex items-center justify-between bg-body/30 shrink-0">
 				<p class="text-xs text-text/35">
-					{{ filteredUsers.length }} member{{ filteredUsers.length !== 1 ? 's' : '' }} in workspace
+					{{ users.length }} member{{ users.length !== 1 ? 's' : '' }} in workspace
 				</p>
-				<p v-if="selectedUser" class="text-xs text-accent font-medium">Viewing {{ selectedUser.name }}</p>
 			</div>
 		</div>
 
-		<!-- ══ RIGHT DRAWER ═══════════════════════════════ -->
-		<Transition name="drawer">
-			<aside v-if="selectedUser"
-				class="w-72 shrink-0 bg-panel border border-heading/8 rounded-2xl shadow-sm flex flex-col overflow-hidden">
-
-				<!-- Drawer Header -->
-				<div class="px-5 py-5 border-b border-heading/8 flex items-start justify-between gap-3">
-					<div class="flex items-center gap-3 min-w-0">
-						<div class="w-11 h-11 rounded-xl flex items-center justify-center text-sm font-bold shrink-0"
-							:class="[getAvatar(selectedUser.id).bg, getAvatar(selectedUser.id).text]">
-							{{ getInitials(selectedUser.name) }}
-						</div>
-						<div class="min-w-0">
-							<p class="text-sm font-bold text-heading leading-tight truncate">{{ selectedUser.name }}</p>
-							<p class="text-xs text-text/45 mt-0.5 truncate">{{ selectedUser.email }}</p>
-						</div>
-					</div>
-					<button @click="selectedUser = null"
-						class="w-7 h-7 rounded-lg flex items-center justify-center text-text/30 hover:text-text hover:bg-heading/8 transition-all shrink-0 mt-0.5">
-						<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
-							stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-							<line x1="18" y1="6" x2="6" y2="18" />
-							<line x1="6" y1="6" x2="18" y2="18" />
-						</svg>
-					</button>
-				</div>
-
-				<!-- Drawer Body -->
-				<div class="flex-1 overflow-auto p-5 space-y-5">
-
-					<!-- Info card -->
-					<div class="bg-body/60 border border-heading/6 rounded-xl divide-y divide-heading/6">
-						<div class="px-4 py-3 flex items-center justify-between gap-2">
-							<span class="text-xs text-text/40 font-medium">Role</span>
-							<span class="text-xs font-semibold px-2.5 py-1 rounded-lg"
-								:class="getRoleBadge(selectedUser.role)">
-								{{ selectedUser.role }}
-							</span>
-						</div>
-						<div class="px-4 py-3 flex items-center justify-between gap-2">
-							<span class="text-xs text-text/40 font-medium">Member since</span>
-							<span class="text-xs font-semibold text-heading">{{ formatDate(selectedUser.joined)
-								}}</span>
-						</div>
-						<div class="px-4 py-3 flex items-center justify-between gap-2">
-							<span class="text-xs text-text/40 font-medium">User ID</span>
-							<span class="text-xs font-mono text-text/50">#{{ selectedUser.id }}</span>
-						</div>
-					</div>
-
-					<!-- Change Role -->
-					<div>
-						<p class="text-[11px] font-bold uppercase tracking-widest text-text/35 mb-2">Change Role</p>
-						<div class="grid grid-cols-1 gap-1.5">
-							<button v-for="r in roles" :key="r" @click="selectedUser.role = r"
-								class="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border text-sm font-medium transition-all"
-								:class="selectedUser.role === r
-									? 'border-accent/40 bg-accent/8 text-accent'
-									: 'border-heading/10 hover:border-heading/20 hover:bg-heading/4 text-text/70'">
-								<span class="w-2 h-2 rounded-full border-2 shrink-0 transition-colors"
-									:class="selectedUser.role === r ? 'border-accent bg-accent' : 'border-text/20'" />
-								{{ r }}
-							</button>
-						</div>
-					</div>
-
-					<!-- Save -->
-					<button @click="saveUser"
-						class="w-full py-2.5 rounded-xl bg-accent text-white text-sm font-semibold hover:bg-accent/85 active:scale-95 transition-all shadow-sm">
-						Save Changes
-					</button>
-
-					<!-- Danger Zone -->
-					<div class="border-t border-heading/6 pt-4">
-						<p class="text-[11px] font-bold uppercase tracking-widest text-text/35 mb-2">Danger Zone</p>
-						<button @click="deleteUser(selectedUser.id)"
-							class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-500 text-sm font-semibold border border-red-100/80 active:scale-95 transition-all">
-							<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
-								stroke="currentColor" stroke-width="2" stroke-linecap="round">
-								<polyline points="3 6 5 6 21 6" />
-								<path d="M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2" />
-							</svg>
-							Remove User
-						</button>
-					</div>
-				</div>
-			</aside>
-		</Transition>
-
-		<!-- ══ INVITE MODAL ════════════════════════════════ -->
+		<!-- ══ USER POPUP MODAL ════════════════════════════ -->
 		<Teleport to="body">
 			<Transition name="modal">
-				<div v-if="showInviteModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-					<div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="closeInviteModal" />
+				<div v-if="selectedUser" class="fixed inset-0 z-50 flex items-center justify-center p-4"
+					@mousedown.self="closeUserPopup">
+					<div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="closeUserPopup" />
 
 					<div
-						class="relative w-full max-w-md bg-panel rounded-2xl shadow-2xl border border-heading/10 overflow-hidden">
+						class="relative w-full max-w-sm bg-panel rounded-2xl shadow-2xl border border-heading/10 overflow-hidden">
 						<!-- Header -->
-						<div class="px-6 py-5 border-b border-heading/8 flex items-center justify-between">
-							<div class="flex items-center gap-3">
-								<div class="w-9 h-9 rounded-xl bg-accent/10 flex items-center justify-center">
-									<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-accent"
-										viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-										stroke-linecap="round">
-										<path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2" />
-										<circle cx="9" cy="7" r="4" />
-										<line x1="19" y1="8" x2="19" y2="14" />
-										<line x1="22" y1="11" x2="16" y2="11" />
-									</svg>
+						<div class="px-6 py-5 border-b border-heading/8 flex items-start justify-between gap-3">
+							<div class="flex items-center gap-3 min-w-0">
+								<div class="w-12 h-12 rounded-xl flex items-center justify-center text-base font-bold shrink-0"
+									:class="[getAvatar(selectedUser.id).bg, getAvatar(selectedUser.id).text]">
+									{{ getInitials(selectedUser.name) }}
 								</div>
-								<div>
-									<h2 class="text-base font-bold text-heading leading-tight">Invite a member</h2>
-									<p class="text-xs text-text/40 mt-0.5">They'll receive an email invitation</p>
+								<div class="min-w-0">
+									<p class="text-sm font-bold text-heading leading-tight truncate">{{
+										selectedUser.name }}</p>
+									<p class="text-xs text-text/45 mt-0.5 truncate">{{ selectedUser.email }}</p>
 								</div>
 							</div>
-							<button @click="closeInviteModal"
-								class="w-7 h-7 rounded-lg flex items-center justify-center text-text/30 hover:text-text hover:bg-heading/8 transition-all">
+							<button @click="closeUserPopup"
+								class="w-7 h-7 rounded-lg flex items-center justify-center text-text/30 hover:text-text hover:bg-heading/8 transition-all shrink-0">
 								<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
 									stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
 									<line x1="18" y1="6" x2="6" y2="18" />
@@ -404,59 +359,64 @@ const saveUser = () => {
 						</div>
 
 						<!-- Body -->
-						<div class="p-6 space-y-4">
-							<div>
-								<label
-									class="block text-xs font-bold text-text/50 uppercase tracking-widest mb-1.5">Full
-									Name</label>
-								<input v-model="newUser.name" placeholder="e.g. Jane Smith"
-									class="w-full border px-4 py-2.5 rounded-xl text-sm outline-none transition-all bg-body placeholder:text-text/30"
-									:class="inviteErrors.name
-										? 'border-red-400 focus:border-red-400 focus:ring-2 focus:ring-red-200'
-										: 'border-heading/12 focus:border-accent focus:ring-2 focus:ring-accent/15'" />
-								<p v-if="inviteErrors.name" class="text-xs text-red-500 mt-1">{{ inviteErrors.name }}
-								</p>
-							</div>
-
-							<div>
-								<label
-									class="block text-xs font-bold text-text/50 uppercase tracking-widest mb-1.5">Email
-									Address</label>
-								<input v-model="newUser.email" type="email" placeholder="jane@example.com"
-									class="w-full border px-4 py-2.5 rounded-xl text-sm outline-none transition-all bg-body placeholder:text-text/30"
-									:class="inviteErrors.email
-										? 'border-red-400 focus:border-red-400 focus:ring-2 focus:ring-red-200'
-										: 'border-heading/12 focus:border-accent focus:ring-2 focus:ring-accent/15'" />
-								<p v-if="inviteErrors.email" class="text-xs text-red-500 mt-1">{{ inviteErrors.email }}
-								</p>
-							</div>
-
-							<div>
-								<label
-									class="block text-xs font-bold text-text/50 uppercase tracking-widest mb-1.5">Role</label>
-								<div class="grid grid-cols-3 gap-2">
-									<button v-for="r in roles" :key="r" @click="newUser.role = r"
-										class="py-2.5 px-3 rounded-xl border text-xs font-semibold transition-all text-center"
-										:class="newUser.role === r
-											? 'border-accent/50 bg-accent/8 text-accent'
-											: 'border-heading/12 hover:border-heading/20 hover:bg-heading/4 text-text/60'">
-										{{ r }}
-									</button>
+						<div class="p-6 space-y-5">
+							<!-- Info card -->
+							<div class="bg-body/60 border border-heading/6 rounded-xl divide-y divide-heading/6">
+								<div class="px-4 py-3 flex items-center justify-between gap-2">
+									<span class="text-xs text-text/40 font-medium">Current Role</span>
+									<span v-if="getPrimaryRole(selectedUser)"
+										class="text-xs font-semibold px-2.5 py-1 rounded-lg"
+										:class="getRoleBadge(getPrimaryRole(selectedUser).name)">
+										{{ getPrimaryRole(selectedUser).label }}
+									</span>
+									<span v-else class="text-xs text-text/30 italic">No role</span>
+								</div>
+								<div class="px-4 py-3 flex items-center justify-between gap-2">
+									<span class="text-xs text-text/40 font-medium">Member since</span>
+									<span class="text-xs font-semibold text-heading">{{
+										formatDate(selectedUser.created_at) }}</span>
+								</div>
+								<div class="px-4 py-3 flex items-center justify-between gap-2">
+									<span class="text-xs text-text/40 font-medium">User ID</span>
+									<span class="text-xs font-mono text-text/50">#{{ selectedUser.id }}</span>
 								</div>
 							</div>
-						</div>
 
-						<!-- Footer -->
-						<div class="px-6 py-4 border-t border-heading/8 flex items-center justify-between gap-3">
-							<p class="text-xs text-text/35">An invite link will be sent via email.</p>
-							<div class="flex gap-2 shrink-0">
-								<button @click="closeInviteModal"
-									class="px-4 py-2 rounded-xl text-sm font-semibold bg-heading/8 hover:bg-heading/12 text-text transition-colors">
-									Cancel
+							<!-- Change Role -->
+							<div v-if="canAssignRole">
+								<p class="text-[11px] font-bold uppercase tracking-widest text-text/35 mb-2">Assign Role
+								</p>
+								<div class="grid grid-cols-1 gap-1.5">
+									<button v-for="r in roles" :key="r.id" @click="pendingRoleId = r.id"
+										class="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border text-sm font-medium transition-all"
+										:class="pendingRoleId === r.id
+											? 'border-accent/40 bg-accent/8 text-accent'
+											: 'border-heading/10 hover:border-heading/20 hover:bg-heading/4 text-text/70'">
+										<span class="w-2 h-2 rounded-full border-2 shrink-0 transition-colors"
+											:class="pendingRoleId === r.id ? 'border-accent bg-accent' : 'border-text/20'" />
+										{{ r.label }}
+									</button>
+								</div>
+
+								<button @click="handleAssignRole"
+									:disabled="userStore.loading.save || pendingRoleId === getPrimaryRole(selectedUser)?.id"
+									class="mt-3 w-full py-2.5 rounded-xl bg-accent text-white text-sm font-semibold hover:bg-accent/85 active:scale-95 transition-all shadow-sm disabled:opacity-40 disabled:cursor-not-allowed">
+									{{ userStore.loading.save ? 'Saving…' : 'Save Changes' }}
 								</button>
-								<button @click="inviteUser"
-									class="px-5 py-2 rounded-xl text-sm font-semibold bg-accent text-white hover:bg-accent/85 transition-all shadow-sm active:scale-95">
-									Send Invite
+							</div>
+
+							<!-- Danger Zone -->
+							<div v-if="canDelete" class="border-t border-heading/6 pt-4">
+								<p class="text-[11px] font-bold uppercase tracking-widest text-text/35 mb-2">Danger Zone
+								</p>
+								<button @click="confirmDelete(selectedUser.id)"
+									class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-500 text-sm font-semibold border border-red-100/80 active:scale-95 transition-all">
+									<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24"
+										fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+										<polyline points="3 6 5 6 21 6" />
+										<path d="M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2" />
+									</svg>
+									Remove User
 								</button>
 							</div>
 						</div>
@@ -464,21 +424,130 @@ const saveUser = () => {
 				</div>
 			</Transition>
 		</Teleport>
+
+		<!-- ══ INVITE MODAL ════════════════════════════════ -->
+		<Teleport to="body">
+			<Transition name="modal">
+				<div v-if="showInviteModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+					<div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="closeInviteModal" />
+
+					<div
+						class="relative w-full max-w-md bg-panel rounded-2xl shadow-2xl border border-heading/10 overflow-hidden">
+						<div class="px-6 py-5 border-b border-heading/8 flex items-center justify-between">
+							<div class="flex items-center gap-3">
+								<div class="w-9 h-9 rounded-xl bg-accent/10 flex items-center justify-center">
+									<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-accent"
+										viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+										stroke-linecap="round">
+										<path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2" />
+										<circle cx="9" cy="7" r="4" />
+										<line x1="19" y1="8" x2="25" y2="8" />
+										<line x1="22" y1="5" x2="22" y2="11" />
+									</svg>
+								</div>
+								<h2 class="text-lg font-bold text-heading">Invite Member</h2>
+							</div>
+							<button @click="closeInviteModal"
+								class="w-7 h-7 rounded-lg flex items-center justify-center text-text/40 hover:text-text hover:bg-heading/8 transition-all">
+								<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
+									stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+									<line x1="18" y1="6" x2="6" y2="18" />
+									<line x1="6" y1="6" x2="18" y2="18" />
+								</svg>
+							</button>
+						</div>
+
+						<div class="p-6 space-y-4">
+							<!-- Name -->
+							<div>
+								<label class="block text-sm font-semibold text-heading mb-1.5">Full Name <span
+										class="text-red-400">*</span></label>
+								<input v-model="newUser.name" type="text" placeholder="Jane Smith"
+									class="w-full px-4 py-2.5 rounded-xl border text-sm outline-none transition-all bg-panel focus:ring-2 focus:ring-accent/20 focus:border-accent"
+									:class="inviteErrors.name ? 'border-red-400' : 'border-heading/15'" />
+								<p v-if="inviteErrors.name" class="text-red-500 text-xs mt-1">{{ inviteErrors.name }}
+								</p>
+							</div>
+
+							<!-- Email -->
+							<div>
+								<label class="block text-sm font-semibold text-heading mb-1.5">Email Address <span
+										class="text-red-400">*</span></label>
+								<input v-model="newUser.email" type="email" placeholder="jane@example.com"
+									class="w-full px-4 py-2.5 rounded-xl border text-sm outline-none transition-all bg-panel focus:ring-2 focus:ring-accent/20 focus:border-accent"
+									:class="inviteErrors.email ? 'border-red-400' : 'border-heading/15'" />
+								<p v-if="inviteErrors.email" class="text-red-500 text-xs mt-1">{{ inviteErrors.email }}
+								</p>
+							</div>
+
+							<!-- Role -->
+							<div>
+								<label class="block text-sm font-semibold text-heading mb-1.5">Role</label>
+								<div class="grid grid-cols-2 gap-1.5">
+									<button v-for="r in roles" :key="r.id"
+										@click="newUser.role_id = newUser.role_id === r.id ? null : r.id"
+										class="flex items-center gap-2 px-3.5 py-2 rounded-xl border text-sm font-medium transition-all"
+										:class="newUser.role_id === r.id
+											? 'border-accent/50 bg-accent/8 text-accent'
+											: 'border-heading/12 hover:border-heading/20 hover:bg-heading/4 text-text/60'">
+										{{ r.label }}
+									</button>
+								</div>
+							</div>
+						</div>
+
+						<div class="px-6 py-4 border-t border-heading/8 flex items-center justify-between gap-3">
+							<p class="text-xs text-text/35">An account will be created for this user.</p>
+							<div class="flex gap-2 shrink-0">
+								<button @click="closeInviteModal"
+									class="px-4 py-2 rounded-xl text-sm font-semibold bg-heading/8 hover:bg-heading/12 text-text transition-colors">
+									Cancel
+								</button>
+								<button @click="handleInvite" :disabled="userStore.loading.invite"
+									class="px-5 py-2 rounded-xl text-sm font-semibold bg-accent text-white hover:bg-accent/85 transition-all shadow-sm active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed">
+									{{ userStore.loading.invite ? 'Inviting…' : 'Send Invite' }}
+								</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			</Transition>
+		</Teleport>
+
+		<!-- ══ DELETE CONFIRM ══════════════════════════════ -->
+		<Teleport to="body">
+			<Transition name="modal">
+				<div v-if="showDeleteConfirm" class="fixed inset-0 z-[60] flex items-center justify-center p-4">
+					<div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="showDeleteConfirm = false" />
+					<div class="relative w-full max-w-sm bg-panel rounded-2xl shadow-2xl p-6 border border-heading/10">
+						<div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+							<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-red-500" viewBox="0 0 24 24"
+								fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+								<polyline points="3 6 5 6 21 6" />
+								<path d="M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2" />
+							</svg>
+						</div>
+						<h3 class="text-lg font-bold text-heading text-center mb-1">Remove User?</h3>
+						<p class="text-sm text-text/60 text-center mb-6">This action cannot be undone.</p>
+						<div class="flex gap-3">
+							<button @click="showDeleteConfirm = false; pendingDeleteId = null"
+								class="flex-1 py-2.5 rounded-lg text-sm font-medium bg-heading/8 hover:bg-heading/12 transition-colors text-text">
+								Cancel
+							</button>
+							<button @click="handleDelete" :disabled="userStore.loading.delete"
+								class="flex-1 py-2.5 rounded-lg text-sm font-semibold bg-red-500 text-white hover:bg-red-600 transition-all disabled:opacity-50">
+								{{ userStore.loading.delete ? 'Removing…' : 'Yes, Remove' }}
+							</button>
+						</div>
+					</div>
+				</div>
+			</Transition>
+		</Teleport>
+
 	</div>
 </template>
 
 <style scoped>
-.drawer-enter-active,
-.drawer-leave-active {
-	transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.drawer-enter-from,
-.drawer-leave-to {
-	opacity: 0;
-	transform: translateX(16px);
-}
-
 .modal-enter-active,
 .modal-leave-active {
 	transition: all 0.2s ease;
@@ -487,5 +556,10 @@ const saveUser = () => {
 .modal-enter-from,
 .modal-leave-to {
 	opacity: 0;
+}
+
+.modal-enter-from .relative,
+.modal-leave-to .relative {
+	transform: scale(0.97);
 }
 </style>

@@ -28,12 +28,13 @@ export const usePreferencesStore = defineStore('preferences', {
     actions: {
         async loadPreferences() {
             const { data } = await axios.get('/api/preferences')
+            // handle if data.preference is null (should not happen but just in case)
 
-            this.palette = data.preference.palette ?? this.palette
-            this.appearance = data.preference.appearance ?? this.appearance
-            this.timezone = data.preference.timezone ?? this.timezone
-            this.week_start = data.preference.week_start ?? this.week_start
-            this.time_format = data.preference.time_format ?? this.time_format
+            this.palette = data.preference?.palette ?? this.palette
+            this.appearance = data.preference?.appearance ?? this.appearance
+            this.timezone = data.preference?.timezone ?? this.timezone
+            this.week_start = data.preference?.week_start ?? this.week_start
+            this.time_format = data.preference?.time_format ?? this.time_format
 
             this.applyTheme()
             this.loaded = true

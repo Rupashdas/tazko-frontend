@@ -401,7 +401,7 @@ function getModuleIcon(module) {
 					<div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="closeModal" />
 
 					<div
-						class="relative w-full max-w-md bg-panel rounded-2xl shadow-2xl border border-heading/10 overflow-hidden">
+						class="relative w-full max-w-md bg-panel rounded-2xl shadow-2xl border border-heading/10 overflow-hidden transition-all">
 
 						<!-- Modal Header -->
 						<div class="px-6 py-5 border-b border-heading/10 flex items-center justify-between">
@@ -485,19 +485,15 @@ function getModuleIcon(module) {
 
 .modal-enter-from .relative,
 .modal-leave-to .relative {
-	transform: translateY(8px) scale(0.97);
+	transform: scale(0.97);
 }
 
 .fade-enter-active,
 .fade-leave-active {
-	transition: opacity 0s ease;
-}
-
-.fade-enter-from {
 	transition: opacity 0.2s ease;
-	opacity: 0;
 }
 
+.fade-enter-from,
 .fade-leave-to {
 	opacity: 0;
 }

@@ -5,6 +5,7 @@ export const useUserStore = defineStore('users', {
 	state: () => ({
 		users: [],
 		roles: [],
+		invitations: [],
 		loading: {
 			page: false,
 			save: false,
@@ -21,12 +22,16 @@ export const useUserStore = defineStore('users', {
 			if (this.loaded) return
 			this.loading.page = true
 			try {
-				const [usersRes, rolesRes] = await Promise.all([
+
+				const [usersRes, rolesRes, invitationsRes] = await Promise.all([
 					axios.get('/api/users'),
 					axios.get('/api/roles'),
+					axios.get('/api/invitations'),
 				])
 				this.users = usersRes.data.data ?? []
 				this.roles = rolesRes.data.data ?? []
+				this.invitations = invitationsRes.data.data ?? []
+
 				this.loaded = true
 			} catch (err) {
 				console.error('[UserStore] init:', err)
@@ -36,11 +41,20 @@ export const useUserStore = defineStore('users', {
 		},
 
 		/*── Invitations ─────────────────────────────────────*/
+		async fetchInvitations() {
+			try {
+				const { data } = await axios.get('/api/invitations')
+				this.invitations = data.data ?? []
+			} catch (err) {
+				console.error('[UserStore] fetchInvitations:', err)
+			}
+		},
 
 		async sendInvitation({ name, email, role_id }) {
 			this.loading.invite = true
 			try {
 				const { data } = await axios.post('/api/invitations', { name, email, role_id })
+				this.invitations.unshift(data.data)
 				return { success: true, message: data.message }
 			} catch (err) {
 				const errors = err.response?.data?.errors ?? {}
@@ -55,6 +69,8 @@ export const useUserStore = defineStore('users', {
 			this.loading.resend = true
 			try {
 				const { data } = await axios.post(`/api/invitations/${invitationId}/resend`)
+				const idx = this.invitations.findIndex(i => i.id === invitationId)
+				if (idx !== -1) this.invitations[idx] = data.data
 				return { success: true, message: data.message }
 			} catch (err) {
 				return { success: false, message: err.response?.data?.message ?? 'Failed to resend.' }
@@ -66,6 +82,7 @@ export const useUserStore = defineStore('users', {
 		async cancelInvitation(invitationId) {
 			try {
 				const { data } = await axios.delete(`/api/invitations/${invitationId}`)
+				this.invitations = this.invitations.filter(i => i.id !== invitationId)
 				return { success: true, message: data.message }
 			} catch (err) {
 				return { success: false, message: err.response?.data?.message ?? 'Failed to cancel.' }

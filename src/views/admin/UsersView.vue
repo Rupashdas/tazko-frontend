@@ -33,6 +33,10 @@ const editErrors = ref({})
 // Invite form
 const newUser = ref({ name: '', email: '', role_id: null })
 const inviteErrors = ref({})
+const invitations = computed(() => userStore.invitations)
+const showCancelConfirm = ref(false)
+const pendingCancelId = ref(null)
+
 
 // Role change inside popup
 const pendingRoleId = ref(null)
@@ -208,6 +212,34 @@ const closeInviteModal = () => {
 	showInviteModal.value = false
 	newUser.value = { name: '', email: '', role_id: null }
 	inviteErrors.value = {}
+}
+
+const confirmCancel = (id) => {
+	pendingCancelId.value = id
+	showCancelConfirm.value = true
+}
+
+const handleCancel = async () => {
+	const res = await userStore.cancelInvitation(pendingCancelId.value)
+	if (res.success) {
+		successToast(res.message)
+		showCancelConfirm.value = false
+		pendingCancelId.value = null
+	} else {
+		errorToast(res.message)
+	}
+}
+
+const handleResend = async (id) => {
+	const res = await userStore.resendInvitation(id)
+	if (res.success) successToast(res.message)
+	else errorToast(res.message)
+}
+
+const getStatusBadge = (status) => {
+	if (status === 'pending') return 'bg-amber-100 text-amber-700'
+	if (status === 'expired') return 'bg-red-100 text-red-600'
+	return 'bg-heading/8 text-text/50'
 }
 
 onMounted(() => userStore.init())
@@ -421,6 +453,157 @@ onMounted(() => userStore.init())
 				</p>
 			</div>
 		</div>
+
+		<!-- ══ PENDING INVITATIONS ════════════════════════════════ -->
+		<div v-if="canCreate && invitations.length > 0"
+			class="mt-6 flex flex-col bg-panel border border-heading/8 rounded-2xl shadow-sm overflow-hidden">
+
+			<!-- Header -->
+			<div class="px-7 py-5 border-b border-heading/8 flex items-center justify-between">
+				<div class="flex items-center gap-3">
+					<div class="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
+						<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-amber-600" viewBox="0 0 24 24"
+							fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+							<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+							<polyline points="22,6 12,13 2,6" />
+						</svg>
+					</div>
+					<div>
+						<div class="flex items-center gap-2">
+							<h2 class="text-base font-bold text-heading">Pending Invitations</h2>
+							<span
+								class="px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-700 tabular-nums">
+								{{ invitations.length }}
+							</span>
+						</div>
+						<p class="text-xs text-text/45 mt-0.5">Invitations waiting to be accepted</p>
+					</div>
+				</div>
+			</div>
+
+			<!-- Table -->
+			<div class="overflow-x-auto">
+				<table class="w-full min-w-[480px]">
+					<thead>
+						<tr class="border-b border-heading/6 bg-body/40">
+							<th
+								class="px-7 py-3 text-left text-[11px] font-bold uppercase tracking-widest text-text/40">
+								Invitee</th>
+							<th
+								class="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-widest text-text/40">
+								Role</th>
+							<th
+								class="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-widest text-text/40">
+								Status</th>
+							<th
+								class="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-widest text-text/40">
+								Expires</th>
+							<th
+								class="px-7 py-3 text-right text-[11px] font-bold uppercase tracking-widest text-text/40">
+								Actions</th>
+						</tr>
+					</thead>
+					<tbody class="divide-y divide-heading/5">
+						<tr v-for="inv in invitations" :key="inv.id" class="group hover:bg-heading/3 transition-colors">
+
+							<!-- Name / Email -->
+							<td class="px-7 py-3.5">
+								<p class="text-sm font-semibold text-heading leading-tight">{{ inv.name }}</p>
+								<p class="text-xs text-text/45 mt-0.5">{{ inv.email }}</p>
+							</td>
+
+							<!-- Role -->
+							<td class="px-4 py-3.5">
+								<span v-if="inv.role" class="inline-flex px-2.5 py-1 rounded-lg text-xs font-semibold"
+									:class="getRoleBadge(inv.role.label?.toLowerCase())">
+									{{ inv.role.label }}
+								</span>
+								<span v-else class="text-xs text-text/30 italic">No role</span>
+							</td>
+
+							<!-- Status -->
+							<td class="px-4 py-3.5">
+								<span
+									class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold capitalize"
+									:class="getStatusBadge(inv.status)">
+									<span class="w-1.5 h-1.5 rounded-full"
+										:class="inv.status === 'pending' ? 'bg-amber-500' : 'bg-red-400'" />
+									{{ inv.status }}
+								</span>
+							</td>
+
+							<!-- Expires -->
+							<td class="px-4 py-3.5">
+								<span class="text-sm text-text/50">{{ formatDate(inv.expires_at) }}</span>
+							</td>
+
+							<!-- Actions -->
+							<td class="px-7 py-3.5 text-right">
+								<div
+									class="flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+									<!-- Resend -->
+									<button @click="handleResend(inv.id)" :disabled="userStore.loading.resend"
+										title="Resend invitation"
+										class="w-8 h-8 rounded-lg flex items-center justify-center text-text/40 hover:text-accent hover:bg-accent/10 transition-all disabled:opacity-40">
+										<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24"
+											fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+											<polyline points="1 4 1 10 7 10" />
+											<polyline points="23 20 23 14 17 14" />
+											<path
+												d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15" />
+										</svg>
+									</button>
+
+									<!-- Cancel -->
+									<button @click="confirmCancel(inv.id)" title="Cancel invitation"
+										class="w-8 h-8 rounded-lg flex items-center justify-center text-text/40 hover:text-red-500 hover:bg-red-50 transition-all">
+										<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24"
+											fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+											<line x1="18" y1="6" x2="6" y2="18" />
+											<line x1="6" y1="6" x2="18" y2="18" />
+										</svg>
+									</button>
+								</div>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+
+		<!-- Cancel Confirm Modal -->
+		<Teleport to="body">
+			<Transition name="modal">
+				<div v-if="showCancelConfirm"
+					class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+					@click.self="showCancelConfirm = false">
+					<div class="relative bg-panel rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
+						<div class="w-12 h-12 rounded-2xl bg-red-100 flex items-center justify-center mx-auto mb-4">
+							<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-red-500" viewBox="0 0 24 24"
+								fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+								<polyline points="3 6 5 6 21 6" />
+								<path d="M19 6l-1 14H6L5 6" />
+								<path d="M10 11v6" />
+								<path d="M14 11v6" />
+							</svg>
+						</div>
+						<h3 class="text-base font-bold text-heading mb-1">Cancel Invitation?</h3>
+						<p class="text-sm text-text/50 mb-6">This will revoke the invitation link. The user won't be
+							able to join unless re-invited.</p>
+						<div class="flex gap-3">
+							<button @click="showCancelConfirm = false"
+								class="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold bg-heading/8 hover:bg-heading/12 text-text transition-colors">
+								Keep
+							</button>
+							<button @click="handleCancel"
+								class="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold bg-red-500 hover:bg-red-600 text-white transition-colors">
+								Cancel Invite
+							</button>
+						</div>
+					</div>
+				</div>
+			</Transition>
+		</Teleport>
 
 		<!-- ══ USER POPUP MODAL ══════════════════════════════════ -->
 		<Teleport to="body">

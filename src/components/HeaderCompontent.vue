@@ -2,7 +2,7 @@
 import { RouterLink } from "vue-router";
 import Logo from "./icons/Logo.vue";
 import { addIcons } from "oh-vue-icons";
-import { useAuthStore } from '@/stores/auth'
+import { useAuthStore } from '@/stores/useAuthStore'
 import { SiHomeadvisor, BiChatDots, LaUserCircleSolid, CoSettings, MdLogoutOutlined, LaUserEditSolid, BiPalette } from
     "oh-vue-icons/icons";
 import { useRouter } from 'vue-router'
@@ -96,15 +96,24 @@ watch(() => route.fullPath, () => {
                                 class=" w-8 h-8 object-cover rounded-full border-1 border-accent" />
                             <v-icon class="w-8" v-else name="la-user-circle-solid" />
                         </button>
-
-                        <!-- User dropdown -->
+                        <!-- Dropdown -->
                         <Transition name="fade-up">
-                            <div>
-                                <div>
-                                    <h4>{{ auth.user?.name ?? "User" }}</h4>
-                                    <p>{{ auth.user?.roles?.[0]?.label || "User" }}</p>
+                            <div v-if="dropdownOpen"
+                                class="absolute top-16 -right-3 flex-col flex w-70 px-6 py-3 bg-panel rounded-md shadow-lg shadow-tazko-blue/10">
+                                <div class="absolute -top-2 right-4 w-4 h-4 bg-panel rotate-45 shadow-tazko-blue/10">
                                 </div>
-
+                                <div
+                                    class="bg-accent/10 p-4 rounded-md shadow-md items-center flex gap-3 border-text/50">
+                                    <div>
+                                        <img v-if="auth.user?.avatar" :src="auth.user.avatar" alt="Avatar"
+                                            class=" w-16 h-16 object-cover rounded-full border-1 border-accent" />
+                                        <v-icon class="w-16" v-else name="la-user-circle-solid" />
+                                    </div>
+                                    <div>
+                                        <h4>{{ auth.user ? auth.user.name : "User" }} </h4>
+                                        <p class="text-sm">{{ auth.user?.roles?.[0]?.label || "User" }}</p>
+                                    </div>
+                                </div>
                                 <div class="pt-4">
                                     <router-link :to="{ name: 'profile' }"
                                         class="dropdown-item text-accent flex align-center gap-1 hover:text-heading font-medium">
@@ -113,20 +122,17 @@ watch(() => route.fullPath, () => {
 
                                     <router-link :to="{ name: 'preferences' }"
                                         class="dropdown-item text-accent flex align-center gap-1 hover:text-heading font-medium">
-                                        <v-icon class="w-5" name="bi-palette" /> Preferences
+                                        <v-icon class="w-5" name="bi-palette" /> Preparences
                                     </router-link>
-
-                                    <!--
-                                    System Settings — only show if user has the settings.view capability.
-                                    super-admin: always visible (hasCapability returns true for super-admin).
-                                    client / developer without settings.view: link hidden entirely.
-                                -->
-                                    <router-link v-if="auth.hasCapability('settings.view')"
-                                        :to="{ name: 'system-settings' }"
+                                    <router-link :to="{ name: 'system-settings' }"
                                         class="dropdown-item text-accent flex align-center gap-1 hover:text-heading font-medium">
                                         <v-icon class="w-5" name="co-settings" /> System Settings
                                     </router-link>
-
+                                    <!-- <router-link v-if="auth.hasCapability('settings.view')"
+                                        :to="{ name: 'system-settings' }"
+                                        class="dropdown-item text-accent flex align-center gap-1 hover:text-heading font-medium">
+                                        <v-icon class="w-5" name="co-settings" /> System Settings
+                                    </router-link> -->
                                     <button
                                         class="dropdown-item text-accent flex align-center gap-1 hover:text-heading font-medium logout"
                                         @click="handleLogout">

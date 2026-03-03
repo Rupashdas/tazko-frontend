@@ -143,7 +143,16 @@ router.beforeEach(async (to, from, next) => {
         }
     }
 
-    // 2. Load preferences after login
+    // 2. If the user is logged in but marked inactive, force logout and
+    //    redirect to login. This catches the case where the admin deactivated
+    //    the user while they were already browsing (before any API call fires).
+    if (auth.isLoggedIn && auth.user?.is_active === false) {
+        auth.user = null
+        auth.authChecked = true
+        return next({ name: 'login', query: { reason: 'deactivated' } })
+    }
+
+    // 3. Load preferences after login
     if (auth.isLoggedIn && !preferencesStore.loaded) {
         try {
             await preferencesStore.loadPreferences()
@@ -155,7 +164,7 @@ router.beforeEach(async (to, from, next) => {
     const requiresAuth = to.matched.some(r => r.meta.requiresAuth)
     const guestOnly = to.matched.some(r => r.meta.guestOnly)
 
-    // 3. Auth check
+    // 4. Auth check
     if (requiresAuth && !auth.isLoggedIn) {
         return next({ name: 'login' })
     }
@@ -163,17 +172,14 @@ router.beforeEach(async (to, from, next) => {
         return next({ name: 'home' })
     }
 
-    // 4. Capability check (most specific match wins — deepest route in hierarchy)
-    //    We check all matched route segments and pick the most specific one.
+    // 5. Capability check (most specific match wins — deepest route in hierarchy)
     if (auth.isLoggedIn) {
-        // Find the most-specific route that declares a requiresCapability
         const matchedWithCap = [...to.matched]
             .reverse()
             .find(r => r.meta?.requiresCapability)
 
         if (matchedWithCap) {
             const required = matchedWithCap.meta.requiresCapability
-
             if (!auth.hasCapability(required)) {
                 return next({ name: 'unauthorized', query: { from: to.fullPath } })
             }

@@ -1,21 +1,25 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { addIcons } from "oh-vue-icons";
 import { MdAlternateemailOutlined, RiLockPasswordLine, RiEyeLine, RiEyeOffLine } from "oh-vue-icons/icons";
 import { useAuthStore } from '@/stores/useAuthStore'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useToast } from '@/utils/toast'
 
 addIcons(MdAlternateemailOutlined, RiLockPasswordLine, RiEyeLine, RiEyeOffLine);
 
 const auth = useAuthStore()
 const router = useRouter()
+const route = useRoute()
 const { successToast, errorToast } = useToast()
 
 const email = ref('rupash.das.202@gmail.com')
 const password = ref('123123')
 const loading = ref(false)
 const showPassword = ref(false)
+
+// Show a contextual banner when redirected after deactivation
+const isDeactivated = computed(() => route.query.reason === 'deactivated')
 
 const fillCredentials = (type) => {
     if (type === 'superadmin') {
@@ -64,6 +68,26 @@ const handleLogin = async () => {
                 </router-link>
             </p>
         </div>
+
+        <!-- ── Deactivated account banner ───────────────────────── -->
+        <Transition name="slide-down">
+            <div v-if="isDeactivated"
+                class="mb-6 flex items-start gap-3 px-4 py-3.5 rounded-xl bg-red-50 border border-red-200">
+                <div class="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center shrink-0 mt-0.5">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-red-500" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-sm font-bold text-red-700 leading-tight">Account deactivated</p>
+                    <p class="text-xs text-red-500 mt-0.5 leading-relaxed">
+                        Your account has been deactivated. Please contact your administrator to regain access.
+                    </p>
+                </div>
+            </div>
+        </Transition>
 
         <!-- Quick Login Chips -->
         <div class="mb-7">
@@ -134,64 +158,31 @@ const handleLogin = async () => {
             <!-- Submit -->
             <button type="submit" :disabled="loading"
                 class="tazko-btn w-full py-3.5 rounded-xl text-sm font-bold tracking-wide mt-1 relative overflow-hidden group"
-                :class="loading ? 'opacity-70 cursor-not-allowed' : ''">
-                <span v-if="!loading" class="flex items-center justify-center gap-2">
-                    Sign In
-                    <svg class="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none"
-                        stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
-                            d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                    </svg>
-                </span>
-                <span v-else class="flex items-center justify-center gap-2">
-                    <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                :class="loading ? 'opacity-75 cursor-not-allowed' : ''">
+                <span class="relative z-10 flex items-center justify-center gap-2">
+                    <svg v-if="loading" class="w-4 h-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none"
+                        viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                     </svg>
-                    Signing in...
+                    {{ loading ? 'Signing in…' : 'Sign in' }}
                 </span>
             </button>
 
         </form>
 
-        <!-- Trust signals -->
-        <div class="mt-8 flex items-center justify-center gap-5">
-            <div class="flex items-center gap-1.5 text-text/30">
-                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd"
-                        d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
-                        clip-rule="evenodd" />
-                </svg>
-                <span class="text-[11px] font-medium">SSL Secured</span>
-            </div>
-            <div class="w-px h-3 bg-heading/10" />
-            <div class="flex items-center gap-1.5 text-text/30">
-                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd"
-                        d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                        clip-rule="evenodd" />
-                </svg>
-                <span class="text-[11px] font-medium">Privacy Protected</span>
-            </div>
-        </div>
-
     </div>
 </template>
 
 <style scoped>
-@keyframes fade-in {
-    from {
-        opacity: 0;
-        transform: translateY(12px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+.slide-down-enter-active,
+.slide-down-leave-active {
+    transition: all 0.25s ease;
 }
 
-.animate-fade-in {
-    animation: fade-in 0.45s ease both;
+.slide-down-enter-from,
+.slide-down-leave-to {
+    opacity: 0;
+    transform: translateY(-8px);
 }
 </style>

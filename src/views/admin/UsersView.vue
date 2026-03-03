@@ -430,7 +430,7 @@ onMounted(() => userStore.init())
 					<div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="closeUserPopup" />
 
 					<div
-						class="relative w-full max-w-sm bg-panel rounded-2xl shadow-2xl border border-heading/10 overflow-hidden">
+						class="relative w-full max-w-sm bg-panel rounded-2xl shadow-2xl border border-heading/10 overflow-hidden transition-all">
 
 						<!-- Header -->
 						<div class="px-6 py-5 border-b border-heading/8 flex items-start justify-between gap-3">
@@ -479,14 +479,14 @@ onMounted(() => userStore.init())
 											class="w-full px-3 py-2 text-sm bg-heading/5 border border-transparent focus:border-accent/30 rounded-lg outline-none transition-all"
 											:class="editErrors.name ? 'border-red-300 bg-red-50' : ''" />
 										<p v-if="editErrors.name" class="text-xs text-red-500 mt-1">{{ editErrors.name
-											}}</p>
+										}}</p>
 									</div>
 									<div>
 										<input v-model="editEmail" type="email" placeholder="Email"
 											class="w-full px-3 py-2 text-sm bg-heading/5 border border-transparent focus:border-accent/30 rounded-lg outline-none transition-all"
 											:class="editErrors.email ? 'border-red-300 bg-red-50' : ''" />
 										<p v-if="editErrors.email" class="text-xs text-red-500 mt-1">{{ editErrors.email
-											}}</p>
+										}}</p>
 									</div>
 									<button @click="handleUpdateUser" :disabled="userStore.loading.save"
 										class="w-full py-2 rounded-lg bg-accent text-white text-sm font-semibold hover:bg-accent/85 active:scale-95 transition-all disabled:opacity-40">
@@ -632,7 +632,8 @@ onMounted(() => userStore.init())
 			<Transition name="modal">
 				<div v-if="showDeleteConfirm" class="fixed inset-0 z-[60] flex items-center justify-center p-4">
 					<div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="showDeleteConfirm = false" />
-					<div class="relative w-full max-w-sm bg-panel rounded-2xl shadow-2xl p-6 border border-heading/10">
+					<div
+						class="relative w-full max-w-sm bg-panel rounded-2xl shadow-2xl p-6 border border-heading/10 transition-all">
 						<div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
 							<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-red-500" viewBox="0 0 24 24"
 								fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -663,7 +664,7 @@ onMounted(() => userStore.init())
 				<div v-if="showInviteModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
 					<div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="closeInviteModal" />
 					<div
-						class="relative w-full max-w-md bg-panel rounded-2xl shadow-2xl border border-heading/10 overflow-hidden">
+						class="relative w-full max-w-md bg-panel rounded-2xl shadow-2xl border border-heading/10 overflow-hidden transition-all">
 
 						<div class="px-6 py-5 border-b border-heading/8 flex items-center justify-between">
 							<div class="flex items-center gap-3">

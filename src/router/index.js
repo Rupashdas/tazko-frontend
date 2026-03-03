@@ -65,7 +65,7 @@ const routes = [
                 component: SystemSettingsView,
                 meta: {
                     requiresAuth: true,
-                    requiresCapability: 'settings.view', // must have this to enter
+                    requiresCapability: 'settings.view',
                 },
                 children: [
                     {
@@ -73,7 +73,7 @@ const routes = [
                         name: 'system-settings-roles',
                         component: RolesView,
                         meta: {
-                            requiresCapability: 'settings.roles.view',
+                            requiresCapability: 'roles.view',
                         },
                     },
                     {
@@ -81,7 +81,7 @@ const routes = [
                         name: 'system-settings-users',
                         component: UsersView,
                         meta: {
-                            requiresCapability: 'settings.users.view',
+                            requiresCapability: 'users.view',
                         },
                     },
                 ]

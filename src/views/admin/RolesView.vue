@@ -4,9 +4,6 @@ import { useRoleStore } from '@/stores/useRoleStore'
 import { useRolePermissions } from '@/composables/useRolePermissions'
 import { useToast } from '@/utils/toast'
 
-/*-----------------------
-| Store & composables
-------------------------*/
 const roleStore = useRoleStore()
 const { successToast, errorToast } = useToast()
 const {
@@ -17,47 +14,20 @@ const {
 	moduleSelectedCount,
 } = useRolePermissions()
 
-/*-----------------------
-| Local UI state
-------------------------*/
 const searchQuery = ref('')
 const showAddRole = ref(false)
 const newRoleName = ref('')
 const newRoleLabel = ref('')
 const showDeleteConfirm = ref(false)
 
-/*-----------------------
-| Computed
-------------------------*/
-const filteredCapabilities = computed(() =>
-	roleStore.filteredCapabilities(searchQuery.value)
-)
-
-const totalPermissions = computed(() => {
-	if (!roleStore.capabilities) return 0
-	return Object.values(roleStore.capabilities).reduce((sum, caps) => sum + caps.length, 0)
-})
-
-const selectedPermissionsCount = computed(() => {
-	if (!roleStore.selectedPermissions) return 0
-	return Object.values(roleStore.selectedPermissions).reduce((sum, list) => sum + list.length, 0)
-})
-
-const coveragePercent = computed(() => {
-	if (!totalPermissions.value) return 0
-	return Math.round((selectedPermissionsCount.value / totalPermissions.value) * 100)
-})
-
+const filteredCapabilities = computed(() => roleStore.filteredCapabilities(searchQuery.value))
+const totalPermissions = computed(() => Object.values(roleStore.capabilities || {}).reduce((sum, caps) => sum + caps.length, 0))
+const selectedPermissionsCount = computed(() => Object.values(roleStore.selectedPermissions || {}).reduce((sum, list) => sum + list.length, 0))
+const coveragePercent = computed(() => totalPermissions.value ? Math.round((selectedPermissionsCount.value / totalPermissions.value) * 100) : 0)
 const moduleList = computed(() => Object.keys(filteredCapabilities.value || {}))
 
-/*-----------------------
-| Lifecycle
-------------------------*/
 onMounted(() => roleStore.init())
 
-/*-----------------------
-| Handlers
-------------------------*/
 async function handleSave() {
 	const result = await roleStore.saveChanges()
 	result.success ? successToast('Changes saved!') : errorToast('Failed to save changes.')
@@ -65,11 +35,7 @@ async function handleSave() {
 
 async function handleDelete() {
 	const result = await roleStore.deleteRole()
-	if (result.success) {
-		showDeleteConfirm.value = false
-	} else {
-		errorToast('Failed to delete role.')
-	}
+	result.success ? (showDeleteConfirm.value = false) : errorToast('Failed to delete role.')
 }
 
 const generateRoleName = () => {
@@ -80,13 +46,8 @@ const generateRoleName = () => {
 }
 
 async function handleAddRole() {
-	const result = await roleStore.createRole({
-		name: newRoleName.value,
-		label: newRoleLabel.value,
-	})
-	if (result.success) {
-		closeModal()
-	}
+	const result = await roleStore.createRole({ name: newRoleName.value, label: newRoleLabel.value })
+	if (result.success) closeModal()
 }
 
 function closeModal() {
@@ -100,11 +61,7 @@ function getRoleInitial(label) {
 }
 
 function getModuleIcon(module) {
-	const icons = {
-		users: '👥', projects: '📁', tasks: '✅', settings: '⚙️',
-		reports: '📊', billing: '💳', roles: '🛡️', teams: '🤝',
-		dashboard: '🏠', files: '📄', messages: '💬', analytics: '📈',
-	}
+	const icons = { users: '👥', projects: '📁', tasks: '✅', settings: '⚙️', reports: '📊', billing: '💳', roles: '🛡️', teams: '🤝', dashboard: '🏠', files: '📄', messages: '💬', analytics: '📈' }
 	return icons[module?.toLowerCase()] || '🔧'
 }
 </script>
@@ -120,7 +77,6 @@ function getModuleIcon(module) {
 				<p class="text-sm text-text/60 font-medium">Loading roles…</p>
 			</div>
 		</Transition>
-
 		<!-- ── SIDEBAR ──────────────────────────────────────── -->
 		<aside class="w-64 border-r border-heading/10 bg-panel flex flex-col shrink-0 rounded-l-xl overflow-hidden">
 
@@ -142,7 +98,6 @@ function getModuleIcon(module) {
 					</button>
 				</div>
 			</div>
-
 			<!-- Role List -->
 			<ul class="flex-1 overflow-auto py-3 px-3 space-y-1">
 				<li v-for="role in roleStore.roles" :key="role.id">
@@ -339,10 +294,9 @@ function getModuleIcon(module) {
 										}" />
 									</div>
 									<span class="text-xs font-medium text-text/40 w-8 text-right">
-										{{ roleStore.capabilities[module]?.length
-											? Math.round(moduleSelectedCount(module) / roleStore.capabilities[module].length
-												* 100)
-											: 0 }}%
+										{{ roleStore.capabilities[module]?.length ?
+											Math.round(moduleSelectedCount(module) / roleStore.capabilities[module].length *
+												100) : 0 }}%
 									</span>
 								</div>
 
@@ -536,10 +490,14 @@ function getModuleIcon(module) {
 
 .fade-enter-active,
 .fade-leave-active {
-	transition: opacity 0.2s ease;
+	transition: opacity 0s ease;
 }
 
-.fade-enter-from,
+.fade-enter-from {
+	transition: opacity 0.2s ease;
+	opacity: 0;
+}
+
 .fade-leave-to {
 	opacity: 0;
 }

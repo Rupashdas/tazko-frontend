@@ -107,7 +107,6 @@ export const useAuthStore = defineStore('auth', {
 
                 const preferencesStore = usePreferencesStore()
                 preferencesStore.$reset()
-
                 return { success: true }
             } catch (err) {
                 this.user = null

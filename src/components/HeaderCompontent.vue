@@ -97,6 +97,7 @@ watch(() => route.fullPath, () => {
                             <v-icon class="w-8" v-else name="la-user-circle-solid" />
                         </button>
                         <!-- Dropdown -->
+
                         <Transition name="fade-up">
                             <div v-if="dropdownOpen"
                                 class="absolute top-16 -right-3 flex-col flex w-70 px-6 py-3 bg-panel rounded-md shadow-lg shadow-tazko-blue/10">
@@ -124,15 +125,11 @@ watch(() => route.fullPath, () => {
                                         class="dropdown-item text-accent flex align-center gap-1 hover:text-heading font-medium">
                                         <v-icon class="w-5" name="bi-palette" /> Preparences
                                     </router-link>
-                                    <router-link :to="{ name: 'system-settings' }"
-                                        class="dropdown-item text-accent flex align-center gap-1 hover:text-heading font-medium">
-                                        <v-icon class="w-5" name="co-settings" /> System Settings
-                                    </router-link>
-                                    <!-- <router-link v-if="auth.hasCapability('settings.view')"
+                                    <router-link v-if="auth.hasCapability('settings.view')"
                                         :to="{ name: 'system-settings' }"
                                         class="dropdown-item text-accent flex align-center gap-1 hover:text-heading font-medium">
                                         <v-icon class="w-5" name="co-settings" /> System Settings
-                                    </router-link> -->
+                                    </router-link>
                                     <button
                                         class="dropdown-item text-accent flex align-center gap-1 hover:text-heading font-medium logout"
                                         @click="handleLogout">

@@ -2,9 +2,6 @@ import { defineStore } from 'pinia'
 import axios from '@/axios'
 
 export const useRoleStore = defineStore('roles', {
-	/*-----------------------
-	| STATE
-	------------------------*/
 	state: () => ({
 		roles: [],
 		capabilities: {},
@@ -13,8 +10,7 @@ export const useRoleStore = defineStore('roles', {
 		collapsedModules: {},
 		loaded: false,
 		loading: {
-			roles: false,
-			capabilities: false,
+			page: false,
 			save: false,
 			delete: false,
 			create: false,
@@ -22,85 +18,73 @@ export const useRoleStore = defineStore('roles', {
 		errors: {},
 	}),
 
-	/*-----------------------
-	| GETTERS
-	------------------------*/
 	getters: {
-		isPageLoading: (state) => state.loading.roles || state.loading.capabilities,
-
+		isPageLoading: (state) => state.loading.page,
 		isSuperAdmin: (state) => state.selectedRole?.name === 'super-admin',
-
 		filteredCapabilities: (state) => (searchQuery = '') => {
 			if (!searchQuery.trim()) return state.capabilities
-
 			return Object.fromEntries(
-				Object.entries(state.capabilities).map(([module, caps]) => [
-					module,
-					caps.filter(c =>
-						c.label.toLowerCase().includes(searchQuery.toLowerCase())
-					),
-				]).filter(([, caps]) => caps.length > 0)
+				Object.entries(state.capabilities)
+					.map(([module, caps]) => [
+						module,
+						caps.filter(c =>
+							c.label.toLowerCase().includes(searchQuery.toLowerCase())
+						),
+					])
+					.filter(([, caps]) => caps.length > 0)
 			)
 		},
-
 		selectedCapabilityIds: (state) =>
 			Object.values(state.selectedPermissions).flat(),
 	},
 
-	/*-----------------------
-	| ACTIONS
-	------------------------*/
 	actions: {
-		// ── Fetch ──────────────────────────────────────────────
-		async fetchRoles() {
-			this.loading.roles = true
-			try {
-				const { data } = await axios.get('/api/roles')
-				this.roles = data
-				if (this.roles.length) this.selectRole(this.roles[0])
-			} catch (err) {
-				console.error('[RoleStore] fetchRoles:', err)
-			} finally {
-				this.loading.roles = false
-			}
-		},
-
-		async fetchCapabilities() {
-			this.loading.capabilities = true
-			try {
-				const { data } = await axios.get('/api/capabilities')
-				this.capabilities = data
-
-				// Initialise collapsed & permission buckets
-				Object.keys(this.capabilities).forEach(module => {
-					this.collapsedModules[module] = false
-					if (!this.selectedPermissions[module])
-						this.selectedPermissions[module] = []
-				})
-			} catch (err) {
-				console.error('[RoleStore] fetchCapabilities:', err)
-			} finally {
-				this.loading.capabilities = false
-			}
-		},
-
+		/*─────────────────────
+		| INIT (Parallel fetch, unified loader)
+		──────────────────────*/
 		async init() {
 			if (this.loaded) return
-			await Promise.all([this.fetchCapabilities(), this.fetchRoles()])
-			this.loaded = true
+
+			this.loading.page = true
+
+			try {
+				const [capRes, roleRes] = await Promise.all([
+					axios.get('/api/capabilities'),
+					axios.get('/api/roles'),
+				])
+
+				// Set capabilities
+				this.capabilities = capRes.data ?? {}
+				Object.keys(this.capabilities).forEach(module => {
+					if (!(module in this.collapsedModules)) this.collapsedModules[module] = false
+					if (!this.selectedPermissions[module]) this.selectedPermissions[module] = []
+				})
+
+				// Set roles
+				this.roles = roleRes.data.data ?? []
+				if (this.roles.length) this.selectRole(this.roles[0])
+
+				this.loaded = true
+			} catch (err) {
+				console.error('[RoleStore] init:', err)
+			} finally {
+				this.loading.page = false
+			}
 		},
 
-		// ── Select role ────────────────────────────────────────
 		selectRole(role) {
+			if (!role || !this.capabilities) return
 			this.selectedRole = role
 
+			// Reset permissions
 			Object.keys(this.capabilities).forEach(module => {
 				this.selectedPermissions[module] = []
 			})
 
+			if (!role.capabilities) return
 			role.capabilities.forEach(roleCap => {
-				const entry = Object.entries(this.capabilities).find(([, caps]) =>
-					caps.some(c => c.id === roleCap.id)
+				const entry = Object.entries(this.capabilities).find(
+					([, caps]) => caps.some(c => c.id === roleCap.id)
 				)
 				if (entry) {
 					const [module] = entry
@@ -109,54 +93,43 @@ export const useRoleStore = defineStore('roles', {
 			})
 		},
 
-		// ── Create ─────────────────────────────────────────────
 		async createRole({ name, label }) {
 			this.errors = {}
 			this.loading.create = true
 			try {
-				const { data } = await axios.post('/api/roles', {
-					name,
-					label,
-					capabilities: [],
-				})
-
-				const newRole = { ...data, capabilities: data.capabilities ?? [] }
-
+				const response = await axios.post('/api/roles', { name, label, capabilities: [] })
+				const newRole = response.data.data
 				this.roles.push(newRole)
 				this.selectRole(newRole)
 				return { success: true }
 			} catch (err) {
-				if (err.response?.status === 422) {
-					this.errors = err.response.data.errors
-				}
+				if (err.response) {
+					if (err.response.status === 422) this.errors = err.response.data.errors
+					else this.errors = { general: err.response.data.message || 'Forbidden' }
+				} else this.errors = { general: 'Network error' }
 				return { success: false, errors: this.errors }
 			} finally {
 				this.loading.create = false
 			}
 		},
 
-		// ── Save ───────────────────────────────────────────────
 		async saveChanges() {
 			if (!this.selectedRole) return
 			this.loading.save = true
 			try {
+				const capabilityIds = this.selectedCapabilityIds
 				await axios.put(`/api/roles/${this.selectedRole.id}`, {
 					name: this.selectedRole.name,
 					label: this.selectedRole.label,
-					capabilities: this.selectedCapabilityIds,
+					capabilities: capabilityIds,
 				})
 
 				const allCaps = Object.values(this.capabilities).flat()
-				const updatedCaps = allCaps.filter(c =>
-					this.selectedCapabilityIds.includes(c.id)
-				)
-
+				const updatedCaps = allCaps.filter(c => capabilityIds.includes(c.id))
 				this.selectedRole.capabilities = updatedCaps
 
 				const idx = this.roles.findIndex(r => r.id === this.selectedRole.id)
-				if (idx > -1) {
-					this.roles[idx].capabilities = updatedCaps
-				}
+				if (idx > -1) this.roles[idx].capabilities = updatedCaps
 
 				return { success: true }
 			} catch (err) {
@@ -167,7 +140,6 @@ export const useRoleStore = defineStore('roles', {
 			}
 		},
 
-		// ── Delete ─────────────────────────────────────────────
 		async deleteRole() {
 			if (!this.selectedRole) return
 			this.loading.delete = true

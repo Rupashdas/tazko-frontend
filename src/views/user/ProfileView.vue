@@ -31,6 +31,10 @@ const loading = ref(false)
 
 const { successToast, errorToast } = useToast()
 
+/* ── Capability flags ──────────────────────────────────────────── */
+const canUpdateProfile = computed(() => auth.hasCapability('users.profile.update'))
+const canChangePassword = computed(() => auth.hasCapability('users.password.change'))
+
 onMounted(async () => {
 	if (!auth.isLoggedIn) {
 		await router.push('/login')
@@ -63,6 +67,10 @@ const userInitials = computed(() => {
 const hasAvatar = computed(() => avatarPreview.value || user.value?.avatar)
 
 const handleProfileSave = async () => {
+	if (!canUpdateProfile.value) {
+		errorToast('You do not have permission to update your profile.')
+		return
+	}
 	if (!firstName.value || !lastName.value || !email.value) {
 		errorToast('Please fill in all required fields.')
 		return
@@ -71,6 +79,11 @@ const handleProfileSave = async () => {
 		errorToast('Passwords do not match.')
 		return
 	}
+	if (password.value && !canChangePassword.value) {
+		errorToast('You do not have permission to change your password.')
+		return
+	}
+
 	loading.value = true
 	const formData = new FormData()
 	formData.append('name', `${firstName.value} ${lastName.value}`)
@@ -79,7 +92,7 @@ const handleProfileSave = async () => {
 	formData.append('phone', phone.value || '')
 	formData.append('bio', bio.value || '')
 	formData.append('location', location.value || '')
-	if (password.value) {
+	if (password.value && canChangePassword.value) {
 		formData.append('password', password.value)
 		formData.append('password_confirmation', confirmPassword.value)
 	}
@@ -163,7 +176,6 @@ const removeAvatar = async () => {
 
 						<!-- Avatar display -->
 						<div class="relative w-28 h-28 mx-auto mb-4 group">
-							<!-- Avatar image / initials fallback -->
 							<div
 								class="w-28 h-28 rounded-full overflow-hidden ring-4 ring-accent/20 ring-offset-2 ring-offset-panel">
 								<img v-if="avatarPreview" :src="avatarPreview" alt="Avatar Preview"
@@ -178,7 +190,7 @@ const removeAvatar = async () => {
 							</div>
 
 							<!-- Remove hover overlay -->
-							<button v-if="hasAvatar" type="button" @click="removeAvatar"
+							<button v-if="hasAvatar && canUpdateProfile" type="button" @click="removeAvatar"
 								class="absolute inset-0 rounded-full bg-black/50 backdrop-blur-sm flex flex-col items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200 cursor-pointer">
 								<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" viewBox="0 0 24 24"
 									fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
@@ -193,8 +205,8 @@ const removeAvatar = async () => {
 						<h3 class="font-bold text-heading text-base leading-tight">{{ displayName }}</h3>
 						<p class="text-sm text-text/50 mt-0.5">{{ title || 'No title set' }}</p>
 
-						<!-- Change avatar button -->
-						<button type="button" @click="showModal = true"
+						<!-- Change avatar button — only if allowed -->
+						<button v-if="canUpdateProfile" type="button" @click="showModal = true"
 							class="mt-4 w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed border-accent/30 text-accent text-xs font-bold hover:bg-accent/5 hover:border-accent/60 transition-all duration-200 cursor-pointer">
 							<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
 								stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -203,6 +215,17 @@ const removeAvatar = async () => {
 							</svg>
 							Change Avatar
 						</button>
+
+						<!-- No permission notice for avatar -->
+						<div v-else
+							class="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-heading/8 text-text/30 text-xs">
+							<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"
+								stroke="currentColor" stroke-width="2" stroke-linecap="round">
+								<rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+								<path d="M7 11V7a5 5 0 0110 0v4" />
+							</svg>
+							Profile editing restricted
+						</div>
 					</div>
 
 					<!-- Quick Info Card -->
@@ -284,14 +307,14 @@ const removeAvatar = async () => {
 										First Name <span class="text-red-400 normal-case tracking-normal">*</span>
 									</label>
 									<input v-model="firstName" type="text" placeholder="John"
-										class="input-field text-sm" />
+										class="input-field text-sm" :disabled="!canUpdateProfile" />
 								</div>
 								<div>
 									<label class="block text-xs font-bold text-text/60 mb-1.5 uppercase tracking-wide">
 										Last Name <span class="text-red-400 normal-case tracking-normal">*</span>
 									</label>
-									<input v-model="lastName" type="text" placeholder="Doe"
-										class="input-field text-sm" />
+									<input v-model="lastName" type="text" placeholder="Doe" class="input-field text-sm"
+										:disabled="!canUpdateProfile" />
 								</div>
 							</div>
 
@@ -300,7 +323,7 @@ const removeAvatar = async () => {
 								<label class="block text-xs font-bold text-text/60 mb-1.5 uppercase tracking-wide">Job
 									Title</label>
 								<input v-model="title" type="text" placeholder="e.g. Senior Web Developer"
-									class="input-field text-sm" />
+									class="input-field text-sm" :disabled="!canUpdateProfile" />
 							</div>
 
 							<!-- Bio -->
@@ -311,7 +334,7 @@ const removeAvatar = async () => {
 										short intro</span>
 								</label>
 								<textarea v-model="bio" rows="3" placeholder="Tell your team a bit about yourself…"
-									class="input-field text-sm resize-none"></textarea>
+									class="input-field text-sm resize-none" :disabled="!canUpdateProfile"></textarea>
 								<p class="text-xs text-text/30 mt-1 text-right">{{ bio?.length || 0 }} chars</p>
 							</div>
 						</div>
@@ -353,7 +376,7 @@ const removeAvatar = async () => {
 											</svg>
 										</span>
 										<input v-model="email" type="email" placeholder="john@example.com"
-											class="input-field text-sm pl-9" />
+											class="input-field text-sm pl-9" :disabled="!canUpdateProfile" />
 									</div>
 								</div>
 
@@ -371,7 +394,7 @@ const removeAvatar = async () => {
 											</svg>
 										</span>
 										<input v-model="phone" type="tel" placeholder="+1 (555) 000-0000"
-											class="input-field text-sm pl-9" />
+											class="input-field text-sm pl-9" :disabled="!canUpdateProfile" />
 									</div>
 								</div>
 							</div>
@@ -389,14 +412,15 @@ const removeAvatar = async () => {
 										</svg>
 									</span>
 									<input v-model="location" type="text" placeholder="City, Country"
-										class="input-field text-sm pl-9" />
+										class="input-field text-sm pl-9" :disabled="!canUpdateProfile" />
 								</div>
 							</div>
 						</div>
 					</div>
 
-					<!-- Section: Security -->
-					<div class="bg-panel border border-heading/8 rounded-2xl shadow-sm overflow-hidden">
+					<!-- Section: Security — only shown if user has users.password.change -->
+					<div v-if="canChangePassword"
+						class="bg-panel border border-heading/8 rounded-2xl shadow-sm overflow-hidden">
 						<div class="px-6 py-4 border-b border-heading/6 flex items-center gap-3">
 							<div class="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
 								<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-amber-500"
@@ -423,14 +447,12 @@ const removeAvatar = async () => {
 										class="input-field text-sm pr-10" />
 									<button type="button" @click="showPassword = !showPassword"
 										class="absolute right-3 top-1/2 -translate-y-1/2 text-text/30 hover:text-text transition-colors">
-										<!-- Eye open -->
 										<svg v-if="!showPassword" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4"
 											viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
 											stroke-linecap="round">
 											<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
 											<circle cx="12" cy="12" r="3" />
 										</svg>
-										<!-- Eye closed -->
 										<svg v-else xmlns="http://www.w3.org/2000/svg" class="w-4 h-4"
 											viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
 											stroke-linecap="round">
@@ -471,7 +493,6 @@ const removeAvatar = async () => {
 										</svg>
 									</button>
 								</div>
-								<!-- Match indicator -->
 								<Transition name="slide-down">
 									<p v-if="confirmPassword && password !== confirmPassword"
 										class="text-xs text-red-400 mt-1 flex items-center gap-1">
@@ -495,10 +516,29 @@ const removeAvatar = async () => {
 						</div>
 					</div>
 
+					<!-- Password change not permitted notice -->
+					<div v-else class="bg-panel border border-heading/8 rounded-2xl shadow-sm overflow-hidden">
+						<div class="px-6 py-4 flex items-center gap-3">
+							<div class="w-8 h-8 rounded-lg bg-heading/6 flex items-center justify-center">
+								<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-text/30" viewBox="0 0 24 24"
+									fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+									<rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+									<path d="M7 11V7a5 5 0 0110 0v4" />
+								</svg>
+							</div>
+							<div>
+								<h2 class="text-sm font-bold text-heading/40 leading-none">Change Password</h2>
+								<p class="text-xs text-text/30 mt-0.5">You do not have permission to change your
+									password</p>
+							</div>
+						</div>
+					</div>
+
 					<!-- Save Button -->
 					<div class="flex justify-end">
-						<button type="submit" :disabled="loading"
-							class="inline-flex items-center gap-2.5 px-8 py-3 bg-accent text-white text-sm font-semibold rounded-xl shadow-md shadow-accent/25 hover:bg-accent/85 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50">
+						<button type="submit" :disabled="loading || !canUpdateProfile"
+							class="inline-flex items-center gap-2.5 px-8 py-3 bg-accent text-white text-sm font-semibold rounded-xl shadow-md shadow-accent/25 hover:bg-accent/85 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
+							:title="!canUpdateProfile ? 'You do not have permission to update your profile' : ''">
 							<svg v-if="loading" class="w-4 h-4 animate-spin" xmlns="http://www.w3.org/2000/svg"
 								fill="none" viewBox="0 0 24 24">
 								<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
@@ -519,6 +559,7 @@ const removeAvatar = async () => {
 				</div>
 			</div>
 		</form>
+
 		<!-- Avatar Crop Modal -->
 		<Teleport to="body">
 			<AvatarCropModal :show="showModal" @closeModal="showModal = false" @submitAvatar="processAvatar" />

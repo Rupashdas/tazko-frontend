@@ -11,6 +11,7 @@ export const useUserStore = defineStore('users', {
 			delete: false,
 			invite: false,
 			resend: false,
+			activate: false,
 		},
 		loaded: false,
 	}),
@@ -73,6 +74,33 @@ export const useUserStore = defineStore('users', {
 
 		/*── Users ───────────────────────────────────────────*/
 
+		async updateUser(userId, payload) {
+			this.loading.save = true
+			try {
+				const { data } = await axios.put(`/api/users/${userId}`, payload)
+				this._replaceUser(data.data)
+				return { success: true, message: data.message }
+			} catch (err) {
+				const errors = err.response?.data?.errors ?? {}
+				return { success: false, message: err.response?.data?.message ?? 'Failed to update user.', errors }
+			} finally {
+				this.loading.save = false
+			}
+		},
+
+		async toggleActive(userId) {
+			this.loading.activate = true
+			try {
+				const { data } = await axios.patch(`/api/users/${userId}/active`)
+				this._replaceUser(data.data)
+				return { success: true, message: data.message }
+			} catch (err) {
+				return { success: false, message: err.response?.data?.message ?? 'Failed to toggle activation.' }
+			} finally {
+				this.loading.activate = false
+			}
+		},
+
 		async assignRole(userId, roleId) {
 			this.loading.save = true
 			try {
@@ -99,13 +127,11 @@ export const useUserStore = defineStore('users', {
 			}
 		},
 
-		// force-reload (e.g. after invitation accepted)
-		async refresh() {
+		async reload() {
 			this.loaded = false
 			await this.init()
 		},
 
-		// internal
 		_replaceUser(updated) {
 			const idx = this.users.findIndex(u => u.id === updated.id)
 			if (idx !== -1) this.users[idx] = updated

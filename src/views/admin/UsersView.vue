@@ -8,27 +8,36 @@ const userStore = useUserStore()
 const authStore = useAuthStore()
 const { successToast, errorToast } = useToast()
 
-/* ── Capabilities ──────────────────────────────────────── */
+/* ── Capability flags ──────────────────────────────────────────── */
 const canCreate = computed(() => authStore.hasCapability('users.create'))
+const canUpdate = computed(() => authStore.hasCapability('users.update'))
 const canDelete = computed(() => authStore.hasCapability('users.delete'))
+const canActivate = computed(() => authStore.hasCapability('users.activate'))
 const canAssignRole = computed(() => authStore.hasCapability('users.role.assign'))
+const canViewProfile = computed(() => authStore.hasCapability('users.profile.view'))
 
-/* ── State ─────────────────────────────────────────────── */
+/* ── State ─────────────────────────────────────────────────────── */
 const searchQuery = ref('')
 const roleFilter = ref('All')
-const selectedUser = ref(null)   // user clicked → opens popup
+const selectedUser = ref(null)
 const showInviteModal = ref(false)
 const showDeleteConfirm = ref(false)
 const pendingDeleteId = ref(null)
+
+// Edit mode inside popup
+const editMode = ref(false)
+const editName = ref('')
+const editEmail = ref('')
+const editErrors = ref({})
 
 // Invite form
 const newUser = ref({ name: '', email: '', role_id: null })
 const inviteErrors = ref({})
 
-// Role change (inside popup)
+// Role change inside popup
 const pendingRoleId = ref(null)
 
-/* ── Computed ──────────────────────────────────────────── */
+/* ── Computed ───────────────────────────────────────────────────── */
 const users = computed(() => userStore.users)
 const roles = computed(() => userStore.roles.filter(r => r.name !== 'super-admin'))
 
@@ -48,11 +57,9 @@ const filteredUsers = computed(() => {
 	return list
 })
 
-/* ── Helpers ───────────────────────────────────────────── */
+/* ── Helpers ────────────────────────────────────────────────────── */
 const isOwnAccount = (userId) => authStore.user?.id === userId
-
-const getInitials = (name) =>
-	name?.split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase() || '?'
+const getInitials = (name) => name?.split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase() || '?'
 
 const avatarColors = [
 	{ bg: 'bg-violet-100', text: 'text-violet-600' },
@@ -63,7 +70,6 @@ const avatarColors = [
 	{ bg: 'bg-indigo-100', text: 'text-indigo-600' },
 ]
 const getAvatar = (id) => avatarColors[id % avatarColors.length]
-
 const getPrimaryRole = (user) => user.roles?.[0] ?? null
 
 const getRoleBadge = (roleName) => {
@@ -77,30 +83,79 @@ const getRoleBadge = (roleName) => {
 }
 
 const formatDate = (d) =>
-	d ? new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '—'
+	d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'
 
-/* ── Actions ───────────────────────────────────────────── */
+/* ── Popup ──────────────────────────────────────────────────────── */
 const openUserPopup = (user) => {
-	selectedUser.value = { ...user }
-	pendingRoleId.value = user.roles?.[0]?.id ?? null
+	selectedUser.value = user
+	pendingRoleId.value = getPrimaryRole(user)?.id ?? null
+	editMode.value = false
+	editName.value = user.name
+	editEmail.value = user.email
+	editErrors.value = {}
 }
 
 const closeUserPopup = () => {
 	selectedUser.value = null
-	pendingRoleId.value = null
+	editMode.value = false
+	editErrors.value = {}
 }
 
-const handleAssignRole = async () => {
-	if (!pendingRoleId.value) return
-	const res = await userStore.assignRole(selectedUser.value.id, pendingRoleId.value)
+/* ── Edit user name/email ───────────────────────────────────────── */
+const startEdit = () => {
+	editName.value = selectedUser.value.name
+	editEmail.value = selectedUser.value.email
+	editErrors.value = {}
+	editMode.value = true
+}
+
+const handleUpdateUser = async () => {
+	editErrors.value = {}
+	const res = await userStore.updateUser(selectedUser.value.id, {
+		name: editName.value,
+		email: editEmail.value,
+	})
 	if (res.success) {
 		successToast(res.message)
-		closeUserPopup()
+		// Update selectedUser reference
+		const updated = users.value.find(u => u.id === selectedUser.value.id)
+		if (updated) selectedUser.value = updated
+		editMode.value = false
+	} else {
+		if (res.errors) editErrors.value = Object.fromEntries(
+			Object.entries(res.errors).map(([k, v]) => [k, Array.isArray(v) ? v[0] : v])
+		)
+		else errorToast(res.message)
+	}
+}
+
+/* ── Activate / Deactivate ──────────────────────────────────────── */
+const handleToggleActive = async (user) => {
+	const res = await userStore.toggleActive(user.id)
+	if (res.success) {
+		successToast(res.message)
+		// Refresh selectedUser
+		const updated = users.value.find(u => u.id === user.id)
+		if (updated && selectedUser.value?.id === user.id) selectedUser.value = updated
 	} else {
 		errorToast(res.message)
 	}
 }
 
+/* ── Assign Role ────────────────────────────────────────────────── */
+const handleAssignRole = async () => {
+	if (!pendingRoleId.value) return
+	const res = await userStore.assignRole(selectedUser.value.id, pendingRoleId.value)
+	if (res.success) {
+		successToast(res.message)
+		const updated = users.value.find(u => u.id === selectedUser.value.id)
+		if (updated) selectedUser.value = updated
+	} else {
+		errorToast(res.message)
+	}
+}
+
+/* ── Delete ─────────────────────────────────────────────────────── */
 const confirmDelete = (userId) => {
 	pendingDeleteId.value = userId
 	showDeleteConfirm.value = true
@@ -111,14 +166,14 @@ const handleDelete = async () => {
 	if (res.success) {
 		successToast(res.message)
 		showDeleteConfirm.value = false
-		if (selectedUser.value?.id === pendingDeleteId.value) closeUserPopup()
 		pendingDeleteId.value = null
+		if (selectedUser.value?.id === pendingDeleteId.value) closeUserPopup()
 	} else {
 		errorToast(res.message)
 	}
 }
 
-/* ── Invite ────────────────────────────────────────────── */
+/* ── Invite ─────────────────────────────────────────────────────── */
 const validateInvite = () => {
 	const e = {}
 	if (!newUser.value.name.trim()) e.name = 'Name is required'
@@ -130,13 +185,11 @@ const validateInvite = () => {
 
 const handleInvite = async () => {
 	if (!validateInvite()) return
-
 	const res = await userStore.sendInvitation({
 		name: newUser.value.name,
 		email: newUser.value.email,
 		role_id: newUser.value.role_id || null,
 	})
-
 	if (res.success) {
 		successToast(res.message)
 		closeInviteModal()
@@ -163,7 +216,7 @@ onMounted(() => userStore.init())
 <template>
 	<div class="bg-body text-text min-h-[600px]">
 
-		<!-- ══ MAIN PANEL ════════════════════════════════ -->
+		<!-- ══ MAIN PANEL ════════════════════════════════════════ -->
 		<div class="flex flex-col bg-panel border border-heading/8 rounded-2xl shadow-sm overflow-hidden">
 
 			<!-- Top Bar -->
@@ -206,61 +259,53 @@ onMounted(() => userStore.init())
 				<div class="relative flex-1 max-w-xs">
 					<svg xmlns="http://www.w3.org/2000/svg"
 						class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text/35 pointer-events-none"
-						viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+						viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 						<circle cx="11" cy="11" r="8" />
 						<line x1="21" y1="21" x2="16.65" y2="16.65" />
 					</svg>
-					<input v-model="searchQuery" type="text" placeholder="Search by name or email…"
-						class="w-full pl-9 pr-9 py-2 rounded-lg border border-heading/12 bg-panel focus:border-accent focus:ring-2 focus:ring-accent/15 outline-none text-sm transition-all placeholder:text-text/30" />
-					<button v-if="searchQuery" @click="searchQuery = ''"
-						class="absolute right-3 top-1/2 -translate-y-1/2 text-text/30 hover:text-text transition-colors">
-						<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"
-							stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-							<line x1="18" y1="6" x2="6" y2="18" />
-							<line x1="6" y1="6" x2="18" y2="18" />
-						</svg>
+					<input v-model="searchQuery" type="text" placeholder="Search users…"
+						class="w-full pl-9 pr-4 py-2 text-sm bg-heading/5 border border-transparent focus:border-accent/30 focus:bg-panel rounded-lg outline-none transition-all" />
+				</div>
+
+				<!-- Role filter pills -->
+				<div class="flex items-center gap-1.5 flex-wrap">
+					<button v-for="r in ['All', ...roles.map(r => r.label)]" :key="r" @click="roleFilter = r"
+						class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all" :class="roleFilter === r
+							? 'bg-accent text-white'
+							: 'bg-heading/6 text-text/60 hover:bg-heading/10'">
+						{{ r }}
 					</button>
 				</div>
-
-				<div class="h-5 w-px bg-heading/10" />
-
-				<div class="flex items-center gap-1">
-					<button v-for="opt in ['All', ...roles.map(r => r.label)]" :key="opt" @click="roleFilter = opt"
-						class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
-						:class="roleFilter === opt ? 'bg-accent text-white shadow-sm' : 'text-text/55 hover:text-heading hover:bg-heading/6'">
-						{{ opt }}
-					</button>
-				</div>
-
-				<div class="ml-auto text-xs text-text/40 font-medium tabular-nums whitespace-nowrap">
-					{{ filteredUsers.length }} of {{ users.length }}
-				</div>
-			</div>
-
-			<!-- Loading state -->
-			<div v-if="userStore.loading.page" class="flex items-center justify-center py-24">
-				<div class="w-7 h-7 border-2 border-accent/30 border-t-accent rounded-full animate-spin" />
 			</div>
 
 			<!-- Table -->
-			<div v-else class="flex-1 overflow-auto">
-				<table class="w-full text-left">
-					<thead class="sticky top-0 z-10 bg-panel/95 backdrop-blur-sm">
-						<tr class="border-b border-heading/8">
-							<th class="px-7 py-3 text-[11px] font-bold uppercase tracking-widest text-text/35">Member
-							</th>
-							<th class="px-4 py-3 text-[11px] font-bold uppercase tracking-widest text-text/35">Role</th>
-							<th class="px-4 py-3 text-[11px] font-bold uppercase tracking-widest text-text/35">Joined
-							</th>
+			<div class="overflow-x-auto flex-1">
+				<table class="w-full min-w-[520px]">
+					<thead>
+						<tr class="border-b border-heading/6 bg-body/40">
 							<th
-								class="px-7 py-3 text-[11px] font-bold uppercase tracking-widest text-text/35 text-right">
+								class="px-7 py-3 text-left text-[11px] font-bold uppercase tracking-widest text-text/40">
+								User</th>
+							<th
+								class="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-widest text-text/40">
+								Role</th>
+							<th
+								class="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-widest text-text/40">
+								Status</th>
+							<th
+								class="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-widest text-text/40">
+								Joined</th>
+							<th
+								class="px-7 py-3 text-right text-[11px] font-bold uppercase tracking-widest text-text/40">
 								Actions</th>
 						</tr>
 					</thead>
 					<tbody class="divide-y divide-heading/5">
-						<tr v-for="user in filteredUsers" :key="user.id" @click="openUserPopup(user)"
-							class="group cursor-pointer transition-colors duration-100 hover:bg-heading/3">
+						<tr v-for="user in filteredUsers" :key="user.id"
+							class="group transition-colors hover:bg-heading/3"
+							:class="{ 'opacity-50': !user.is_active }">
 
+							<!-- Name / Email -->
 							<td class="px-7 py-3.5">
 								<div class="flex items-center gap-3">
 									<div class="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold shrink-0 transition-transform group-hover:scale-105"
@@ -272,15 +317,14 @@ onMounted(() => userStore.init())
 											<p class="text-sm font-semibold text-heading leading-tight truncate">{{
 												user.name }}</p>
 											<span v-if="isOwnAccount(user.id)"
-												class="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-accent/15 text-accent">
-												You
-											</span>
+												class="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-accent/15 text-accent">You</span>
 										</div>
 										<p class="text-xs text-text/45 mt-0.5 truncate">{{ user.email }}</p>
 									</div>
 								</div>
 							</td>
 
+							<!-- Role -->
 							<td class="px-4 py-3.5">
 								<span v-if="getPrimaryRole(user)"
 									class="inline-flex px-2.5 py-1 rounded-lg text-xs font-semibold"
@@ -290,22 +334,66 @@ onMounted(() => userStore.init())
 								<span v-else class="text-xs text-text/30 italic">No role</span>
 							</td>
 
+							<!-- Status badge -->
+							<td class="px-4 py-3.5">
+								<span
+									class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold"
+									:class="user.is_active
+										? 'bg-emerald-100 text-emerald-700'
+										: 'bg-red-100 text-red-600'">
+									<span class="w-1.5 h-1.5 rounded-full"
+										:class="user.is_active ? 'bg-emerald-500' : 'bg-red-400'" />
+									{{ user.is_active ? 'Active' : 'Inactive' }}
+								</span>
+							</td>
+
+							<!-- Joined date -->
 							<td class="px-4 py-3.5">
 								<span class="text-sm text-text/50">{{ formatDate(user.created_at) }}</span>
 							</td>
 
+							<!-- Actions -->
 							<td class="px-7 py-3.5 text-right">
 								<div class="flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
 									@click.stop>
-									<button @click="openUserPopup(user)"
+
+									<!-- View/Edit profile popup — requires users.profile.view OR users.update -->
+									<button v-if="canViewProfile || canUpdate" @click="openUserPopup(user)"
 										class="w-8 h-8 rounded-lg flex items-center justify-center text-text/40 hover:text-accent hover:bg-accent/10 transition-all"
-										title="Edit">
+										title="View / Edit">
 										<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24"
 											fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
 											<path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
 											<path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
 										</svg>
 									</button>
+
+									<!-- Activate / Deactivate toggle -->
+									<button
+										v-if="canActivate && !isOwnAccount(user.id) && !user.roles?.some(r => r.name === 'super-admin')"
+										@click="handleToggleActive(user)" :disabled="userStore.loading.activate"
+										:title="user.is_active ? 'Deactivate' : 'Activate'"
+										class="w-8 h-8 rounded-lg flex items-center justify-center transition-all disabled:opacity-40"
+										:class="user.is_active
+											? 'text-text/40 hover:text-amber-500 hover:bg-amber-50'
+											: 'text-text/40 hover:text-emerald-600 hover:bg-emerald-50'">
+										<!-- Deactivate icon -->
+										<svg v-if="user.is_active" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4"
+											viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+											stroke-linecap="round">
+											<circle cx="12" cy="12" r="10" />
+											<line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+										</svg>
+										<!-- Activate icon -->
+										<svg v-else xmlns="http://www.w3.org/2000/svg" class="w-4 h-4"
+											viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+											stroke-linecap="round">
+											<path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
+											<polyline points="22 4 12 14.01 9 11.01" />
+										</svg>
+									</button>
+
+									<!-- Delete -->
 									<button v-if="canDelete && !isOwnAccount(user.id)" @click="confirmDelete(user.id)"
 										class="w-8 h-8 rounded-lg flex items-center justify-center text-text/40 hover:text-red-500 hover:bg-red-50 transition-all"
 										title="Remove">
@@ -320,9 +408,7 @@ onMounted(() => userStore.init())
 						</tr>
 
 						<tr v-if="!filteredUsers.length">
-							<td colspan="4" class="px-7 py-16 text-center text-text/35 text-sm">
-								No users found.
-							</td>
+							<td colspan="5" class="px-7 py-16 text-center text-text/35 text-sm">No users found.</td>
 						</tr>
 					</tbody>
 				</table>
@@ -336,7 +422,7 @@ onMounted(() => userStore.init())
 			</div>
 		</div>
 
-		<!-- ══ USER POPUP MODAL ════════════════════════════ -->
+		<!-- ══ USER POPUP MODAL ══════════════════════════════════ -->
 		<Teleport to="body">
 			<Transition name="modal">
 				<div v-if="selectedUser" class="fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -345,6 +431,7 @@ onMounted(() => userStore.init())
 
 					<div
 						class="relative w-full max-w-sm bg-panel rounded-2xl shadow-2xl border border-heading/10 overflow-hidden">
+
 						<!-- Header -->
 						<div class="px-6 py-5 border-b border-heading/8 flex items-start justify-between gap-3">
 							<div class="flex items-center gap-3 min-w-0">
@@ -357,9 +444,7 @@ onMounted(() => userStore.init())
 										<p class="text-sm font-bold text-heading leading-tight truncate">{{
 											selectedUser.name }}</p>
 										<span v-if="isOwnAccount(selectedUser.id)"
-											class="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-accent/15 text-accent">
-											You
-										</span>
+											class="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-accent/15 text-accent">You</span>
 									</div>
 									<p class="text-xs text-text/45 mt-0.5 truncate">{{ selectedUser.email }}</p>
 								</div>
@@ -376,29 +461,130 @@ onMounted(() => userStore.init())
 
 						<!-- Body -->
 						<div class="p-6 space-y-5">
-							<!-- Info card -->
-							<div class="bg-body/60 border border-heading/6 rounded-xl divide-y divide-heading/6">
-								<div class="px-4 py-3 flex items-center justify-between gap-2">
-									<span class="text-xs text-text/40 font-medium">Current Role</span>
-									<span v-if="getPrimaryRole(selectedUser)"
-										class="text-xs font-semibold px-2.5 py-1 rounded-lg"
-										:class="getRoleBadge(getPrimaryRole(selectedUser).name)">
-										{{ getPrimaryRole(selectedUser).label }}
-									</span>
-									<span v-else class="text-xs text-text/30 italic">No role</span>
+
+							<!-- ── Edit Name/Email (users.update) ── -->
+							<div v-if="canUpdate && !isOwnAccount(selectedUser.id)">
+								<div class="flex items-center justify-between mb-2">
+									<p class="text-[11px] font-bold uppercase tracking-widest text-text/35">User Info
+									</p>
+									<button v-if="!editMode" @click="startEdit"
+										class="text-xs text-accent font-semibold hover:underline">Edit</button>
+									<button v-else @click="editMode = false"
+										class="text-xs text-text/40 font-semibold hover:text-text">Cancel</button>
 								</div>
-								<div class="px-4 py-3 flex items-center justify-between gap-2">
-									<span class="text-xs text-text/40 font-medium">Member since</span>
-									<span class="text-xs font-semibold text-heading">{{
-										formatDate(selectedUser.created_at) }}</span>
+
+								<div v-if="editMode" class="space-y-2">
+									<div>
+										<input v-model="editName" type="text" placeholder="Full name"
+											class="w-full px-3 py-2 text-sm bg-heading/5 border border-transparent focus:border-accent/30 rounded-lg outline-none transition-all"
+											:class="editErrors.name ? 'border-red-300 bg-red-50' : ''" />
+										<p v-if="editErrors.name" class="text-xs text-red-500 mt-1">{{ editErrors.name
+											}}</p>
+									</div>
+									<div>
+										<input v-model="editEmail" type="email" placeholder="Email"
+											class="w-full px-3 py-2 text-sm bg-heading/5 border border-transparent focus:border-accent/30 rounded-lg outline-none transition-all"
+											:class="editErrors.email ? 'border-red-300 bg-red-50' : ''" />
+										<p v-if="editErrors.email" class="text-xs text-red-500 mt-1">{{ editErrors.email
+											}}</p>
+									</div>
+									<button @click="handleUpdateUser" :disabled="userStore.loading.save"
+										class="w-full py-2 rounded-lg bg-accent text-white text-sm font-semibold hover:bg-accent/85 active:scale-95 transition-all disabled:opacity-40">
+										{{ userStore.loading.save ? 'Saving…' : 'Save Changes' }}
+									</button>
 								</div>
-								<div class="px-4 py-3 flex items-center justify-between gap-2">
-									<span class="text-xs text-text/40 font-medium">User ID</span>
-									<span class="text-xs font-mono text-text/50">#{{ selectedUser.id }}</span>
+
+								<!-- Read-only info card when not editing -->
+								<div v-else
+									class="bg-body/60 border border-heading/6 rounded-xl divide-y divide-heading/6">
+									<div class="px-4 py-3 flex items-center justify-between gap-2">
+										<span class="text-xs text-text/40 font-medium">Current Role</span>
+										<span v-if="getPrimaryRole(selectedUser)"
+											class="text-xs font-semibold px-2.5 py-1 rounded-lg"
+											:class="getRoleBadge(getPrimaryRole(selectedUser).name)">
+											{{ getPrimaryRole(selectedUser).label }}
+										</span>
+										<span v-else class="text-xs text-text/30 italic">No role</span>
+									</div>
+									<div class="px-4 py-3 flex items-center justify-between gap-2">
+										<span class="text-xs text-text/40 font-medium">Status</span>
+										<span class="inline-flex items-center gap-1.5 text-xs font-semibold"
+											:class="selectedUser.is_active ? 'text-emerald-600' : 'text-red-500'">
+											<span class="w-1.5 h-1.5 rounded-full"
+												:class="selectedUser.is_active ? 'bg-emerald-500' : 'bg-red-400'" />
+											{{ selectedUser.is_active ? 'Active' : 'Inactive' }}
+										</span>
+									</div>
+									<div class="px-4 py-3 flex items-center justify-between gap-2">
+										<span class="text-xs text-text/40 font-medium">Member since</span>
+										<span class="text-xs font-semibold text-heading">{{
+											formatDate(selectedUser.created_at) }}</span>
+									</div>
 								</div>
 							</div>
 
-							<!-- Change Role — hidden for own account -->
+							<!-- ── Read-only info (no users.update) ── -->
+							<div v-else>
+								<p class="text-[11px] font-bold uppercase tracking-widest text-text/35 mb-2">User Info
+								</p>
+								<div class="bg-body/60 border border-heading/6 rounded-xl divide-y divide-heading/6">
+									<div class="px-4 py-3 flex items-center justify-between gap-2">
+										<span class="text-xs text-text/40 font-medium">Current Role</span>
+										<span v-if="getPrimaryRole(selectedUser)"
+											class="text-xs font-semibold px-2.5 py-1 rounded-lg"
+											:class="getRoleBadge(getPrimaryRole(selectedUser).name)">
+											{{ getPrimaryRole(selectedUser).label }}
+										</span>
+										<span v-else class="text-xs text-text/30 italic">No role</span>
+									</div>
+									<div class="px-4 py-3 flex items-center justify-between gap-2">
+										<span class="text-xs text-text/40 font-medium">Status</span>
+										<span class="inline-flex items-center gap-1.5 text-xs font-semibold"
+											:class="selectedUser.is_active ? 'text-emerald-600' : 'text-red-500'">
+											<span class="w-1.5 h-1.5 rounded-full"
+												:class="selectedUser.is_active ? 'bg-emerald-500' : 'bg-red-400'" />
+											{{ selectedUser.is_active ? 'Active' : 'Inactive' }}
+										</span>
+									</div>
+									<div class="px-4 py-3 flex items-center justify-between gap-2">
+										<span class="text-xs text-text/40 font-medium">Member since</span>
+										<span class="text-xs font-semibold text-heading">{{
+											formatDate(selectedUser.created_at) }}</span>
+									</div>
+									<div class="px-4 py-3 flex items-center justify-between gap-2">
+										<span class="text-xs text-text/40 font-medium">User ID</span>
+										<span class="text-xs font-mono text-text/50">#{{ selectedUser.id }}</span>
+									</div>
+								</div>
+							</div>
+
+							<!-- ── Activate / Deactivate (users.activate) ── -->
+							<div
+								v-if="canActivate && !isOwnAccount(selectedUser.id) && !selectedUser.roles?.some(r => r.name === 'super-admin')">
+								<p class="text-[11px] font-bold uppercase tracking-widest text-text/35 mb-2">Account
+									Status</p>
+								<button @click="handleToggleActive(selectedUser)" :disabled="userStore.loading.activate"
+									class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold border active:scale-95 transition-all disabled:opacity-40"
+									:class="selectedUser.is_active
+										? 'bg-amber-50 hover:bg-amber-100 text-amber-600 border-amber-100'
+										: 'bg-emerald-50 hover:bg-emerald-100 text-emerald-600 border-emerald-100'">
+									<svg v-if="selectedUser.is_active" xmlns="http://www.w3.org/2000/svg"
+										class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+										stroke-width="2" stroke-linecap="round">
+										<circle cx="12" cy="12" r="10" />
+										<line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+									</svg>
+									<svg v-else xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24"
+										fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+										<path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
+										<polyline points="22 4 12 14.01 9 11.01" />
+									</svg>
+									{{ userStore.loading.activate ? 'Processing…' : (selectedUser.is_active ?
+										'Deactivate User' : 'Activate User') }}
+								</button>
+							</div>
+
+							<!-- ── Assign Role (users.role.assign) ── -->
 							<div v-if="canAssignRole && !isOwnAccount(selectedUser.id)">
 								<p class="text-[11px] font-bold uppercase tracking-widest text-text/35 mb-2">Assign Role
 								</p>
@@ -413,7 +599,6 @@ onMounted(() => userStore.init())
 										{{ r.label }}
 									</button>
 								</div>
-
 								<button @click="handleAssignRole"
 									:disabled="userStore.loading.save || pendingRoleId === getPrimaryRole(selectedUser)?.id"
 									class="mt-3 w-full py-2.5 rounded-xl bg-accent text-white text-sm font-semibold hover:bg-accent/85 active:scale-95 transition-all shadow-sm disabled:opacity-40 disabled:cursor-not-allowed">
@@ -421,7 +606,7 @@ onMounted(() => userStore.init())
 								</button>
 							</div>
 
-							<!-- Danger Zone — hidden for own account -->
+							<!-- ── Danger Zone: Delete (users.delete) ── -->
 							<div v-if="canDelete && !isOwnAccount(selectedUser.id)"
 								class="border-t border-heading/6 pt-4">
 								<p class="text-[11px] font-bold uppercase tracking-widest text-text/35 mb-2">Danger Zone
@@ -442,96 +627,7 @@ onMounted(() => userStore.init())
 			</Transition>
 		</Teleport>
 
-		<!-- ══ INVITE MODAL ════════════════════════════════ -->
-		<Teleport to="body">
-			<Transition name="modal">
-				<div v-if="showInviteModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-					<div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="closeInviteModal" />
-
-					<div
-						class="relative w-full max-w-md bg-panel rounded-2xl shadow-2xl border border-heading/10 overflow-hidden">
-						<div class="px-6 py-5 border-b border-heading/8 flex items-center justify-between">
-							<div class="flex items-center gap-3">
-								<div class="w-9 h-9 rounded-xl bg-accent/10 flex items-center justify-center">
-									<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-accent"
-										viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-										stroke-linecap="round">
-										<path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2" />
-										<circle cx="9" cy="7" r="4" />
-										<line x1="19" y1="8" x2="25" y2="8" />
-										<line x1="22" y1="5" x2="22" y2="11" />
-									</svg>
-								</div>
-								<h2 class="text-lg font-bold text-heading">Invite Member</h2>
-							</div>
-							<button @click="closeInviteModal"
-								class="w-7 h-7 rounded-lg flex items-center justify-center text-text/40 hover:text-text hover:bg-heading/8 transition-all">
-								<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
-									stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-									<line x1="18" y1="6" x2="6" y2="18" />
-									<line x1="6" y1="6" x2="18" y2="18" />
-								</svg>
-							</button>
-						</div>
-
-						<div class="p-6 space-y-4">
-							<!-- Name -->
-							<div>
-								<label class="block text-sm font-semibold text-heading mb-1.5">Full Name <span
-										class="text-red-400">*</span></label>
-								<input v-model="newUser.name" type="text" placeholder="Jane Smith"
-									class="w-full px-4 py-2.5 rounded-xl border text-sm outline-none transition-all bg-panel focus:ring-2 focus:ring-accent/20 focus:border-accent"
-									:class="inviteErrors.name ? 'border-red-400' : 'border-heading/15'" />
-								<p v-if="inviteErrors.name" class="text-red-500 text-xs mt-1">{{ inviteErrors.name }}
-								</p>
-							</div>
-
-							<!-- Email -->
-							<div>
-								<label class="block text-sm font-semibold text-heading mb-1.5">Email Address <span
-										class="text-red-400">*</span></label>
-								<input v-model="newUser.email" type="email" placeholder="jane@example.com"
-									class="w-full px-4 py-2.5 rounded-xl border text-sm outline-none transition-all bg-panel focus:ring-2 focus:ring-accent/20 focus:border-accent"
-									:class="inviteErrors.email ? 'border-red-400' : 'border-heading/15'" />
-								<p v-if="inviteErrors.email" class="text-red-500 text-xs mt-1">{{ inviteErrors.email }}
-								</p>
-							</div>
-
-							<!-- Role -->
-							<div>
-								<label class="block text-sm font-semibold text-heading mb-1.5">Role</label>
-								<div class="grid grid-cols-2 gap-1.5">
-									<button v-for="r in roles" :key="r.id"
-										@click="newUser.role_id = newUser.role_id === r.id ? null : r.id"
-										class="flex items-center gap-2 px-3.5 py-2 rounded-xl border text-sm font-medium transition-all"
-										:class="newUser.role_id === r.id
-											? 'border-accent/50 bg-accent/8 text-accent'
-											: 'border-heading/12 hover:border-heading/20 hover:bg-heading/4 text-text/60'">
-										{{ r.label }}
-									</button>
-								</div>
-							</div>
-						</div>
-
-						<div class="px-6 py-4 border-t border-heading/8 flex items-center justify-between gap-3">
-							<p class="text-xs text-text/35">An account will be created for this user.</p>
-							<div class="flex gap-2 shrink-0">
-								<button @click="closeInviteModal"
-									class="px-4 py-2 rounded-xl text-sm font-semibold bg-heading/8 hover:bg-heading/12 text-text transition-colors">
-									Cancel
-								</button>
-								<button @click="handleInvite" :disabled="userStore.loading.invite"
-									class="px-5 py-2 rounded-xl text-sm font-semibold bg-accent text-white hover:bg-accent/85 transition-all shadow-sm active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed">
-									{{ userStore.loading.invite ? 'Inviting…' : 'Send Invite' }}
-								</button>
-							</div>
-						</div>
-					</div>
-				</div>
-			</Transition>
-		</Teleport>
-
-		<!-- ══ DELETE CONFIRM ══════════════════════════════ -->
+		<!-- ══ DELETE CONFIRM ════════════════════════════════════ -->
 		<Teleport to="body">
 			<Transition name="modal">
 				<div v-if="showDeleteConfirm" class="fixed inset-0 z-[60] flex items-center justify-center p-4">
@@ -555,6 +651,94 @@ onMounted(() => userStore.init())
 								class="flex-1 py-2.5 rounded-lg text-sm font-semibold bg-red-500 text-white hover:bg-red-600 transition-all disabled:opacity-50">
 								{{ userStore.loading.delete ? 'Removing…' : 'Yes, Remove' }}
 							</button>
+						</div>
+					</div>
+				</div>
+			</Transition>
+		</Teleport>
+
+		<!-- ══ INVITE MODAL ══════════════════════════════════════ -->
+		<Teleport to="body">
+			<Transition name="modal">
+				<div v-if="showInviteModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+					<div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="closeInviteModal" />
+					<div
+						class="relative w-full max-w-md bg-panel rounded-2xl shadow-2xl border border-heading/10 overflow-hidden">
+
+						<div class="px-6 py-5 border-b border-heading/8 flex items-center justify-between">
+							<div class="flex items-center gap-3">
+								<div class="w-9 h-9 rounded-xl bg-accent/10 flex items-center justify-center">
+									<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-accent"
+										viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+										stroke-linecap="round">
+										<path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2" />
+										<circle cx="9" cy="7" r="4" />
+										<line x1="19" y1="8" x2="25" y2="8" />
+										<line x1="22" y1="5" x2="22" y2="11" />
+									</svg>
+								</div>
+								<div>
+									<h3 class="text-sm font-bold text-heading">Invite User</h3>
+									<p class="text-xs text-text/40 mt-0.5">Send an invitation by email</p>
+								</div>
+							</div>
+							<button @click="closeInviteModal"
+								class="w-7 h-7 rounded-lg flex items-center justify-center text-text/30 hover:text-text hover:bg-heading/8 transition-all">
+								<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
+									stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+									<line x1="18" y1="6" x2="6" y2="18" />
+									<line x1="6" y1="6" x2="18" y2="18" />
+								</svg>
+							</button>
+						</div>
+
+						<div class="p-6 space-y-4">
+							<div>
+								<label class="block text-xs font-bold text-text/60 mb-1.5 uppercase tracking-wide">Full
+									Name</label>
+								<input v-model="newUser.name" type="text" placeholder="John Doe"
+									class="w-full px-3.5 py-2.5 text-sm bg-heading/5 border border-transparent focus:border-accent/30 focus:bg-panel rounded-xl outline-none transition-all"
+									:class="inviteErrors.name ? 'border-red-300 bg-red-50' : ''" />
+								<p v-if="inviteErrors.name" class="text-xs text-red-500 mt-1">{{ inviteErrors.name }}
+								</p>
+							</div>
+							<div>
+								<label class="block text-xs font-bold text-text/60 mb-1.5 uppercase tracking-wide">Email
+									Address</label>
+								<input v-model="newUser.email" type="email" placeholder="john@example.com"
+									class="w-full px-3.5 py-2.5 text-sm bg-heading/5 border border-transparent focus:border-accent/30 focus:bg-panel rounded-xl outline-none transition-all"
+									:class="inviteErrors.email ? 'border-red-300 bg-red-50' : ''" />
+								<p v-if="inviteErrors.email" class="text-xs text-red-500 mt-1">{{ inviteErrors.email }}
+								</p>
+							</div>
+							<div>
+								<label class="block text-xs font-bold text-text/60 mb-2 uppercase tracking-wide">Role
+									(optional)</label>
+								<div class="flex flex-wrap gap-2">
+									<button v-for="r in roles" :key="r.id"
+										@click="newUser.role_id = newUser.role_id === r.id ? null : r.id"
+										class="flex items-center gap-2 px-3.5 py-2 rounded-xl border text-sm font-medium transition-all"
+										:class="newUser.role_id === r.id
+											? 'border-accent/50 bg-accent/8 text-accent'
+											: 'border-heading/12 hover:border-heading/20 hover:bg-heading/4 text-text/60'">
+										{{ r.label }}
+									</button>
+								</div>
+							</div>
+						</div>
+
+						<div class="px-6 py-4 border-t border-heading/8 flex items-center justify-between gap-3">
+							<p class="text-xs text-text/35">An invitation email will be sent.</p>
+							<div class="flex gap-2 shrink-0">
+								<button @click="closeInviteModal"
+									class="px-4 py-2 rounded-xl text-sm font-semibold bg-heading/8 hover:bg-heading/12 text-text transition-colors">
+									Cancel
+								</button>
+								<button @click="handleInvite" :disabled="userStore.loading.invite"
+									class="px-5 py-2 rounded-xl text-sm font-semibold bg-accent text-white hover:bg-accent/85 transition-all shadow-sm active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed">
+									{{ userStore.loading.invite ? 'Inviting…' : 'Send Invite' }}
+								</button>
+							</div>
 						</div>
 					</div>
 				</div>

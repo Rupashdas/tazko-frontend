@@ -344,12 +344,12 @@ function getModuleIcon(module) {
 								@click="roleStore.collapsedModules[module] = !roleStore.collapsedModules[module]">
 								<div class="flex items-center gap-3 min-w-0">
 									<span class="text-lg leading-none shrink-0">{{ getModuleIcon(module) }}</span>
-									<div class="text-left min-w-0">
+									<div class="text-left min-w-0 flex w-full items-center gap-2">
 										<h3 class="font-semibold capitalize text-heading text-sm">{{ module }}</h3>
-										<p class="text-xs text-text/40 mt-0.5">
+										<p class="text-xs text-text/80 mt-0.5">(
 											{{ moduleSelectedCount(module) }} of {{
 												roleStore.capabilities[module]?.length }}
-											permission{{ roleStore.capabilities[module]?.length !== 1 ? 's' : '' }}
+											permission{{ roleStore.capabilities[module]?.length !== 1 ? 's' : '' }} )
 										</p>
 									</div>
 								</div>
@@ -559,7 +559,7 @@ function getModuleIcon(module) {
 				<div v-if="showAddRole && canCreate" class="fixed inset-0 z-50 flex items-center justify-center p-4">
 					<div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="closeModal" />
 					<div
-						class="relative w-full max-w-md bg-panel rounded-2xl shadow-2xl border border-heading/10 overflow-hidden">
+						class="relative w-full max-w-md bg-panel rounded-2xl shadow-2xl border border-heading/10 overflow-hidden transition-all">
 
 						<div class="px-6 py-5 border-b border-heading/10 flex items-center justify-between">
 							<div class="flex items-center gap-3">

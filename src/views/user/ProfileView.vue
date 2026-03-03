@@ -83,9 +83,6 @@ const handleProfileSave = async () => {
 		formData.append('password', password.value)
 		formData.append('password_confirmation', confirmPassword.value)
 	}
-	if (avatarFile.value) {
-		formData.append('avatar', avatarFile.value)
-	}
 	const response = await auth.updateProfile(formData)
 	if (response.success) {
 		successToast(response.message)
@@ -105,8 +102,24 @@ const handleProfileSave = async () => {
 
 const processAvatar = async (file) => {
 	if (!file) return
-	avatarFile.value = file
-	avatarPreview.value = URL.createObjectURL(file)
+	try {
+		loading.value = true
+		const formData = new FormData()
+		formData.append('avatar', file)
+		const response = await axios.post('/api/upload-avatar', formData)
+		if (response.data.status === 'success') {
+			auth.user.avatar = response.data.user.avatar
+			avatarPreview.value = null
+			avatarFile.value = null
+			successToast(response.data.message || 'Avatar updated')
+		} else {
+			errorToast(response.data.message || 'Failed to update avatar')
+		}
+	} catch (err) {
+		errorToast(err.response?.data?.message || 'Something went wrong')
+	} finally {
+		loading.value = false
+	}
 }
 
 const removeAvatar = async () => {

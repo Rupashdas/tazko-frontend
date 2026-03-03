@@ -6,9 +6,59 @@ export const useAuthStore = defineStore('auth', {
         user: null,
         authChecked: false,
     }),
+
     getters: {
         isLoggedIn: (state) => !!state.user,
+
+        /**
+         * Returns true if the current user has the super-admin role.
+         * Super-admins bypass all capability checks.
+         */
+        isSuperAdmin: (state) => {
+            return state.user?.roles?.some(r => r.name === 'super-admin') ?? false
+        },
+
+        /**
+         * Check if the logged-in user has a specific capability.
+         * Capabilities live on the role objects returned from /api/user.
+         *
+         * Usage:
+         *   auth.hasCapability('settings.view')
+         *   auth.hasCapability('settings.roles.manage')
+         */
+        hasCapability: (state) => (capabilityName) => {
+            if (!state.user) return false
+
+            // super-admin bypasses all checks
+            if (state.user.roles?.some(r => r.name === 'super-admin')) {
+                return true
+            }
+
+            // Check across all roles
+            return state.user.roles?.some(role =>
+                role.capabilities?.some(cap => cap.name === capabilityName)
+            ) ?? false
+        },
+
+        /**
+         * Check if the user has any of the given capabilities.
+         *
+         * Usage:
+         *   auth.hasAnyCapability(['settings.view', 'settings.users.view'])
+         */
+        hasAnyCapability: (state) => (capabilityNames) => {
+            if (!state.user) return false
+
+            if (state.user.roles?.some(r => r.name === 'super-admin')) {
+                return true
+            }
+
+            return state.user.roles?.some(role =>
+                role.capabilities?.some(cap => capabilityNames.includes(cap.name))
+            ) ?? false
+        },
     },
+
     actions: {
         async login(email, password) {
             try {

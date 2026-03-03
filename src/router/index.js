@@ -12,17 +12,14 @@ import ResetPasswordView from '@/views/auth/ResetPasswordView.vue';
 import ProfileView from '@/views/user/ProfileView.vue';
 import PreferencesView from '@/views/user/PreferencesView.vue';
 import SystemSettingsView from '@/views/admin/SystemSettingsView.vue';
-import RolesView from '@/views/admin/RolesView.vue'
-import UsersView from '@/views/admin/UsersView.vue'
-
+import RolesView from '@/views/admin/RolesView.vue';
+import UsersView from '@/views/admin/UsersView.vue';
+import UnauthorizedView from '@/views/errors/UnauthorizedView.vue';
 
 import HomeView from '@/views/HomeView.vue';
 import PingsView from '@/views/PingsView.vue';
 
-
-
 const routes = [
-
     {
         path: '/',
         component: MainLayout,
@@ -48,25 +45,47 @@ const routes = [
                 name: 'preferences',
                 component: PreferencesView,
             },
+
+            // 403 page
+            {
+                path: 'unauthorized',
+                name: 'unauthorized',
+                component: UnauthorizedView,
+            },
+
+            /*-----------------------------------------------------------------
+            | System Settings — capability-guarded
+            | Requires: settings.view  (to enter the settings section at all)
+            | Sub-routes have their own capability checks inside the views.
+            -----------------------------------------------------------------*/
             {
                 path: 'system-settings',
                 name: 'system-settings',
                 redirect: { name: 'system-settings-roles' },
                 component: SystemSettingsView,
+                meta: {
+                    requiresAuth: true,
+                    requiresCapability: 'settings.view', // must have this to enter
+                },
                 children: [
                     {
                         path: 'roles',
                         name: 'system-settings-roles',
                         component: RolesView,
+                        meta: {
+                            requiresCapability: 'settings.roles.view',
+                        },
                     },
                     {
                         path: 'users',
                         name: 'system-settings-users',
                         component: UsersView,
+                        meta: {
+                            requiresCapability: 'settings.users.view',
+                        },
                     },
                 ]
             },
-
         ]
     },
 
@@ -97,17 +116,18 @@ const routes = [
             },
         ]
     },
-
 ]
+
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
     routes
 })
-export default router;
 
 router.beforeEach(async (to, from, next) => {
     const auth = useAuthStore()
     const preferencesStore = usePreferencesStore()
+
+    // 1. Ensure auth state is resolved
     if (!auth.authChecked) {
         try {
             await auth.fetchUser()
@@ -116,6 +136,7 @@ router.beforeEach(async (to, from, next) => {
         }
     }
 
+    // 2. Load preferences after login
     if (auth.isLoggedIn && !preferencesStore.loaded) {
         try {
             await preferencesStore.loadPreferences()
@@ -124,9 +145,10 @@ router.beforeEach(async (to, from, next) => {
         }
     }
 
-    const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
-    const guestOnly = to.matched.some(record => record.meta.guestOnly)
+    const requiresAuth = to.matched.some(r => r.meta.requiresAuth)
+    const guestOnly = to.matched.some(r => r.meta.guestOnly)
 
+    // 3. Auth check
     if (requiresAuth && !auth.isLoggedIn) {
         return next({ name: 'login' })
     }
@@ -134,5 +156,24 @@ router.beforeEach(async (to, from, next) => {
         return next({ name: 'home' })
     }
 
+    // 4. Capability check (most specific match wins — deepest route in hierarchy)
+    //    We check all matched route segments and pick the most specific one.
+    if (auth.isLoggedIn) {
+        // Find the most-specific route that declares a requiresCapability
+        const matchedWithCap = [...to.matched]
+            .reverse()
+            .find(r => r.meta?.requiresCapability)
+
+        if (matchedWithCap) {
+            const required = matchedWithCap.meta.requiresCapability
+
+            if (!auth.hasCapability(required)) {
+                return next({ name: 'unauthorized', query: { from: to.fullPath } })
+            }
+        }
+    }
+
     return next()
 })
+
+export default router

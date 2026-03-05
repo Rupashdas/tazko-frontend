@@ -622,7 +622,6 @@ function getModuleIcon(module) {
 				</div>
 			</Transition>
 		</Teleport>
-
 	</div>
 </template>
 

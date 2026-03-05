@@ -24,10 +24,10 @@ const isDeactivated = computed(() => route.query.reason === 'deactivated')
 const fillCredentials = (type) => {
     if (type === 'superadmin') {
         email.value = 'admin@example.com'
-        password.value = 'password1234'
+        password.value = 'Pass123#'
     } else {
         email.value = 'rupash.das.202@gmail.com'
-        password.value = '123123'
+        password.value = 'Pass123#'
     }
 }
 

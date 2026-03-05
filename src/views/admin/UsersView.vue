@@ -772,14 +772,14 @@ onMounted(() => userStore.init())
 								<p class="text-[11px] font-bold uppercase tracking-widest text-text/35 mb-2">Assign Role
 								</p>
 								<div class="grid grid-cols-1 gap-1.5">
-									<button v-for="r in roles" :key="r.id" @click="pendingRoleId = r.id"
+									<button v-for="role in roles" :key="role.id" @click="pendingRoleId = role.id"
 										class="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border text-sm font-medium transition-all"
-										:class="pendingRoleId === r.id
+										:class="pendingRoleId === role.id
 											? 'border-accent/40 bg-accent/8 text-accent'
 											: 'border-heading/10 hover:border-heading/20 hover:bg-heading/4 text-text/70'">
 										<span class="w-2 h-2 rounded-full border-2 shrink-0 transition-colors"
-											:class="pendingRoleId === r.id ? 'border-accent bg-accent' : 'border-text/20'" />
-										{{ r.label }}
+											:class="pendingRoleId === role.id ? 'border-accent bg-accent' : 'border-text/20'" />
+										{{ role.label }}
 									</button>
 								</div>
 								<button @click="handleAssignRole"
@@ -898,14 +898,15 @@ onMounted(() => userStore.init())
 							<div>
 								<label class="block text-xs font-bold text-text/60 mb-2 uppercase tracking-wide">Role
 									(optional)</label>
+
 								<div class="flex flex-wrap gap-2">
-									<button v-for="r in roles" :key="r.id"
-										@click="newUser.role_id = newUser.role_id === r.id ? null : r.id"
+									<button v-for="role in roles" :key="role.id"
+										@click="newUser.role_id = newUser.role_id === role.id ? null : role.id"
 										class="flex items-center gap-2 px-3.5 py-2 rounded-xl border text-sm font-medium transition-all"
-										:class="newUser.role_id === r.id
+										:class="newUser.role_id === role.id
 											? 'border-accent/50 bg-accent/8 text-accent'
 											: 'border-heading/12 hover:border-heading/20 hover:bg-heading/4 text-text/60'">
-										{{ r.label }}
+										{{ role.label }}
 									</button>
 								</div>
 							</div>

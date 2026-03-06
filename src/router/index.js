@@ -21,6 +21,7 @@ import PingsView from '@/views/PingsView.vue';
 import ProjectsView from '@/views/projects/ProjectsView.vue';
 import ProjectDetailView from '@/views/projects/Projectdetailview.vue';
 import TasksView from '@/views/projects/TasksView.vue';
+import TaskDetailView from '@/views/projects/TaskDetailView.vue';
 
 import AcceptInvitationView from '@/views/auth/AcceptInvitationView.vue';
 
@@ -30,126 +31,76 @@ const routes = [
         component: MainLayout,
         meta: { requiresAuth: true },
         children: [
-            {
-                path: '',
-                name: 'home',
-                component: HomeView,
-            },
-            {
-                path: 'pings',
-                name: 'pings',
-                component: PingsView,
-            },
-            {
-                path: 'profile',
-                name: 'profile',
-                component: ProfileView,
-            },
-            {
-                path: 'preferences',
-                name: 'preferences',
-                component: PreferencesView,
-            },
+            { path: '', name: 'home', component: HomeView },
+            { path: 'pings', name: 'pings', component: PingsView },
+            { path: 'profile', name: 'profile', component: ProfileView },
+            { path: 'preferences', name: 'preferences', component: PreferencesView },
 
             // ── Projects ──────────────────────────────────────────────────────
             {
                 path: 'projects',
                 name: 'projects',
                 component: ProjectsView,
-                meta: {
-                    requiresCapability: 'projects.view',
-                },
+                meta: { requiresCapability: 'projects.view' },
             },
             {
                 path: 'projects/:id',
                 name: 'project-detail',
                 component: ProjectDetailView,
-                meta: {
-                    requiresCapability: 'projects.view',
-                },
+                meta: { requiresCapability: 'projects.view' },
             },
 
-            // ── Tasks ✅ NEW ──────────────────────────────────────────────────
+            // ── Tasks ─────────────────────────────────────────────────────────
             {
                 path: 'projects/:id/tasks',
                 name: 'project-tasks',
                 component: TasksView,
-                meta: {
-                    requiresCapability: 'tasks.view',
-                },
+                meta: { requiresCapability: 'tasks.view' },
+            },
+            {
+                path: 'projects/:id/tasks/:taskId', // ✅ NEW
+                name: 'task-detail',
+                component: TaskDetailView,
+                meta: { requiresCapability: 'tasks.view' },
             },
 
             // 403 page
-            {
-                path: 'unauthorized',
-                name: 'unauthorized',
-                component: UnauthorizedView,
-            },
+            { path: 'unauthorized', name: 'unauthorized', component: UnauthorizedView },
 
-            /*-----------------------------------------------------------------
-            | System Settings — capability-guarded
-            -----------------------------------------------------------------*/
+            // ── System Settings ───────────────────────────────────────────────
             {
                 path: 'system-settings',
                 name: 'system-settings',
                 redirect: { name: 'system-settings-roles' },
                 component: SystemSettingsView,
-                meta: {
-                    requiresAuth: true,
-                    requiresCapability: 'settings.view',
-                },
+                meta: { requiresAuth: true, requiresCapability: 'settings.view' },
                 children: [
                     {
                         path: 'roles',
                         name: 'system-settings-roles',
                         component: RolesView,
-                        meta: {
-                            requiresCapability: 'roles.view',
-                        },
+                        meta: { requiresCapability: 'roles.view' },
                     },
                     {
                         path: 'users',
                         name: 'system-settings-users',
                         component: UsersView,
-                        meta: {
-                            requiresCapability: 'users.view',
-                        },
+                        meta: { requiresCapability: 'users.view' },
                     },
                 ]
             },
         ]
     },
-
     {
         path: '/',
         component: AuthLayout,
         meta: { guestOnly: true },
         children: [
-            {
-                path: 'login',
-                name: 'login',
-                component: LoginView,
-            },
-            {
-                path: 'signup',
-                name: 'signup',
-                component: SignupView,
-            },
-            {
-                path: 'forgot-password',
-                name: 'forgot-password',
-                component: ForgotPasswordView,
-            },
-            {
-                path: 'reset-password',
-                name: 'reset-password',
-                component: ResetPasswordView,
-            },
-            {
-                path: 'accept-invitation',
-                name: 'accept-invitation',
-                component: AcceptInvitationView,
-            },
+            { path: 'login', name: 'login', component: LoginView },
+            { path: 'signup', name: 'signup', component: SignupView },
+            { path: 'forgot-password', name: 'forgot-password', component: ForgotPasswordView },
+            { path: 'reset-password', name: 'reset-password', component: ResetPasswordView },
+            { path: 'accept-invitation', name: 'accept-invitation', component: AcceptInvitationView },
         ]
     },
 ]
@@ -164,9 +115,7 @@ router.beforeEach(async (to, from, next) => {
     const preferencesStore = usePreferencesStore()
 
     if (!auth.authChecked) {
-        try {
-            await auth.fetchUser()
-        } catch (e) { /* ignore */ }
+        try { await auth.fetchUser() } catch (e) { /* ignore */ }
     }
 
     if (auth.isLoggedIn && auth.user?.is_active === false) {
@@ -176,11 +125,7 @@ router.beforeEach(async (to, from, next) => {
     }
 
     if (auth.isLoggedIn && !preferencesStore.loaded) {
-        try {
-            await preferencesStore.loadPreferences()
-        } catch (e) {
-            console.error('Failed to load preferences', e)
-        }
+        try { await preferencesStore.loadPreferences() } catch (e) { console.error('Failed to load preferences', e) }
     }
 
     const requiresAuth = to.matched.some(r => r.meta.requiresAuth)

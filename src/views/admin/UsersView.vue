@@ -44,6 +44,7 @@ const pendingRoleId = ref(null)
 /* ── Computed ───────────────────────────────────────────────────── */
 const users = computed(() => userStore.users)
 const roles = computed(() => userStore.roles.filter(r => r.name !== 'super-admin'))
+const allRoles = computed(() => userStore.roles)
 
 const filteredUsers = computed(() => {
 	let list = users.value
@@ -246,8 +247,15 @@ onMounted(() => userStore.init())
 </script>
 
 <template>
-	<div class="bg-body text-text min-h-[600px]">
-
+	<div class="bg-body text-text min-h-[600px] relative">
+		<!-- PAGE LOADING OVERLAY -->
+		<Transition name="fade">
+			<div v-if="userStore.loading.page"
+				class="absolute inset-0 bg-panel/80 backdrop-blur-sm flex flex-col items-center justify-center z-40 rounded-xl gap-3">
+				<div class="w-10 h-10 rounded-full border-3 border-accent border-t-transparent animate-spin" />
+				<p class="text-sm text-text/60 font-medium">Loading users…</p>
+			</div>
+		</Transition>
 		<!-- ══ MAIN PANEL ════════════════════════════════════════ -->
 		<div class="flex flex-col bg-panel border border-heading/8 rounded-2xl shadow-sm overflow-hidden">
 
@@ -301,11 +309,12 @@ onMounted(() => userStore.init())
 
 				<!-- Role filter pills -->
 				<div class="flex items-center gap-1.5 flex-wrap">
-					<button v-for="r in ['All', ...roles.map(r => r.label)]" :key="r" @click="roleFilter = r"
-						class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all" :class="roleFilter === r
+					<button v-for="role in ['All', ...allRoles.map(r => r.label)]" :key="role"
+						@click="roleFilter = role" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+						:class="roleFilter === role
 							? 'bg-accent text-white'
 							: 'bg-heading/6 text-text/60 hover:bg-heading/10'">
-						{{ r }}
+						{{ role }}
 					</button>
 				</div>
 			</div>
@@ -515,7 +524,7 @@ onMounted(() => userStore.init())
 							<!-- Role -->
 							<td class="px-4 py-3.5">
 								<span v-if="inv.role" class="inline-flex px-2.5 py-1 rounded-lg text-xs font-semibold"
-									:class="getRoleBadge(inv.role.label?.toLowerCase())">
+									:class="getRoleBadge(inv.role.name)">
 									{{ inv.role.label }}
 								</span>
 								<span v-else class="text-xs text-text/30 italic">No role</span>

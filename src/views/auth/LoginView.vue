@@ -13,8 +13,8 @@ const router = useRouter()
 const route = useRoute()
 const { successToast, errorToast } = useToast()
 
-const email = ref('rupash.das.202@gmail.com')
-const password = ref('123123')
+const email = ref('')
+const password = ref('')
 const loading = ref(false)
 const showPassword = ref(false)
 

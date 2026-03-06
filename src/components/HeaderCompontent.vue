@@ -3,7 +3,7 @@ import { RouterLink } from "vue-router";
 import Logo from "./icons/Logo.vue";
 import { addIcons } from "oh-vue-icons";
 import { useAuthStore } from '@/stores/useAuthStore'
-import { SiHomeadvisor, BiChatDots, LaUserCircleSolid, CoSettings, MdLogoutOutlined, LaUserEditSolid, BiPalette } from
+import { SiHomeadvisor, BiChatDots, LaUserCircleSolid, CoSettings, MdLogoutOutlined, LaUserEditSolid, BiPalette, MdMenuRound, MdCloseRound } from
     "oh-vue-icons/icons";
 import { useRouter } from 'vue-router'
 import { useRoute } from 'vue-router'
@@ -12,7 +12,7 @@ import { useToast } from "@/utils/toast.js"
 
 const { errorToast } = useToast()
 
-addIcons(SiHomeadvisor, BiChatDots, LaUserCircleSolid, CoSettings, MdLogoutOutlined, LaUserEditSolid, BiPalette);
+addIcons(SiHomeadvisor, BiChatDots, LaUserCircleSolid, CoSettings, MdLogoutOutlined, LaUserEditSolid, BiPalette, MdMenuRound, MdCloseRound);
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -34,6 +34,7 @@ const handleLogout = async () => {
 }
 
 const dropdownOpen = ref(false)
+const mobileMenuOpen = ref(false)
 const dropdownRef = ref(null)
 
 const toggleDropdown = () => {
@@ -57,83 +58,147 @@ const route = useRoute()
 
 watch(() => route.fullPath, () => {
     dropdownOpen.value = false
+    mobileMenuOpen.value = false
 })
 </script>
 
 <template>
-    <header class="sticky top-0 z-50 bg-panel px-4 py-5 shadow-sm">
+    <header class="sticky top-0 z-50 bg-panel px-4 py-3 md:py-4 shadow-sm border-b border-heading/6">
         <div class="container mx-auto">
-            <div class="flex items-center">
-                <div class="max-w-40">
-                    <RouterLink to="/" class="max-w-24 inline-block">
+            <div class="flex items-center gap-4">
+
+                <!-- Logo -->
+                <div class="shrink-0">
+                    <RouterLink to="/" class="inline-block w-24 md:w-28">
                         <Logo />
                     </RouterLink>
                 </div>
-                <nav class="flex flex-1 items-center justify-center">
-                    <ul class="flex items-center flex-wrap gap-3">
+
+                <!-- Desktop Nav -->
+                <nav class="hidden md:flex flex-1 items-center justify-center">
+                    <ul class="flex items-center gap-1">
                         <li>
-                            <router-link :to="{ name: 'home' }">
-                                <v-icon name="si-homeadvisor" /> Home
+                            <router-link :to="{ name: 'home' }"
+                                class="flex items-center gap-2 px-4 py-2 rounded-lg text-base font-medium transition-all duration-150"
+                                :class="route.name === 'home' ? 'bg-accent/10 text-accent' : 'text-text hover:bg-heading/6 hover:text-heading'">
+                                <v-icon name="si-homeadvisor" scale="0.9" /> Home
                             </router-link>
                         </li>
                         <li>
-                            <router-link :to="{ name: 'pings' }">
-                                <v-icon name="bi-chat-dots" /> Pings
+                            <router-link :to="{ name: 'pings' }"
+                                class="flex items-center gap-2 px-4 py-2 rounded-lg text-base font-medium transition-all duration-150"
+                                :class="route.name === 'pings' ? 'bg-accent/10 text-accent' : 'text-text hover:bg-heading/6 hover:text-heading'">
+                                <v-icon name="bi-chat-dots" scale="0.9" /> Pings
                             </router-link>
                         </li>
                     </ul>
                 </nav>
-                <div class="max-w-40">
+
+                <!-- Right side: hamburger (mobile) + profile (always) -->
+                <div class="flex items-center gap-2 ml-auto">
+
+                    <!-- Mobile hamburger -->
+                    <button class="md:hidden p-2 rounded-lg text-text hover:bg-heading/8 transition-colors"
+                        @click="mobileMenuOpen = !mobileMenuOpen" aria-label="Toggle menu">
+                        <v-icon :name="mobileMenuOpen ? 'md-close-round' : 'md-menu-round'" scale="1.1" />
+                    </button>
+
+                    <!-- Profile Dropdown -->
                     <div class="relative" ref="dropdownRef" v-if="auth.isLoggedIn">
 
                         <!-- Profile Button -->
-                        <button class="flex items-center gap-2 cursor-pointer font-medium text-sm"
+                        <button
+                            class="flex items-center gap-2.5 cursor-pointer rounded-xl px-3 py-2 hover:bg-heading/6 transition-all duration-150"
                             @click="toggleDropdown">
-                            <div class="text-left">
-                                <p>{{ auth.user ? auth.user.name : "User" }}</p>
-                            </div>
                             <img v-if="auth.user?.avatar" :src="auth.user.avatar" alt="Avatar"
-                                class=" w-8 h-8 object-cover rounded-full border-1 border-accent" />
-                            <v-icon class="w-8" v-else name="la-user-circle-solid" />
+                                class="w-9 h-9 object-cover rounded-full border-2 border-accent/30 shrink-0" />
+                            <v-icon class="w-9 h-9 text-text/60" v-else name="la-user-circle-solid" />
+                            <div class="hidden sm:block text-left">
+                                <p class="text-sm font-semibold text-heading leading-tight">{{ auth.user?.name || 'User'
+                                }}</p>
+                                <p class="text-xs text-text/50 leading-tight">{{ auth.user?.roles?.[0]?.label ||
+                                    'Member' }}</p>
+                            </div>
+                            <svg xmlns="http://www.w3.org/2000/svg"
+                                class="hidden sm:block w-4 h-4 text-text/40 transition-transform duration-200"
+                                :class="dropdownOpen ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                                <polyline points="6 9 12 15 18 9" />
+                            </svg>
                         </button>
-                        <!-- Dropdown -->
 
+                        <!-- Dropdown Panel -->
                         <Transition name="fade-up">
                             <div v-if="dropdownOpen"
-                                class="absolute top-16 -right-3 flex-col flex w-70 px-6 py-3 bg-panel rounded-md shadow-lg shadow-tazko-blue/10">
-                                <div class="absolute -top-2 right-4 w-4 h-4 bg-panel rotate-45 shadow-tazko-blue/10">
-                                </div>
-                                <div
-                                    class="bg-accent/10 p-4 rounded-md shadow-md items-center flex gap-3 border-text/50">
-                                    <div>
+                                class="absolute top-14 -right-1 flex-col flex w-72 bg-panel rounded-2xl shadow-xl shadow-heading/10 border border-heading/8 overflow-hidden">
+
+                                <!-- Profile Summary -->
+                                <div class="bg-accent/6 px-5 py-4 flex items-center gap-3 border-b border-heading/6">
+                                    <div class="shrink-0">
                                         <img v-if="auth.user?.avatar" :src="auth.user.avatar" alt="Avatar"
-                                            class=" w-16 h-16 object-cover rounded-full border-1 border-accent" />
-                                        <v-icon class="w-16" v-else name="la-user-circle-solid" />
+                                            class="w-14 h-14 object-cover rounded-full border-2 border-accent/30" />
+                                        <v-icon class="w-14 h-14 text-text/40" v-else name="la-user-circle-solid" />
                                     </div>
-                                    <div>
-                                        <h4>{{ auth.user ? auth.user.name : "User" }} </h4>
-                                        <p class="text-sm">{{ auth.user?.roles?.[0]?.label || "User" }}</p>
+                                    <div class="min-w-0">
+                                        <h4 class="text-base font-bold text-heading truncate">{{ auth.user?.name ||
+                                            'User' }}</h4>
+                                        <p class="text-sm text-text/60 truncate">{{ auth.user?.roles?.[0]?.label ||
+                                            'Member' }}</p>
+                                        <p v-if="auth.user?.email" class="text-xs text-text/40 truncate mt-0.5">{{
+                                            auth.user.email }}</p>
                                     </div>
                                 </div>
-                                <div class="pt-4">
+
+                                <!-- Menu Items -->
+                                <div class="px-2 py-2">
                                     <router-link :to="{ name: 'profile' }"
-                                        class="dropdown-item text-accent flex align-center gap-1 hover:text-heading font-medium">
-                                        <v-icon class="w-5" name="la-user-edit-solid" /> Edit Profile
+                                        class="dropdown-item group hover:bg-heading/5">
+                                        <span
+                                            class="w-8 h-8 rounded-lg bg-accent/8 flex items-center justify-center shrink-0 group-hover:bg-accent/15 transition-colors">
+                                            <v-icon class="w-4 h-4 text-accent" name="la-user-edit-solid" />
+                                        </span>
+                                        <div>
+                                            <p class="text-sm font-semibold text-heading">Edit Profile</p>
+                                            <p class="text-xs text-text/45">Update your personal info</p>
+                                        </div>
                                     </router-link>
 
                                     <router-link :to="{ name: 'preferences' }"
-                                        class="dropdown-item text-accent flex align-center gap-1 hover:text-heading font-medium">
-                                        <v-icon class="w-5" name="bi-palette" /> Preparences
+                                        class="dropdown-item group hover:bg-heading/5">
+                                        <span
+                                            class="w-8 h-8 rounded-lg bg-accent/8 flex items-center justify-center shrink-0 group-hover:bg-accent/15 transition-colors">
+                                            <v-icon class="w-4 h-4 text-accent" name="bi-palette" />
+                                        </span>
+                                        <div>
+                                            <p class="text-sm font-semibold text-heading">Preferences</p>
+                                            <p class="text-xs text-text/45">Theme & display settings</p>
+                                        </div>
                                     </router-link>
+
                                     <router-link v-if="auth.hasCapability('settings.view')"
                                         :to="{ name: 'system-settings' }"
-                                        class="dropdown-item text-accent flex align-center gap-1 hover:text-heading font-medium">
-                                        <v-icon class="w-5" name="co-settings" /> System Settings
+                                        class="dropdown-item group hover:bg-heading/5">
+                                        <span
+                                            class="w-8 h-8 rounded-lg bg-accent/8 flex items-center justify-center shrink-0 group-hover:bg-accent/15 transition-colors">
+                                            <v-icon class="w-4 h-4 text-accent" name="co-settings" />
+                                        </span>
+                                        <div>
+                                            <p class="text-sm font-semibold text-heading">System Settings</p>
+                                            <p class="text-xs text-text/45">Manage users & roles</p>
+                                        </div>
                                     </router-link>
+                                </div>
+
+                                <!-- Logout -->
+                                <div class="px-2 pb-2 border-t border-heading/6 pt-2 mt-0">
                                     <button
-                                        class="dropdown-item text-accent flex align-center gap-1 hover:text-heading font-medium logout"
+                                        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all duration-150 group"
                                         @click="handleLogout">
-                                        <v-icon class="w-5" name="md-logout-outlined" /> Logout
+                                        <span
+                                            class="w-8 h-8 rounded-lg bg-red-50 dark:bg-red-500/10 flex items-center justify-center shrink-0">
+                                            <v-icon class="w-4 h-4 text-red-400" name="md-logout-outlined" />
+                                        </span>
+                                        Sign Out
                                     </button>
                                 </div>
                             </div>
@@ -141,6 +206,28 @@ watch(() => route.fullPath, () => {
                     </div>
                 </div>
             </div>
+
+            <!-- Mobile Nav Menu -->
+            <Transition name="mobile-nav">
+                <nav v-if="mobileMenuOpen" class="md:hidden mt-3 pb-2 border-t border-heading/6 pt-3">
+                    <ul class="flex flex-col gap-1">
+                        <li>
+                            <router-link :to="{ name: 'home' }"
+                                class="flex items-center gap-3 px-3 py-3 rounded-xl text-base font-medium transition-all"
+                                :class="route.name === 'home' ? 'bg-accent/10 text-accent' : 'text-text hover:bg-heading/6 hover:text-heading'">
+                                <v-icon name="si-homeadvisor" scale="1" /> Home
+                            </router-link>
+                        </li>
+                        <li>
+                            <router-link :to="{ name: 'pings' }"
+                                class="flex items-center gap-3 px-3 py-3 rounded-xl text-base font-medium transition-all"
+                                :class="route.name === 'pings' ? 'bg-accent/10 text-accent' : 'text-text hover:bg-heading/6 hover:text-heading'">
+                                <v-icon name="bi-chat-dots" scale="1" /> Pings
+                            </router-link>
+                        </li>
+                    </ul>
+                </nav>
+            </Transition>
         </div>
     </header>
 </template>
@@ -149,21 +236,37 @@ watch(() => route.fullPath, () => {
 @reference "tailwindcss";
 
 .dropdown-item {
-    @apply w-full text-left font-medium py-3 cursor-pointer transition [&:not(:last-child)]:border-b border-b-gray-300 text-sm;
+    @apply w-full flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-150;
 }
 
+/* Dropdown fade-up */
 .fade-up-enter-active,
 .fade-up-leave-active {
     transition: all 0.2s ease-in-out;
-    opacity: 1;
-    visibility: visible;
-    margin-top: 0
 }
 
 .fade-up-enter-from,
 .fade-up-leave-to {
     opacity: 0;
-    visibility: hidden;
-    margin-top: 10px;
+    transform: translateY(8px);
+}
+
+/* Mobile nav slide-down */
+.mobile-nav-enter-active,
+.mobile-nav-leave-active {
+    transition: all 0.2s ease-in-out;
+    overflow: hidden;
+}
+
+.mobile-nav-enter-from,
+.mobile-nav-leave-to {
+    opacity: 0;
+    max-height: 0;
+}
+
+.mobile-nav-enter-to,
+.mobile-nav-leave-from {
+    opacity: 1;
+    max-height: 200px;
 }
 </style>

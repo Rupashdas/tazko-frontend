@@ -64,6 +64,7 @@ const filteredUsers = computed(() => {
 
 /* ── Helpers ────────────────────────────────────────────────────── */
 const isOwnAccount = (userId) => authStore.user?.id === userId
+const isSuperAdminUser = (user) => user.roles?.some(r => r.name === 'super-admin')
 const getInitials = (name) => name?.split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase() || '?'
 
 const avatarColors = [
@@ -122,7 +123,6 @@ const handleUpdateUser = async () => {
 	})
 	if (res.success) {
 		successToast(res.message)
-		// Update selectedUser reference
 		const updated = users.value.find(u => u.id === selectedUser.value.id)
 		if (updated) selectedUser.value = updated
 		editMode.value = false
@@ -139,7 +139,6 @@ const handleToggleActive = async (user) => {
 	const res = await userStore.toggleActive(user.id)
 	if (res.success) {
 		successToast(res.message)
-		// Refresh selectedUser
 		const updated = users.value.find(u => u.id === user.id)
 		if (updated && selectedUser.value?.id === user.id) selectedUser.value = updated
 	} else {
@@ -243,7 +242,10 @@ const getStatusBadge = (status) => {
 	return 'bg-heading/8 text-text/50'
 }
 
-onMounted(() => userStore.init())
+onMounted(async () => {
+	await userStore.init()
+	await userStore.refreshRoles()
+})
 </script>
 
 <template>
@@ -398,7 +400,7 @@ onMounted(() => userStore.init())
 								<div class="flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
 									@click.stop>
 
-									<!-- View/Edit profile popup — requires users.profile.view OR users.update -->
+									<!-- View/Edit profile popup -->
 									<button v-if="canViewProfile || canUpdate" @click="openUserPopup(user)"
 										class="w-8 h-8 rounded-lg flex items-center justify-center text-text/40 hover:text-accent hover:bg-accent/10 transition-all"
 										title="View / Edit">
@@ -410,22 +412,19 @@ onMounted(() => userStore.init())
 									</button>
 
 									<!-- Activate / Deactivate toggle -->
-									<button
-										v-if="canActivate && !isOwnAccount(user.id) && !user.roles?.some(r => r.name === 'super-admin')"
+									<button v-if="canActivate && !isOwnAccount(user.id) && !isSuperAdminUser(user)"
 										@click="handleToggleActive(user)" :disabled="userStore.loading.activate"
 										:title="user.is_active ? 'Deactivate' : 'Activate'"
 										class="w-8 h-8 rounded-lg flex items-center justify-center transition-all disabled:opacity-40"
 										:class="user.is_active
 											? 'text-text/40 hover:text-amber-500 hover:bg-amber-50'
 											: 'text-text/40 hover:text-emerald-600 hover:bg-emerald-50'">
-										<!-- Deactivate icon -->
 										<svg v-if="user.is_active" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4"
 											viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
 											stroke-linecap="round">
 											<circle cx="12" cy="12" r="10" />
 											<line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
 										</svg>
-										<!-- Activate icon -->
 										<svg v-else xmlns="http://www.w3.org/2000/svg" class="w-4 h-4"
 											viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
 											stroke-linecap="round">
@@ -492,7 +491,7 @@ onMounted(() => userStore.init())
 
 			<!-- Table -->
 			<div class="overflow-x-auto">
-				<table class="w-full min-w-[480px]">
+				<table class="w-full min-w-[620px]">
 					<thead>
 						<tr class="border-b border-heading/6 bg-body/40">
 							<th
@@ -501,6 +500,10 @@ onMounted(() => userStore.init())
 							<th
 								class="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-widest text-text/40">
 								Role</th>
+							<!-- ✅ New column -->
+							<th
+								class="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-widest text-text/40">
+								Invited By</th>
 							<th
 								class="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-widest text-text/40">
 								Status</th>
@@ -528,6 +531,17 @@ onMounted(() => userStore.init())
 									{{ inv.role.label }}
 								</span>
 								<span v-else class="text-xs text-text/30 italic">No role</span>
+							</td>
+
+							<!-- ✅ Invited By -->
+							<td class="px-4 py-3.5">
+								<div class="flex items-center gap-2">
+									<div class="w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-bold shrink-0"
+										:class="[getAvatar(inv.id).bg, getAvatar(inv.id).text]">
+										{{ getInitials(inv.invited_by) }}
+									</div>
+									<span class="text-sm text-text/70 font-medium truncate">{{ inv.invited_by }}</span>
+								</div>
 							</td>
 
 							<!-- Status -->
@@ -632,11 +646,15 @@ onMounted(() => userStore.init())
 									{{ getInitials(selectedUser.name) }}
 								</div>
 								<div class="min-w-0">
-									<div class="flex items-center gap-1.5">
+									<div class="flex items-center gap-1.5 flex-wrap">
 										<p class="text-sm font-bold text-heading leading-tight truncate">{{
 											selectedUser.name }}</p>
 										<span v-if="isOwnAccount(selectedUser.id)"
 											class="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-accent/15 text-accent">You</span>
+										<!-- ✅ Super-admin badge -->
+										<span v-if="isSuperAdminUser(selectedUser)"
+											class="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-violet-100 text-violet-700">Super
+											Admin</span>
 									</div>
 									<p class="text-xs text-text/45 mt-0.5 truncate">{{ selectedUser.email }}</p>
 								</div>
@@ -752,7 +770,7 @@ onMounted(() => userStore.init())
 
 							<!-- ── Activate / Deactivate (users.activate) ── -->
 							<div
-								v-if="canActivate && !isOwnAccount(selectedUser.id) && !selectedUser.roles?.some(r => r.name === 'super-admin')">
+								v-if="canActivate && !isOwnAccount(selectedUser.id) && !isSuperAdminUser(selectedUser)">
 								<p class="text-[11px] font-bold uppercase tracking-widest text-text/35 mb-2">Account
 									Status</p>
 								<button @click="handleToggleActive(selectedUser)" :disabled="userStore.loading.activate"
@@ -777,25 +795,43 @@ onMounted(() => userStore.init())
 							</div>
 
 							<!-- ── Assign Role (users.role.assign) ── -->
+							<!-- ✅ Hidden entirely for super-admin users, replaced with lock notice -->
 							<div v-if="canAssignRole && !isOwnAccount(selectedUser.id)">
 								<p class="text-[11px] font-bold uppercase tracking-widest text-text/35 mb-2">Assign Role
 								</p>
-								<div class="grid grid-cols-1 gap-1.5">
-									<button v-for="role in roles" :key="role.id" @click="pendingRoleId = role.id"
-										class="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border text-sm font-medium transition-all"
-										:class="pendingRoleId === role.id
-											? 'border-accent/40 bg-accent/8 text-accent'
-											: 'border-heading/10 hover:border-heading/20 hover:bg-heading/4 text-text/70'">
-										<span class="w-2 h-2 rounded-full border-2 shrink-0 transition-colors"
-											:class="pendingRoleId === role.id ? 'border-accent bg-accent' : 'border-text/20'" />
-										{{ role.label }}
-									</button>
+
+								<!-- Lock notice for super-admin -->
+								<div v-if="isSuperAdminUser(selectedUser)"
+									class="px-4 py-3 bg-violet-50 border border-violet-100 rounded-xl flex items-center gap-3">
+									<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-violet-400 shrink-0"
+										viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+										stroke-linecap="round">
+										<rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+										<path d="M7 11V7a5 5 0 0110 0v4" />
+									</svg>
+									<p class="text-xs text-violet-600 font-medium">Super-admin role cannot be changed.
+									</p>
 								</div>
-								<button @click="handleAssignRole"
-									:disabled="userStore.loading.save || pendingRoleId === getPrimaryRole(selectedUser)?.id"
-									class="mt-3 w-full py-2.5 rounded-xl bg-accent text-white text-sm font-semibold hover:bg-accent/85 active:scale-95 transition-all shadow-sm disabled:opacity-40 disabled:cursor-not-allowed">
-									{{ userStore.loading.save ? 'Saving…' : 'Save Changes' }}
-								</button>
+
+								<!-- Normal role picker -->
+								<template v-else>
+									<div class="grid grid-cols-1 gap-1.5">
+										<button v-for="role in roles" :key="role.id" @click="pendingRoleId = role.id"
+											class="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border text-sm font-medium transition-all"
+											:class="pendingRoleId === role.id
+												? 'border-accent/40 bg-accent/8 text-accent'
+												: 'border-heading/10 hover:border-heading/20 hover:bg-heading/4 text-text/70'">
+											<span class="w-2 h-2 rounded-full border-2 shrink-0 transition-colors"
+												:class="pendingRoleId === role.id ? 'border-accent bg-accent' : 'border-text/20'" />
+											{{ role.label }}
+										</button>
+									</div>
+									<button @click="handleAssignRole"
+										:disabled="userStore.loading.save || pendingRoleId === getPrimaryRole(selectedUser)?.id"
+										class="mt-3 w-full py-2.5 rounded-xl bg-accent text-white text-sm font-semibold hover:bg-accent/85 active:scale-95 transition-all shadow-sm disabled:opacity-40 disabled:cursor-not-allowed">
+										{{ userStore.loading.save ? 'Saving…' : 'Save Changes' }}
+									</button>
+								</template>
 							</div>
 
 							<!-- ── Danger Zone: Delete (users.delete) ── -->

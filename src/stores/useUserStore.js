@@ -149,6 +149,15 @@ export const useUserStore = defineStore('users', {
 			await this.init()
 		},
 
+		async refreshRoles() {
+			try {
+				const { data } = await axios.get('/api/roles')
+				this.roles = data.data ?? []
+			} catch (err) {
+				console.error('[UserStore] refreshRoles:', err)
+			}
+		},
+
 		_replaceUser(updated) {
 			const idx = this.users.findIndex(u => u.id === updated.id)
 			if (idx !== -1) this.users[idx] = updated

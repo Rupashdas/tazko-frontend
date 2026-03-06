@@ -18,6 +18,8 @@ import UnauthorizedView from '@/views/errors/Unauthorizedview.vue';
 
 import HomeView from '@/views/HomeView.vue';
 import PingsView from '@/views/PingsView.vue';
+import ProjectsView from '@/views/projects/ProjectsView.vue';
+import ProjectDetailView from '@/views/projects/ProjectDetailView.vue';
 
 import AcceptInvitationView from '@/views/auth/AcceptInvitationView.vue';
 
@@ -48,6 +50,24 @@ const routes = [
                 component: PreferencesView,
             },
 
+            // ── Projects ──────────────────────────────────────────────────────
+            {
+                path: 'projects',
+                name: 'projects',
+                component: ProjectsView,
+                meta: {
+                    requiresCapability: 'projects.view',
+                },
+            },
+            {
+                path: 'projects/:id',
+                name: 'project-detail',
+                component: ProjectDetailView,
+                meta: {
+                    requiresCapability: 'projects.view',
+                },
+            },
+
             // 403 page
             {
                 path: 'unauthorized',
@@ -57,8 +77,6 @@ const routes = [
 
             /*-----------------------------------------------------------------
             | System Settings — capability-guarded
-            | Requires: settings.view  (to enter the settings section at all)
-            | Sub-routes have their own capability checks inside the views.
             -----------------------------------------------------------------*/
             {
                 path: 'system-settings',
@@ -143,9 +161,7 @@ router.beforeEach(async (to, from, next) => {
         }
     }
 
-    // 2. If the user is logged in but marked inactive, force logout and
-    //    redirect to login. This catches the case where the admin deactivated
-    //    the user while they were already browsing (before any API call fires).
+    // 2. If the user is logged in but marked inactive, force logout
     if (auth.isLoggedIn && auth.user?.is_active === false) {
         auth.user = null
         auth.authChecked = true
@@ -172,7 +188,7 @@ router.beforeEach(async (to, from, next) => {
         return next({ name: 'home' })
     }
 
-    // 5. Capability check (most specific match wins — deepest route in hierarchy)
+    // 5. Capability check
     if (auth.isLoggedIn) {
         const matchedWithCap = [...to.matched]
             .reverse()

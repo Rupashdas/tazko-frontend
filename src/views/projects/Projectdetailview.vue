@@ -5,32 +5,30 @@ import { addIcons } from 'oh-vue-icons'
 import {
 	BiArrowLeft, BiPencil, BiThreeDotsVertical, BiArchive,
 	BiTrash, BiPlusCircle, BiCheckCircle, BiClock, BiPeople,
-	BiCalendar3, BiFlag, BiArrowRight,
-	MdFolderspecialOutlined, BiCardList, BiLayoutWtf,
-	BiChevronDown, BiPersonPlus, BiXCircle, BiBarChart,
-	BiLightningCharge, BiChat, BiActivity, BiBoxArrowUpRight
+	BiCalendar3, BiFlag, BiSearch, BiXCircle, BiLayoutWtf,
+	BiCardList, BiChevronDown, BiPersonPlus, BiBarChart,
+	BiLightningCharge, BiActivity, BiFilter, BiCircle,
+	BiArrowRepeat, BiCheck2Circle, BiExclamationCircle,
+	MdFolderspecialOutlined, BiChevronRight, BiStar,
+	BiListTask, BiKanban, BiGripVertical,
 } from 'oh-vue-icons/icons'
 
 addIcons(
 	BiArrowLeft, BiPencil, BiThreeDotsVertical, BiArchive,
 	BiTrash, BiPlusCircle, BiCheckCircle, BiClock, BiPeople,
-	BiCalendar3, BiFlag, BiArrowRight,
-	MdFolderspecialOutlined, BiCardList, BiLayoutWtf,
-	BiChevronDown, BiPersonPlus, BiXCircle, BiBarChart,
-	BiLightningCharge, BiChat, BiActivity, BiBoxArrowUpRight
+	BiCalendar3, BiFlag, BiSearch, BiXCircle, BiLayoutWtf,
+	BiCardList, BiChevronDown, BiPersonPlus, BiBarChart,
+	BiLightningCharge, BiActivity, BiFilter, BiCircle,
+	BiArrowRepeat, BiCheck2Circle, BiExclamationCircle,
+	MdFolderspecialOutlined, BiChevronRight, BiStar,
+	BiListTask, BiKanban, BiGripVertical,
 )
 
 const router = useRouter()
 const route = useRoute()
 
-const activeTab = ref('overview')
-const tabs = [
-	{ key: 'overview', label: 'Overview', icon: 'md-folderspecial-outlined' },
-	{ key: 'tasks', label: 'Tasks', icon: 'bi-card-list' },
-	{ key: 'members', label: 'Members', icon: 'bi-people' },
-]
-
-const project = {
+// ── Project data ──────────────────────────────────────
+const project = ref({
 	id: route.params.id,
 	name: 'Tazko App',
 	description: 'Main project management SaaS — full-stack development including Vue.js frontend, Laravel API backend, authentication, role & permission system, and task management.',
@@ -47,414 +45,625 @@ const project = {
 		{ name: 'Dina Malik', initials: 'DM', color: 'bg-amber-500', role: 'UI/UX Designer', email: 'dina@tazko.io' },
 		{ name: 'Karim Uddin', initials: 'KU', color: 'bg-red-400', role: 'QA Engineer', email: 'karim@tazko.io' },
 	],
-}
-
-const tasks = ref([
-	{ id: 1, title: 'Set up project scaffolding and repo', status: 'Done', priority: 'High', assignee: 'AH', due: 'Jan 18' },
-	{ id: 2, title: 'Design authentication flow (Login/Register)', status: 'Done', priority: 'High', assignee: 'SK', due: 'Jan 22' },
-	{ id: 3, title: 'Implement JWT/Sanctum backend auth', status: 'Done', priority: 'Urgent', assignee: 'NR', due: 'Jan 25' },
-	{ id: 4, title: 'Build role & permission RBAC system', status: 'Done', priority: 'High', assignee: 'NR', due: 'Feb 05' },
-	{ id: 5, title: 'Dashboard UI & analytics widgets', status: 'In Progress', priority: 'High', assignee: 'SK', due: 'Mar 10' },
-	{ id: 6, title: 'Project management CRUD module', status: 'In Progress', priority: 'Urgent', assignee: 'AH', due: 'Mar 15' },
-	{ id: 7, title: 'Task management with Kanban board', status: 'Todo', priority: 'High', assignee: 'SK', due: 'Mar 25' },
-	{ id: 8, title: 'File upload and preview system', status: 'Todo', priority: 'Medium', assignee: 'DM', due: 'Apr 05' },
-	{ id: 9, title: 'In-app notification system', status: 'Todo', priority: 'Medium', assignee: 'NR', due: 'Apr 15' },
-	{ id: 10, title: 'End-to-end testing & QA', status: 'Todo', priority: 'High', assignee: 'KU', due: 'May 01' },
-])
-
-const recentActivity = [
-	{ text: 'Sara Khan updated task "Dashboard UI & analytics widgets"', time: '4h ago', color: 'bg-accent', initials: 'SK' },
-	{ text: 'Arif Hossain added task "Project management CRUD module"', time: 'Yesterday', color: 'bg-violet-500', initials: 'AH' },
-	{ text: 'Dina Malik joined the project', time: '2 days ago', color: 'bg-amber-500', initials: 'DM' },
-	{ text: 'Noman Rahman completed "Build role & permission RBAC"', time: '3 days ago', color: 'bg-emerald-500', initials: 'NR' },
-]
-
-const taskFilter = ref('All')
-const taskStatuses = ['All', 'Todo', 'In Progress', 'Done']
-
-const filteredTasks = computed(() => {
-	if (taskFilter.value === 'All') return tasks.value
-	return tasks.value.filter(t => t.status === taskFilter.value)
 })
 
-// Stats
+// ── Tasks ─────────────────────────────────────────────
+const tasks = ref([
+	{ id: 1, title: 'Set up project scaffolding and repo', status: 'Done', priority: 'High', assignee: 'AH', due: '2026-01-18' },
+	{ id: 2, title: 'Design authentication flow (Login/Register)', status: 'Done', priority: 'High', assignee: 'SK', due: '2026-01-22' },
+	{ id: 3, title: 'Implement JWT/Sanctum backend auth', status: 'Done', priority: 'Urgent', assignee: 'NR', due: '2026-01-25' },
+	{ id: 4, title: 'Build role & permission RBAC system', status: 'Done', priority: 'High', assignee: 'NR', due: '2026-02-05' },
+	{ id: 5, title: 'Dashboard UI & analytics widgets', status: 'In Progress', priority: 'High', assignee: 'SK', due: '2026-03-10' },
+	{ id: 6, title: 'Project management CRUD module', status: 'In Progress', priority: 'Urgent', assignee: 'AH', due: '2026-03-15' },
+	{ id: 7, title: 'Task management with Kanban board', status: 'Todo', priority: 'High', assignee: 'SK', due: '2026-03-25' },
+	{ id: 8, title: 'File upload and preview system', status: 'Todo', priority: 'Medium', assignee: 'DM', due: '2026-04-05' },
+	{ id: 9, title: 'In-app notification system', status: 'Todo', priority: 'Medium', assignee: 'NR', due: '2026-04-15' },
+	{ id: 10, title: 'Time tracking module', status: 'Todo', priority: 'Low', assignee: 'KU', due: '2026-05-01' },
+])
+
+// ── Config maps ───────────────────────────────────────
+const statusConfig = {
+	'Planning': { cls: 'bg-slate-100 text-slate-600 dark:bg-slate-700/40 dark:text-slate-400', dot: 'bg-slate-400' },
+	'In Progress': { cls: 'bg-accent/10 text-accent', dot: 'bg-accent animate-pulse' },
+	'On Hold': { cls: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400', dot: 'bg-amber-500' },
+	'Completed': { cls: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400', dot: 'bg-emerald-500' },
+}
+
+const taskStatusConfig = {
+	'Done': { cls: 'bg-emerald-500/10 text-emerald-600', dot: 'bg-emerald-500', icon: 'bi-check2-circle' },
+	'In Progress': { cls: 'bg-accent/10 text-accent', dot: 'bg-accent', icon: 'bi-arrow-repeat' },
+	'Review': { cls: 'bg-violet-500/10 text-violet-600', dot: 'bg-violet-500', icon: 'bi-exclamation-circle' },
+	'Todo': { cls: 'bg-slate-100 text-slate-600 dark:bg-slate-700/40 dark:text-slate-400', dot: 'bg-slate-400', icon: 'bi-circle' },
+}
+
+const priorityConfig = {
+	'Urgent': { cls: 'bg-red-500/10 text-red-500', dot: '🔴' },
+	'High': { cls: 'bg-orange-500/10 text-orange-500', dot: '🟠' },
+	'Medium': { cls: 'bg-amber-500/10 text-amber-600', dot: '🟡' },
+	'Low': { cls: 'bg-slate-100 text-slate-500 dark:bg-slate-700/40', dot: '⚪' },
+}
+
+const memberColorMap = Object.fromEntries(
+	project.value.members.map(m => [m.initials, m.color])
+)
+
+// ── Task filtering ─────────────────────────────────────
+const searchQuery = ref('')
+const statusFilter = ref('All')
+const priorityFilter = ref('All')
+const viewMode = ref('list') // 'list' | 'board'
+const showAddTask = ref(false)
+const newTaskTitle = ref('')
+
+const filteredTasks = computed(() => {
+	return tasks.value.filter(t => {
+		const matchSearch = !searchQuery.value || t.title.toLowerCase().includes(searchQuery.value.toLowerCase())
+		const matchStatus = statusFilter.value === 'All' || t.status === statusFilter.value
+		const matchPriority = priorityFilter.value === 'All' || t.priority === priorityFilter.value
+		return matchSearch && matchStatus && matchPriority
+	})
+})
+
+const tasksByStatus = computed(() => {
+	const groups = { 'Todo': [], 'In Progress': [], 'Review': [], 'Done': [] }
+	filteredTasks.value.forEach(t => {
+		if (groups[t.status]) groups[t.status].push(t)
+	})
+	return groups
+})
+
+// ── Stats ──────────────────────────────────────────────
+const totalTasks = computed(() => tasks.value.length)
 const doneCount = computed(() => tasks.value.filter(t => t.status === 'Done').length)
 const inProgressCount = computed(() => tasks.value.filter(t => t.status === 'In Progress').length)
 const todoCount = computed(() => tasks.value.filter(t => t.status === 'Todo').length)
-const daysLeft = computed(() => {
-	const diff = Math.ceil((new Date(project.endDate) - new Date()) / (1000 * 60 * 60 * 24))
-	return diff
+const overdueCount = computed(() => {
+	const now = new Date()
+	return tasks.value.filter(t => t.status !== 'Done' && new Date(t.due) < now).length
 })
 
-const statusConfig = {
-	'Planning': { cls: 'bg-slate-400/15 text-slate-500', dot: 'bg-slate-400' },
-	'In Progress': { cls: 'bg-accent/10 text-accent', dot: 'bg-accent' },
-	'On Hold': { cls: 'bg-amber-500/15 text-amber-600', dot: 'bg-amber-500' },
-	'Completed': { cls: 'bg-emerald-500/15 text-emerald-600', dot: 'bg-emerald-500' },
-}
-const priorityConfig = {
-	Urgent: { cls: 'bg-red-500/15 text-red-500' },
-	High: { cls: 'bg-amber-500/15 text-amber-600' },
-	Medium: { cls: 'bg-blue-500/15 text-blue-500' },
-	Low: { cls: 'bg-slate-400/15 text-slate-500' },
-}
-const taskStatusConfig = {
-	'Done': { cls: 'bg-emerald-500/15 text-emerald-600', dot: 'bg-emerald-500' },
-	'In Progress': { cls: 'bg-accent/10 text-accent', dot: 'bg-accent' },
-	'Todo': { cls: 'bg-slate-400/15 text-slate-500', dot: 'bg-slate-400' },
-	'Review': { cls: 'bg-violet-500/15 text-violet-600', dot: 'bg-violet-500' },
-}
+// ── Timeline ───────────────────────────────────────────
+const daysLeft = computed(() => {
+	const end = new Date(project.value.endDate)
+	const now = new Date()
+	return Math.ceil((end - now) / (1000 * 60 * 60 * 24))
+})
+
+const todayPercent = computed(() => {
+	const start = new Date(project.value.startDate)
+	const end = new Date(project.value.endDate)
+	const now = new Date()
+	const total = end - start
+	const elapsed = now - start
+	return Math.min(100, Math.max(0, Math.round((elapsed / total) * 100)))
+})
 
 const formatDate = (d) => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+const formatShort = (d) => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 
-// SVG progress ring
-const radius = 36
-const circumference = 2 * Math.PI * radius
-const strokeDash = computed(() => (project.progress / 100) * circumference)
+// ── Actions ────────────────────────────────────────────
+const addTask = () => {
+	if (!newTaskTitle.value.trim()) return
+	tasks.value.push({
+		id: Date.now(),
+		title: newTaskTitle.value.trim(),
+		status: 'Todo',
+		priority: 'Medium',
+		assignee: 'AH',
+		due: '',
+	})
+	newTaskTitle.value = ''
+	showAddTask.value = false
+}
 
-const openTasksView = () => router.push({ name: 'project-tasks', params: { id: project.id } })
+const openTask = (taskId) => {
+	router.push({ name: 'task-detail', params: { id: route.params.id, taskId } })
+}
 
+// ── Sidebar collapse ───────────────────────────────────
+const sidebarCollapsed = ref(false)
+
+// ── Recent activity ────────────────────────────────────
+const recentActivity = [
+	{ initials: 'SK', color: 'bg-violet-500', text: 'Updated Dashboard UI task to In Progress', time: '2h ago' },
+	{ initials: 'NR', color: 'bg-emerald-500', text: 'Completed JWT auth implementation', time: '5h ago' },
+	{ initials: 'AH', color: 'bg-accent', text: 'Added 3 new tasks to the board', time: '1d ago' },
+	{ initials: 'DM', color: 'bg-amber-500', text: 'Uploaded new design mockups', time: '2d ago' },
+]
 </script>
 
 <template>
-	<div class="pb-20 pt-8 px-1">
+	<div class="min-h-screen pb-20">
 
-		<!-- ── Back ───────────────────────────────────── -->
-		<button @click="router.push({ name: 'projects' })"
-			class="inline-flex items-center gap-2 text-sm text-text/50 hover:text-accent transition-colors mb-5 group">
-			<v-icon name="bi-arrow-left" scale="0.85" class="group-hover:-translate-x-0.5 transition-transform" />
-			Back to Projects
-		</button>
+		<!-- ════════════════════════════════════════════ -->
+		<!-- PROJECT HERO HEADER                         -->
+		<!-- ════════════════════════════════════════════ -->
+		<div class="relative overflow-hidden rounded-2xl mb-6 mt-6">
+			<!-- Gradient background -->
+			<div
+				class="absolute inset-0 bg-gradient-to-br from-accent/20 via-violet-500/10 to-indigo-500/5 rounded-2xl" />
+			<div class="absolute inset-0 bg-panel/80 backdrop-blur-sm rounded-2xl border border-heading/8" />
 
-		<!-- ── Hero Banner ────────────────────────────── -->
-		<div class="relative bg-panel rounded-2xl border border-heading/5 overflow-hidden mb-6">
-			<!-- Gradient top strip -->
-			<div class="h-1.5 w-full bg-gradient-to-r from-accent via-violet-500 to-indigo-500"></div>
+			<!-- Decorative circles -->
+			<div class="absolute -right-12 -top-12 w-48 h-48 rounded-full bg-accent/5 blur-2xl pointer-events-none" />
+			<div
+				class="absolute right-24 -bottom-8 w-32 h-32 rounded-full bg-violet-500/8 blur-xl pointer-events-none" />
 
-			<div class="p-6 flex flex-wrap gap-6 items-start justify-between">
-				<!-- Left: title + meta -->
-				<div class="flex items-start gap-4 flex-1 min-w-0">
-					<div
-						class="w-14 h-14 rounded-2xl bg-gradient-to-br from-accent to-violet-600 flex items-center justify-center shrink-0 shadow-lg shadow-accent/25">
-						<v-icon name="md-folderspecial-outlined" class="text-white" scale="1.6" />
-					</div>
-					<div class="min-w-0">
-						<div class="flex items-center gap-2.5 flex-wrap mb-1.5">
-							<h1 class="text-heading leading-none">{{ project.name }}</h1>
-							<span
-								:class="[statusConfig[project.status].cls, 'inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full font-bold']">
-								<span
-									:class="[statusConfig[project.status].dot, 'w-1.5 h-1.5 rounded-full animate-pulse']"></span>
-								{{ project.status }}
-							</span>
-							<span
-								:class="[priorityConfig[project.priority].cls, 'text-xs px-2.5 py-1 rounded-full font-bold']">
-								{{ project.priority }}
-							</span>
-						</div>
-						<p class="text-sm text-text/50 leading-relaxed max-w-2xl">{{ project.description }}</p>
-
-						<!-- Date row -->
-						<div class="flex items-center gap-4 mt-3 flex-wrap">
-							<div class="flex items-center gap-1.5 text-xs text-text/40">
-								<v-icon name="bi-calendar3" scale="0.8" />
-								<span>{{ formatDate(project.startDate) }}</span>
-								<span class="text-text/20">→</span>
-								<span>{{ formatDate(project.endDate) }}</span>
-							</div>
-							<div class="flex items-center gap-1.5 text-xs"
-								:class="daysLeft <= 7 ? 'text-amber-500 font-semibold' : 'text-text/40'">
-								<v-icon name="bi-clock" scale="0.8" />
-								{{ daysLeft > 0 ? `${daysLeft} days remaining` : 'Overdue' }}
-							</div>
-						</div>
-					</div>
+			<div class="relative p-6 md:p-8">
+				<!-- Breadcrumb -->
+				<div class="flex items-center gap-1.5 text-xs text-text/40 mb-5">
+					<button @click="router.push({ name: 'projects' })"
+						class="hover:text-accent transition-colors font-medium">Projects</button>
+					<v-icon name="bi-chevron-right" scale="0.75" />
+					<span class="text-text/60 font-semibold">{{ project.name }}</span>
 				</div>
 
-				<!-- Right: Actions + Progress Ring -->
-				<div class="flex items-center gap-4 shrink-0">
-					<!-- Progress ring -->
-					<div class="relative w-20 h-20">
-						<svg width="80" height="80" viewBox="0 0 80 80" class="-rotate-90">
-							<circle cx="40" cy="40" r="36" fill="none" stroke="currentColor" stroke-width="6"
-								class="text-heading/8" />
-							<circle cx="40" cy="40" r="36" fill="none" stroke="url(#progressGrad)" stroke-width="6"
-								stroke-linecap="round" :stroke-dasharray="`${strokeDash} ${circumference}`" />
-							<defs>
-								<linearGradient id="progressGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-									<stop offset="0%" stop-color="#6c63ff" />
-									<stop offset="100%" stop-color="#8b5cf6" />
-								</linearGradient>
-							</defs>
-						</svg>
-						<div class="absolute inset-0 flex flex-col items-center justify-center">
-							<span class="text-lg font-bold text-heading leading-none">{{ project.progress }}%</span>
-							<span class="text-[8px] text-text/40 uppercase tracking-wider">done</span>
-						</div>
-					</div>
-
-					<!-- Action buttons -->
-					<div class="flex flex-col gap-2">
-						<button
-							class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-heading/10 text-sm font-semibold text-text/60 hover:bg-heading/5 transition-colors whitespace-nowrap">
-							<v-icon name="bi-pencil" scale="0.85" />
-							Edit
-						</button>
-						<button
-							class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-accent/8 text-accent text-sm font-semibold hover:bg-accent/15 transition-colors whitespace-nowrap">
-							<v-icon name="bi-person-plus" scale="0.85" />
-							Add Member
-						</button>
-					</div>
-				</div>
-			</div>
-
-			<!-- Goal banner -->
-			<div v-if="project.goal"
-				class="mx-6 mb-5 px-4 py-3 rounded-xl bg-accent/5 border border-accent/10 flex items-center gap-3">
-				<v-icon name="bi-lightning-charge" class="text-accent shrink-0" scale="0.9" />
-				<p class="text-xs text-text/60"><span class="font-bold text-accent">Goal:</span> {{ project.goal }}</p>
-			</div>
-		</div>
-
-		<!-- ── Quick Stats Row ────────────────────────── -->
-		<div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-			<div class="bg-panel rounded-xl border border-heading/5 px-4 py-3.5 flex items-center gap-3">
-				<div class="w-8 h-8 rounded-lg bg-heading/5 flex items-center justify-center shrink-0">
-					<v-icon name="bi-card-list" class="text-text/50" scale="0.9" />
-				</div>
-				<div>
-					<p class="text-xl font-bold text-heading leading-none">{{ tasks.length }}</p>
-					<p class="text-[10px] text-text/40 mt-0.5">Total Tasks</p>
-				</div>
-			</div>
-			<div class="bg-panel rounded-xl border border-heading/5 px-4 py-3.5 flex items-center gap-3">
-				<div class="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
-					<v-icon name="bi-check-circle" class="text-emerald-500" scale="0.9" />
-				</div>
-				<div>
-					<p class="text-xl font-bold text-heading leading-none">{{ doneCount }}</p>
-					<p class="text-[10px] text-text/40 mt-0.5">Completed</p>
-				</div>
-			</div>
-			<div class="bg-panel rounded-xl border border-heading/5 px-4 py-3.5 flex items-center gap-3">
-				<div class="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
-					<v-icon name="bi-lightning-charge" class="text-accent" scale="0.9" />
-				</div>
-				<div>
-					<p class="text-xl font-bold text-heading leading-none">{{ inProgressCount }}</p>
-					<p class="text-[10px] text-text/40 mt-0.5">In Progress</p>
-				</div>
-			</div>
-			<div class="bg-panel rounded-xl border border-heading/5 px-4 py-3.5 flex items-center gap-3">
-				<div class="w-8 h-8 rounded-lg bg-slate-400/10 flex items-center justify-center shrink-0">
-					<v-icon name="bi-clock" class="text-slate-400" scale="0.9" />
-				</div>
-				<div>
-					<p class="text-xl font-bold text-heading leading-none">{{ todoCount }}</p>
-					<p class="text-[10px] text-text/40 mt-0.5">To Do</p>
-				</div>
-			</div>
-		</div>
-
-		<!-- ── Tabs ───────────────────────────────────── -->
-		<div class="flex items-center gap-1 mb-6 bg-panel border border-heading/5 rounded-xl p-1 w-fit">
-			<button v-for="tab in tabs" :key="tab.key" @click="activeTab = tab.key" :class="['inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all',
-				activeTab === tab.key
-					? 'bg-accent text-white shadow-sm shadow-accent/30'
-					: 'text-text/50 hover:text-text/80 hover:bg-heading/5']">
-				<v-icon :name="tab.icon" scale="0.85" />
-				{{ tab.label }}
-			</button>
-		</div>
-
-		<!-- ──────────────────────────────────────────── -->
-		<!-- TAB: Overview                               -->
-		<!-- ──────────────────────────────────────────── -->
-		<div v-if="activeTab === 'overview'" class="grid grid-cols-1 lg:grid-cols-3 gap-5">
-
-			<!-- Progress breakdown -->
-			<div class="lg:col-span-2 bg-panel rounded-2xl border border-heading/5 p-5">
-				<h3 class="font-bold text-heading text-sm mb-4 flex items-center gap-2">
-					<v-icon name="bi-bar-chart" class="text-accent" scale="0.9" />
-					Task Breakdown
-				</h3>
-				<div class="space-y-3.5">
-					<div v-for="(st, label) in { 'Done': doneCount, 'In Progress': inProgressCount, 'To Do': todoCount }"
-						:key="label">
-						<div class="flex items-center justify-between mb-1.5">
-							<span class="text-xs font-semibold text-text/60">{{ label }}</span>
-							<span class="text-xs text-text/40">{{ st }} task{{ st !== 1 ? 's' : '' }}</span>
-						</div>
-						<div class="h-2 bg-heading/8 rounded-full overflow-hidden">
-							<div class="h-full rounded-full transition-all duration-500" :class="{
-								'bg-emerald-500': label === 'Done',
-								'bg-accent': label === 'In Progress',
-								'bg-slate-300': label === 'To Do',
-							}" :style="`width: ${tasks.length ? (st / tasks.length) * 100 : 0}%`">
-							</div>
-						</div>
-					</div>
-				</div>
-
-				<!-- Timeline -->
-				<div class="mt-6 pt-5 border-t border-heading/5">
-					<h4 class="text-xs font-bold text-text/40 uppercase tracking-wider mb-3">Timeline</h4>
-					<div class="relative">
-						<div class="flex items-center justify-between text-xs text-text/40 mb-2">
-							<span>{{ formatDate(project.startDate) }}</span>
-							<span>{{ formatDate(project.endDate) }}</span>
-						</div>
-						<div class="h-3 bg-heading/8 rounded-full overflow-hidden relative">
-							<div class="h-full bg-gradient-to-r from-accent to-violet-500 rounded-full transition-all"
-								:style="`width: ${project.progress}%`"></div>
-							<!-- Today indicator -->
-							<div class="absolute top-0 bottom-0 w-0.5 bg-amber-500" style="left: 40%" title="Today">
-								<div
-									class="absolute -top-4 left-1/2 -translate-x-1/2 text-[8px] text-amber-500 font-bold whitespace-nowrap">
-									Today</div>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-
-			<!-- Activity Feed -->
-			<div class="bg-panel rounded-2xl border border-heading/5 p-5">
-				<h3 class="font-bold text-heading text-sm mb-4 flex items-center gap-2">
-					<v-icon name="bi-activity" class="text-accent" scale="0.9" />
-					Recent Activity
-				</h3>
-				<div class="space-y-4">
-					<div v-for="(item, i) in recentActivity" :key="i" class="flex items-start gap-3">
+				<div class="flex flex-wrap gap-6 items-start justify-between">
+					<!-- Left: Icon + Title + Meta -->
+					<div class="flex items-start gap-4 flex-1 min-w-0">
 						<div
-							:class="[item.color, 'w-7 h-7 rounded-full flex items-center justify-center text-white text-[9px] font-bold shrink-0 mt-0.5']">
-							{{ item.initials }}
+							class="w-14 h-14 rounded-2xl bg-gradient-to-br from-accent to-violet-600 flex items-center justify-center shrink-0 shadow-xl shadow-accent/30">
+							<v-icon name="md-folderspecial-outlined" class="text-white" scale="1.5" />
 						</div>
 						<div class="min-w-0 flex-1">
-							<p class="text-xs text-text/70 leading-relaxed">{{ item.text }}</p>
-							<p class="text-[10px] text-text/35 mt-0.5">{{ item.time }}</p>
-						</div>
-					</div>
-				</div>
-				<button
-					class="mt-4 w-full text-xs text-accent/70 hover:text-accent font-semibold py-2 rounded-lg hover:bg-accent/5 transition-colors">
-					View all activity →
-				</button>
-			</div>
-		</div>
-
-		<!-- ──────────────────────────────────────────── -->
-		<!-- TAB: Tasks                                  -->
-		<!-- ──────────────────────────────────────────── -->
-		<div v-else-if="activeTab === 'tasks'">
-
-			<!-- Tab header -->
-			<div class="flex items-center justify-between mb-5">
-				<div>
-					<h3 class="font-bold text-heading text-sm">Recent Tasks</h3>
-					<p class="text-xs text-text/40 mt-0.5">Showing {{ tasks.slice(0, 5).length }} of {{ tasks.length }}
-						tasks</p>
-				</div>
-				<button @click="openTasksView"
-					class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-accent text-white text-sm font-semibold hover:bg-accent/90 active:scale-95 transition-all shadow-md shadow-accent/20">
-					<v-icon name="bi-box-arrow-up-right" scale="0.85" />
-					Full Task View
-				</button>
-			</div>
-
-			<!-- Preview: first 5 tasks -->
-			<div class="bg-panel rounded-2xl border border-heading/5 overflow-hidden mb-4">
-				<div class="divide-y divide-heading/5">
-					<div v-for="task in tasks.slice(0, 5)" :key="task.id"
-						class="flex items-center gap-4 px-5 py-3.5 hover:bg-heading/[0.015] transition-colors group cursor-pointer"
-						@click="openTasksView">
-
-						<!-- Status dot -->
-						<div
-							:class="[taskStatusConfig[task.status]?.dot || 'bg-slate-300', 'w-2 h-2 rounded-full shrink-0']">
-						</div>
-
-						<!-- Title -->
-						<p class="flex-1 text-sm font-medium min-w-0 group-hover:text-accent transition-colors"
-							:class="task.status === 'Done' ? 'line-through text-text/35' : 'text-heading'">
-							{{ task.title }}
-						</p>
-
-						<!-- Badges -->
-						<div class="flex items-center gap-2 shrink-0">
-							<span
-								:class="[priorityConfig[task.priority]?.cls, 'text-[10px] px-2 py-0.5 rounded-full font-bold hidden sm:inline-flex']">
-								{{ task.priority }}
-							</span>
-							<span
-								:class="[taskStatusConfig[task.status]?.cls, 'text-[10px] px-2.5 py-1 rounded-full font-bold inline-flex items-center gap-1']">
-								<span :class="[taskStatusConfig[task.status]?.dot, 'w-1 h-1 rounded-full']"></span>
-								{{ task.status }}
-							</span>
-							<div
-								class="w-6 h-6 rounded-full bg-accent flex items-center justify-center text-white text-[9px] font-bold">
-								{{ task.assignee }}
+							<div class="flex items-center gap-2.5 flex-wrap mb-2">
+								<h1 class="text-2xl font-bold text-heading leading-none">{{ project.name }}</h1>
+								<span
+									:class="[statusConfig[project.status]?.cls, 'inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full font-bold border border-current/10']">
+									<span
+										:class="[statusConfig[project.status]?.dot, 'w-1.5 h-1.5 rounded-full']"></span>
+									{{ project.status }}
+								</span>
+								<span
+									:class="[priorityConfig[project.priority]?.cls, 'text-xs px-2.5 py-1 rounded-full font-bold border border-current/10']">
+									{{ project.priority }}
+								</span>
 							</div>
-							<span class="text-[10px] text-text/35 hidden md:flex items-center gap-1">
-								<v-icon name="bi-calendar3" scale="0.7" />
-								{{ task.due }}
-							</span>
+							<p class="text-sm text-text/50 leading-relaxed max-w-2xl mb-4">{{ project.description }}</p>
+
+							<!-- Progress + dates row -->
+							<div class="flex flex-wrap items-center gap-5">
+								<!-- Progress bar -->
+								<div class="flex items-center gap-3 min-w-48">
+									<div class="flex-1 h-1.5 bg-heading/10 rounded-full overflow-hidden">
+										<div class="h-full bg-gradient-to-r from-accent to-violet-500 rounded-full transition-all duration-700"
+											:style="`width:${project.progress}%`" />
+									</div>
+									<span class="text-xs font-bold text-heading tabular-nums">{{ project.progress
+									}}%</span>
+								</div>
+
+								<!-- Dates -->
+								<div class="flex items-center gap-1.5 text-xs text-text/40">
+									<v-icon name="bi-calendar3" scale="0.8" />
+									<span>{{ formatDate(project.startDate) }}</span>
+									<span class="text-text/20 mx-0.5">→</span>
+									<span>{{ formatDate(project.endDate) }}</span>
+								</div>
+
+								<!-- Days left -->
+								<div class="flex items-center gap-1.5 text-xs"
+									:class="daysLeft <= 14 ? 'text-amber-500 font-semibold' : 'text-text/40'">
+									<v-icon name="bi-clock" scale="0.8" />
+									{{ daysLeft > 0 ? `${daysLeft} days left` : 'Overdue' }}
+								</div>
+
+								<!-- Member avatars -->
+								<div class="flex items-center -space-x-1.5">
+									<div v-for="m in project.members.slice(0, 4)" :key="m.initials"
+										:class="[m.color, 'w-6 h-6 rounded-full border-2 border-panel flex items-center justify-center text-white text-[9px] font-bold shadow-sm']"
+										:title="m.name">
+										{{ m.initials }}
+									</div>
+									<div v-if="project.members.length > 4"
+										class="w-6 h-6 rounded-full border-2 border-panel bg-heading/10 flex items-center justify-center text-text/50 text-[9px] font-bold">
+										+{{ project.members.length - 4 }}
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- Right: Actions -->
+					<div class="flex items-center gap-2 shrink-0">
+						<button
+							class="p-2 rounded-xl hover:bg-heading/8 text-text/40 hover:text-heading transition-colors">
+							<v-icon name="bi-pencil" scale="0.9" />
+						</button>
+						<button
+							class="p-2 rounded-xl hover:bg-heading/8 text-text/40 hover:text-heading transition-colors">
+							<v-icon name="bi-archive" scale="0.9" />
+						</button>
+						<button
+							class="p-2 rounded-xl hover:bg-red-500/10 text-text/40 hover:text-red-500 transition-colors">
+							<v-icon name="bi-trash" scale="0.9" />
+						</button>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- ════════════════════════════════════════════ -->
+		<!-- BODY: SIDEBAR + TASKS                       -->
+		<!-- ════════════════════════════════════════════ -->
+		<div class="flex gap-5 items-start">
+
+			<!-- ══════════════════════════════════════ -->
+			<!-- SIDEBAR                               -->
+			<!-- ══════════════════════════════════════ -->
+			<aside
+				:class="[sidebarCollapsed ? 'w-10' : 'w-72', 'shrink-0 transition-all duration-300 self-start sticky top-24 space-y-4']">
+
+				<!-- Collapse toggle -->
+				<button @click="sidebarCollapsed = !sidebarCollapsed"
+					class="w-full flex items-center justify-between text-xs font-semibold text-text/40 hover:text-accent transition-colors mb-1 group">
+					<span v-if="!sidebarCollapsed" class="uppercase tracking-widest">Project Info</span>
+					<span
+						:class="[sidebarCollapsed ? 'rotate-180' : '', 'transition-transform duration-300 w-6 h-6 rounded-lg bg-heading/5 group-hover:bg-accent/10 flex items-center justify-center']">
+						<v-icon name="bi-chevron-right" scale="0.75"
+							:class="sidebarCollapsed ? 'text-accent' : 'text-text/40'" />
+					</span>
+				</button>
+
+				<template v-if="!sidebarCollapsed">
+					<!-- Goal -->
+					<div class="bg-panel rounded-2xl border border-heading/5 p-4">
+						<h3
+							class="text-[10px] font-bold uppercase tracking-widest text-text/35 mb-2.5 flex items-center gap-1.5">
+							<v-icon name="bi-star" scale="0.75" class="text-amber-500" />
+							Goal
+						</h3>
+						<p class="text-xs text-text/60 leading-relaxed">{{ project.goal }}</p>
+					</div>
+
+					<!-- Task stats -->
+					<div class="bg-panel rounded-2xl border border-heading/5 p-4">
+						<h3
+							class="text-[10px] font-bold uppercase tracking-widest text-text/35 mb-3 flex items-center gap-1.5">
+							<v-icon name="bi-bar-chart" scale="0.75" class="text-accent" />
+							Progress
+						</h3>
+						<div class="space-y-2.5">
+							<div v-for="(count, label, i) in { 'Done': doneCount, 'In Progress': inProgressCount, 'To Do': todoCount }"
+								:key="label">
+								<div class="flex items-center justify-between mb-1">
+									<span class="text-[11px] font-semibold text-text/50">{{ label }}</span>
+									<span class="text-[11px] text-text/35 tabular-nums">{{ count }}/{{ totalTasks
+									}}</span>
+								</div>
+								<div class="h-1.5 bg-heading/8 rounded-full overflow-hidden">
+									<div class="h-full rounded-full transition-all duration-500" :class="{
+										'bg-emerald-500': label === 'Done',
+										'bg-accent': label === 'In Progress',
+										'bg-slate-300 dark:bg-slate-600': label === 'To Do',
+									}" :style="`width: ${totalTasks ? (count / totalTasks) * 100 : 0}%`" />
+								</div>
+							</div>
+						</div>
+						<div class="mt-3 pt-3 border-t border-heading/5 flex items-center justify-between">
+							<span class="text-[11px] text-text/40">Overall progress</span>
+							<span class="text-sm font-bold text-heading tabular-nums">{{ project.progress }}%</span>
+						</div>
+					</div>
+
+					<!-- Timeline -->
+					<div class="bg-panel rounded-2xl border border-heading/5 p-4">
+						<h3
+							class="text-[10px] font-bold uppercase tracking-widest text-text/35 mb-3 flex items-center gap-1.5">
+							<v-icon name="bi-calendar3" scale="0.75" class="text-violet-500" />
+							Timeline
+						</h3>
+						<div class="flex items-center justify-between text-[10px] text-text/40 mb-2">
+							<span>{{ formatShort(project.startDate) }}</span>
+							<span>{{ formatShort(project.endDate) }}</span>
+						</div>
+						<div class="relative h-2 bg-heading/8 rounded-full overflow-visible mb-3">
+							<div class="h-full bg-gradient-to-r from-accent to-violet-500 rounded-full"
+								:style="`width:${project.progress}%`" />
+							<!-- Today marker -->
+							<div class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2"
+								:style="`left:${todayPercent}%`">
+								<div class="w-2.5 h-2.5 rounded-full bg-amber-400 border-2 border-panel shadow-sm" />
+							</div>
+						</div>
+						<div class="flex items-center gap-1.5 text-[10px] text-amber-500 font-semibold">
+							<span class="w-2 h-2 rounded-full bg-amber-400 inline-block" />
+							Today · {{ daysLeft > 0 ? `${daysLeft} days remaining` : 'Past deadline' }}
+						</div>
+					</div>
+
+					<!-- Members -->
+					<div class="bg-panel rounded-2xl border border-heading/5 p-4">
+						<div class="flex items-center justify-between mb-3">
+							<h3
+								class="text-[10px] font-bold uppercase tracking-widest text-text/35 flex items-center gap-1.5">
+								<v-icon name="bi-people" scale="0.75" class="text-emerald-500" />
+								Team ({{ project.members.length }})
+							</h3>
+							<button class="text-text/30 hover:text-accent transition-colors">
+								<v-icon name="bi-person-plus" scale="0.85" />
+							</button>
+						</div>
+						<div class="space-y-2">
+							<div v-for="m in project.members" :key="m.initials"
+								class="flex items-center gap-2.5 group cursor-pointer">
+								<div
+									:class="[m.color, 'w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0 shadow-sm']">
+									{{ m.initials }}
+								</div>
+								<div class="min-w-0 flex-1">
+									<p class="text-xs font-semibold text-heading/80 truncate">{{ m.name }}</p>
+									<p class="text-[10px] text-text/35 truncate">{{ m.role }}</p>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- Recent Activity -->
+					<div class="bg-panel rounded-2xl border border-heading/5 p-4">
+						<h3
+							class="text-[10px] font-bold uppercase tracking-widest text-text/35 mb-3 flex items-center gap-1.5">
+							<v-icon name="bi-activity" scale="0.75" class="text-accent" />
+							Activity
+						</h3>
+						<div class="space-y-3">
+							<div v-for="(item, i) in recentActivity" :key="i" class="flex items-start gap-2.5">
+								<div
+									:class="[item.color, 'w-6 h-6 rounded-full flex items-center justify-center text-white text-[9px] font-bold shrink-0 mt-0.5']">
+									{{ item.initials }}
+								</div>
+								<div class="min-w-0">
+									<p class="text-[11px] text-text/60 leading-relaxed">{{ item.text }}</p>
+									<p class="text-[10px] text-text/30 mt-0.5">{{ item.time }}</p>
+								</div>
+							</div>
+						</div>
+					</div>
+				</template>
+			</aside>
+
+			<!-- ══════════════════════════════════════ -->
+			<!-- MAIN: TASKS                           -->
+			<!-- ══════════════════════════════════════ -->
+			<div class="flex-1 min-w-0">
+
+				<!-- Task stats row -->
+				<div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+					<div v-for="(stat, i) in [
+						{ label: 'Total', value: totalTasks, icon: 'bi-list-task', cls: 'text-heading', bg: 'bg-heading/5' },
+						{ label: 'In Progress', value: inProgressCount, icon: 'bi-lightning-charge', cls: 'text-accent', bg: 'bg-accent/10' },
+						{ label: 'Done', value: doneCount, icon: 'bi-check-circle', cls: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+						{ label: 'Overdue', value: overdueCount, icon: 'bi-clock', cls: overdueCount ? 'text-red-500' : 'text-text/40', bg: overdueCount ? 'bg-red-500/10' : 'bg-heading/5' },
+					]" :key="stat.label" class="bg-panel rounded-xl border border-heading/5 px-4 py-3 flex items-center gap-3">
+						<div :class="[stat.bg, 'w-8 h-8 rounded-lg flex items-center justify-center shrink-0']">
+							<v-icon :name="stat.icon" :class="stat.cls" scale="0.9" />
+						</div>
+						<div>
+							<p :class="[stat.cls, 'text-xl font-bold leading-none tabular-nums']">{{ stat.value }}</p>
+							<p class="text-[10px] text-text/35 mt-0.5">{{ stat.label }}</p>
 						</div>
 					</div>
 				</div>
-			</div>
 
-			<!-- View all button -->
-			<button @click="openTasksView"
-				class="w-full py-3 rounded-xl border border-dashed border-heading/15 text-sm font-semibold text-text/40 hover:text-accent hover:border-accent/30 hover:bg-accent/5 transition-all flex items-center justify-center gap-2">
-				<v-icon name="bi-card-list" scale="0.9" />
-				View all {{ tasks.length }} tasks →
-			</button>
-		</div>
+				<!-- Toolbar -->
+				<div class="bg-panel rounded-2xl border border-heading/5 p-3.5 mb-4">
+					<div class="flex flex-wrap items-center gap-2.5">
+						<!-- Search -->
+						<div class="relative flex-1 min-w-40">
+							<v-icon name="bi-search"
+								class="absolute left-3 top-1/2 -translate-y-1/2 text-text/30 pointer-events-none"
+								scale="0.85" />
+							<input v-model="searchQuery" type="text" placeholder="Search tasks…"
+								class="w-full pl-9 pr-8 py-2 rounded-xl border border-heading/8 bg-heading/3 text-sm text-heading placeholder-text/30 focus:outline-none focus:border-accent/40 transition-colors" />
+							<button v-if="searchQuery" @click="searchQuery = ''"
+								class="absolute right-2.5 top-1/2 -translate-y-1/2 text-text/30 hover:text-text/60">
+								<v-icon name="bi-x-circle" scale="0.8" />
+							</button>
+						</div>
 
-		<!-- ──────────────────────────────────────────── -->
-		<!-- TAB: Members                                -->
-		<!-- ──────────────────────────────────────────── -->
-		<div v-else-if="activeTab === 'members'">
-			<div class="flex items-center justify-between mb-4">
-				<p class="text-sm text-text/40">{{ project.members.length }} team member{{ project.members.length !== 1
-					? 's' : '' }}</p>
-				<button
-					class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-accent text-white text-xs font-semibold hover:bg-accent/90 active:scale-95 transition-all shadow-md shadow-accent/20">
-					<v-icon name="bi-person-plus" scale="0.85" />
-					Add Member
-				</button>
-			</div>
+						<!-- Status filter -->
+						<select v-model="statusFilter"
+							:class="['appearance-none pl-3 pr-7 py-2 rounded-xl border text-sm focus:outline-none transition-colors cursor-pointer',
+								statusFilter !== 'All' ? 'border-accent/30 bg-accent/8 text-accent font-semibold' : 'border-heading/8 bg-heading/3 text-text/50 hover:text-text/80']">
+							<option v-for="s in ['All', 'Todo', 'In Progress', 'Review', 'Done']" :key="s" :value="s">
+								{{ s === 'All' ? 'All Status' : s }}
+							</option>
+						</select>
 
-			<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-				<div v-for="member in project.members" :key="member.email"
-					class="bg-panel rounded-2xl border border-heading/5 p-5 flex items-center gap-4 hover:shadow-md hover:border-accent/10 transition-all group">
-					<div
-						:class="[member.color, 'w-12 h-12 rounded-2xl flex items-center justify-center text-white text-base font-bold shrink-0 shadow-sm group-hover:scale-105 transition-transform']">
-						{{ member.initials }}
+						<!-- Priority filter -->
+						<select v-model="priorityFilter"
+							:class="['appearance-none pl-3 pr-7 py-2 rounded-xl border text-sm focus:outline-none transition-colors cursor-pointer',
+								priorityFilter !== 'All' ? 'border-accent/30 bg-accent/8 text-accent font-semibold' : 'border-heading/8 bg-heading/3 text-text/50 hover:text-text/80']">
+							<option v-for="p in ['All', 'Urgent', 'High', 'Medium', 'Low']" :key="p" :value="p">
+								{{ p === 'All' ? 'All Priority' : p }}
+							</option>
+						</select>
+
+						<!-- Spacer -->
+						<div class="flex-1 hidden sm:block" />
+
+						<!-- View toggle -->
+						<div class="flex items-center gap-1 bg-heading/5 rounded-xl p-1">
+							<button @click="viewMode = 'list'" :class="[
+								viewMode === 'list' ? 'bg-panel text-heading shadow-sm' : 'text-text/40 hover:text-text/70',
+								'px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5'
+							]">
+								<v-icon name="bi-list-task" scale="0.85" />
+								List
+							</button>
+							<button @click="viewMode = 'board'" :class="[
+								viewMode === 'board' ? 'bg-panel text-heading shadow-sm' : 'text-text/40 hover:text-text/70',
+								'px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5'
+							]">
+								<v-icon name="bi-kanban" scale="0.85" />
+								Board
+							</button>
+						</div>
+
+						<!-- Add task -->
+						<button @click="showAddTask = true"
+							class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-accent text-white text-sm font-semibold hover:bg-accent/90 active:scale-95 transition-all shadow-md shadow-accent/20">
+							<v-icon name="bi-plus-circle" scale="0.9" />
+							Add Task
+						</button>
 					</div>
-					<div class="min-w-0 flex-1">
-						<p class="font-bold text-heading text-sm leading-tight">{{ member.name }}</p>
-						<p class="text-xs text-accent/80 font-medium mt-0.5">{{ member.role }}</p>
-						<p class="text-[10px] text-text/35 mt-1 truncate">{{ member.email }}</p>
+
+					<!-- Inline add task row -->
+					<div v-if="showAddTask" class="mt-3 pt-3 border-t border-heading/5 flex items-center gap-2.5">
+						<input v-model="newTaskTitle" @keydown.enter="addTask" @keydown.esc="showAddTask = false"
+							type="text" placeholder="Task title… (Enter to save, Esc to cancel)"
+							class="flex-1 px-3.5 py-2 rounded-xl border border-accent/30 bg-accent/5 text-sm text-heading placeholder-text/30 focus:outline-none focus:border-accent/60 transition-colors"
+							autofocus />
+						<button @click="addTask"
+							class="px-4 py-2 rounded-xl bg-accent text-white text-sm font-semibold hover:bg-accent/90 transition-colors">
+							Save
+						</button>
+						<button @click="showAddTask = false; newTaskTitle = ''"
+							class="px-3 py-2 rounded-xl border border-heading/10 text-text/50 text-sm hover:text-heading transition-colors">
+							Cancel
+						</button>
 					</div>
-					<button
-						class="w-7 h-7 rounded-lg border border-heading/10 flex items-center justify-center text-text/25 hover:text-red-500 hover:border-red-200 transition-colors opacity-0 group-hover:opacity-100">
-						<v-icon name="bi-x-circle" scale="0.8" />
-					</button>
 				</div>
+
+				<!-- ── LIST VIEW ──────────────────────────── -->
+				<div v-if="viewMode === 'list'">
+					<div v-if="filteredTasks.length === 0"
+						class="bg-panel rounded-2xl border border-heading/5 p-12 text-center">
+						<v-icon name="bi-list-task" class="text-text/15 mx-auto mb-3" scale="2.5" />
+						<p class="text-sm font-semibold text-text/40">No tasks found</p>
+						<p class="text-xs text-text/25 mt-1">Try adjusting your filters</p>
+					</div>
+
+					<div v-else class="bg-panel rounded-2xl border border-heading/5 overflow-hidden">
+						<!-- Column header -->
+						<div
+							class="grid grid-cols-[auto_1fr_auto_auto_auto_auto] gap-4 px-5 py-2.5 border-b border-heading/5 bg-heading/[0.02]">
+							<div class="w-4" />
+							<span class="text-[10px] font-bold uppercase tracking-widest text-text/30">Task</span>
+							<span
+								class="text-[10px] font-bold uppercase tracking-widest text-text/30 w-20 text-center">Status</span>
+							<span
+								class="text-[10px] font-bold uppercase tracking-widest text-text/30 w-16 text-center">Priority</span>
+							<span
+								class="text-[10px] font-bold uppercase tracking-widest text-text/30 w-8 text-center">Who</span>
+							<span
+								class="text-[10px] font-bold uppercase tracking-widest text-text/30 w-16 text-right">Due</span>
+						</div>
+
+						<!-- Task rows -->
+						<div class="divide-y divide-heading/[0.04]">
+							<div v-for="task in filteredTasks" :key="task.id" @click="openTask(task.id)"
+								class="grid grid-cols-[auto_1fr_auto_auto_auto_auto] gap-4 items-center px-5 py-3.5 hover:bg-heading/[0.02] transition-colors cursor-pointer group">
+
+								<!-- Drag handle -->
+								<div class="text-text/15 group-hover:text-text/30 transition-colors cursor-grab">
+									<v-icon name="bi-grip-vertical" scale="0.85" />
+								</div>
+
+								<!-- Title -->
+								<p class="text-sm font-medium min-w-0 truncate transition-colors"
+									:class="[task.status === 'Done' ? 'line-through text-text/35' : 'text-heading group-hover:text-accent']">
+									{{ task.title }}
+								</p>
+
+								<!-- Status -->
+								<div class="w-20 flex justify-center">
+									<span
+										:class="[taskStatusConfig[task.status]?.cls, 'text-[10px] px-2 py-0.5 rounded-full font-bold inline-flex items-center gap-1 whitespace-nowrap']">
+										<span :class="[taskStatusConfig[task.status]?.dot, 'w-1 h-1 rounded-full']" />
+										{{ task.status }}
+									</span>
+								</div>
+
+								<!-- Priority -->
+								<div class="w-16 flex justify-center">
+									<span
+										:class="[priorityConfig[task.priority]?.cls, 'text-[10px] px-2 py-0.5 rounded-full font-bold whitespace-nowrap']">
+										{{ task.priority }}
+									</span>
+								</div>
+
+								<!-- Assignee avatar -->
+								<div class="w-8 flex justify-center">
+									<div :class="[memberColorMap[task.assignee] || 'bg-accent', 'w-6 h-6 rounded-full flex items-center justify-center text-white text-[9px] font-bold shadow-sm']"
+										:title="task.assignee">
+										{{ task.assignee }}
+									</div>
+								</div>
+
+								<!-- Due date -->
+								<div class="w-16 text-right">
+									<span v-if="task.due" class="text-[10px] text-text/35 tabular-nums">
+										{{ formatShort(task.due) }}
+									</span>
+									<span v-else class="text-[10px] text-text/20">—</span>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- Shown count -->
+					<p class="text-center text-xs text-text/30 mt-3">
+						Showing {{ filteredTasks.length }} of {{ totalTasks }} tasks
+					</p>
+				</div>
+
+				<!-- ── BOARD VIEW ─────────────────────────── -->
+				<div v-else class="grid grid-cols-2 xl:grid-cols-4 gap-4">
+					<div v-for="(columnTasks, status) in tasksByStatus" :key="status"
+						class="bg-panel rounded-2xl border border-heading/5 overflow-hidden">
+
+						<!-- Column header -->
+						<div class="px-4 py-3 border-b border-heading/5 flex items-center justify-between">
+							<div class="flex items-center gap-2">
+								<span :class="[taskStatusConfig[status]?.dot, 'w-2 h-2 rounded-full']" />
+								<span class="text-xs font-bold text-heading">{{ status }}</span>
+							</div>
+							<span
+								class="text-[10px] font-bold text-text/40 bg-heading/5 px-1.5 py-0.5 rounded-md tabular-nums">
+								{{ columnTasks.length }}
+							</span>
+						</div>
+
+						<!-- Cards -->
+						<div class="p-3 space-y-2.5 min-h-24">
+							<div v-for="task in columnTasks" :key="task.id" @click="openTask(task.id)"
+								class="bg-heading/[0.025] hover:bg-heading/[0.05] border border-heading/5 rounded-xl p-3 cursor-pointer transition-all hover:border-accent/20 group">
+								<p class="text-xs font-semibold text-heading group-hover:text-accent transition-colors leading-snug mb-2"
+									:class="task.status === 'Done' ? 'line-through text-text/35' : ''">
+									{{ task.title }}
+								</p>
+								<div class="flex items-center justify-between gap-2">
+									<span
+										:class="[priorityConfig[task.priority]?.cls, 'text-[10px] px-1.5 py-0.5 rounded-md font-bold']">
+										{{ task.priority }}
+									</span>
+									<div class="flex items-center gap-1.5">
+										<span v-if="task.due" class="text-[10px] text-text/30 tabular-nums">
+											{{ formatShort(task.due) }}
+										</span>
+										<div
+											:class="[memberColorMap[task.assignee] || 'bg-accent', 'w-5 h-5 rounded-full flex items-center justify-center text-white text-[8px] font-bold']">
+											{{ task.assignee }}
+										</div>
+									</div>
+								</div>
+							</div>
+
+							<!-- Empty state -->
+							<div v-if="columnTasks.length === 0"
+								class="py-6 text-center text-[11px] text-text/25 font-medium">
+								No tasks
+							</div>
+						</div>
+					</div>
+				</div>
+
 			</div>
+			<!-- /MAIN -->
+
 		</div>
+		<!-- /BODY -->
 
 	</div>
 </template>
-
-<style scoped>
-.line-clamp-1 {
-	display: -webkit-box;
-	-webkit-line-clamp: 1;
-	-webkit-box-orient: vertical;
-	overflow: hidden;
-}
-</style>

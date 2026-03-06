@@ -19,8 +19,7 @@ import UnauthorizedView from '@/views/errors/Unauthorizedview.vue';
 import HomeView from '@/views/HomeView.vue';
 import PingsView from '@/views/PingsView.vue';
 import ProjectsView from '@/views/projects/ProjectsView.vue';
-import ProjectDetailView from '@/views/projects/Projectdetailview.vue';
-import TasksView from '@/views/projects/TasksView.vue';
+import ProjectDetailView from '@/views/projects/ProjectDetailView.vue';
 import TaskDetailView from '@/views/projects/TaskDetailView.vue';
 
 import AcceptInvitationView from '@/views/auth/AcceptInvitationView.vue';
@@ -53,17 +52,14 @@ const routes = [
             // ── Tasks ─────────────────────────────────────────────────────────
             {
                 path: 'projects/:id/tasks',
-                name: 'project-tasks',
-                component: TasksView,
-                meta: { requiresCapability: 'tasks.view' },
+                redirect: to => ({ name: 'project-detail', params: { id: to.params.id } })
             },
             {
-                path: 'projects/:id/tasks/:taskId', // ✅ NEW
+                path: 'projects/:id/tasks/:taskId',
                 name: 'task-detail',
                 component: TaskDetailView,
                 meta: { requiresCapability: 'tasks.view' },
             },
-
             // 403 page
             { path: 'unauthorized', name: 'unauthorized', component: UnauthorizedView },
 

@@ -8,7 +8,7 @@ import {
 	BiCalendar3, BiFlag, BiArrowRight,
 	MdFolderspecialOutlined, BiCardList, BiLayoutWtf,
 	BiChevronDown, BiPersonPlus, BiXCircle, BiBarChart,
-	BiLightningCharge, BiChat, BiActivity,
+	BiLightningCharge, BiChat, BiActivity, BiBoxArrowUpRight
 } from 'oh-vue-icons/icons'
 
 addIcons(
@@ -17,7 +17,7 @@ addIcons(
 	BiCalendar3, BiFlag, BiArrowRight,
 	MdFolderspecialOutlined, BiCardList, BiLayoutWtf,
 	BiChevronDown, BiPersonPlus, BiXCircle, BiBarChart,
-	BiLightningCharge, BiChat, BiActivity,
+	BiLightningCharge, BiChat, BiActivity, BiBoxArrowUpRight
 )
 
 const router = useRouter()
@@ -111,6 +111,9 @@ const formatDate = (d) => new Date(d).toLocaleDateString('en-US', { month: 'shor
 const radius = 36
 const circumference = 2 * Math.PI * radius
 const strokeDash = computed(() => (project.progress / 100) * circumference)
+
+const openTasksView = () => router.push({ name: 'project-tasks', params: { id: project.id } })
+
 </script>
 
 <template>
@@ -345,30 +348,27 @@ const strokeDash = computed(() => (project.progress / 100) * circumference)
 		<!-- TAB: Tasks                                  -->
 		<!-- ──────────────────────────────────────────── -->
 		<div v-else-if="activeTab === 'tasks'">
-			<!-- Toolbar -->
-			<div class="flex items-center justify-between gap-4 mb-4 flex-wrap">
-				<div class="flex items-center gap-2 flex-wrap">
-					<button v-for="s in taskStatuses" :key="s" @click="taskFilter = s"
-						:class="['px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all',
-							taskFilter === s ? 'bg-accent text-white shadow-sm' : 'bg-panel border border-heading/10 text-text/50 hover:text-text/80 hover:bg-heading/5']">
-						{{ s }}
-						<span v-if="s !== 'All'" class="ml-1 opacity-60">
-							{{tasks.filter(t => t.status === s).length}}
-						</span>
-					</button>
+
+			<!-- Tab header -->
+			<div class="flex items-center justify-between mb-5">
+				<div>
+					<h3 class="font-bold text-heading text-sm">Recent Tasks</h3>
+					<p class="text-xs text-text/40 mt-0.5">Showing {{ tasks.slice(0, 5).length }} of {{ tasks.length }}
+						tasks</p>
 				</div>
-				<button
-					class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-accent text-white text-xs font-semibold hover:bg-accent/90 active:scale-95 transition-all shadow-md shadow-accent/20">
-					<v-icon name="bi-plus-circle" scale="0.85" />
-					Add Task
+				<button @click="openTasksView"
+					class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-accent text-white text-sm font-semibold hover:bg-accent/90 active:scale-95 transition-all shadow-md shadow-accent/20">
+					<v-icon name="bi-box-arrow-up-right" scale="0.85" />
+					Full Task View
 				</button>
 			</div>
 
-			<!-- Task list -->
-			<div class="bg-panel rounded-2xl border border-heading/5 overflow-hidden">
+			<!-- Preview: first 5 tasks -->
+			<div class="bg-panel rounded-2xl border border-heading/5 overflow-hidden mb-4">
 				<div class="divide-y divide-heading/5">
-					<div v-for="task in filteredTasks" :key="task.id"
-						class="flex items-center gap-4 px-5 py-3.5 hover:bg-heading/[0.015] transition-colors group">
+					<div v-for="task in tasks.slice(0, 5)" :key="task.id"
+						class="flex items-center gap-4 px-5 py-3.5 hover:bg-heading/[0.015] transition-colors group cursor-pointer"
+						@click="openTasksView">
 
 						<!-- Status dot -->
 						<div
@@ -376,7 +376,7 @@ const strokeDash = computed(() => (project.progress / 100) * circumference)
 						</div>
 
 						<!-- Title -->
-						<p class="flex-1 text-sm font-medium min-w-0"
+						<p class="flex-1 text-sm font-medium min-w-0 group-hover:text-accent transition-colors"
 							:class="task.status === 'Done' ? 'line-through text-text/35' : 'text-heading'">
 							{{ task.title }}
 						</p>
@@ -392,23 +392,25 @@ const strokeDash = computed(() => (project.progress / 100) * circumference)
 								<span :class="[taskStatusConfig[task.status]?.dot, 'w-1 h-1 rounded-full']"></span>
 								{{ task.status }}
 							</span>
-							<div class="w-6 h-6 rounded-full bg-accent flex items-center justify-center text-white text-[9px] font-bold"
-								:title="task.assignee">
+							<div
+								class="w-6 h-6 rounded-full bg-accent flex items-center justify-center text-white text-[9px] font-bold">
 								{{ task.assignee }}
 							</div>
-							<span class="text-[10px] text-text/35 flex items-center gap-1 hidden md:flex">
+							<span class="text-[10px] text-text/35 hidden md:flex items-center gap-1">
 								<v-icon name="bi-calendar3" scale="0.7" />
 								{{ task.due }}
 							</span>
 						</div>
 					</div>
 				</div>
-
-				<div v-if="filteredTasks.length === 0" class="text-center py-16">
-					<v-icon name="bi-check-circle" class="text-text/20 mb-3" scale="2" />
-					<p class="text-sm text-text/40">No tasks match this filter.</p>
-				</div>
 			</div>
+
+			<!-- View all button -->
+			<button @click="openTasksView"
+				class="w-full py-3 rounded-xl border border-dashed border-heading/15 text-sm font-semibold text-text/40 hover:text-accent hover:border-accent/30 hover:bg-accent/5 transition-all flex items-center justify-center gap-2">
+				<v-icon name="bi-card-list" scale="0.9" />
+				View all {{ tasks.length }} tasks →
+			</button>
 		</div>
 
 		<!-- ──────────────────────────────────────────── -->

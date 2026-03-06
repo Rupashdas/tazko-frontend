@@ -19,7 +19,8 @@ import UnauthorizedView from '@/views/errors/Unauthorizedview.vue';
 import HomeView from '@/views/HomeView.vue';
 import PingsView from '@/views/PingsView.vue';
 import ProjectsView from '@/views/projects/ProjectsView.vue';
-import ProjectDetailView from '@/views/projects/ProjectDetailView.vue';
+import ProjectDetailView from '@/views/projects/Projectdetailview.vue';
+import TasksView from '@/views/projects/TasksView.vue';
 
 import AcceptInvitationView from '@/views/auth/AcceptInvitationView.vue';
 
@@ -65,6 +66,16 @@ const routes = [
                 component: ProjectDetailView,
                 meta: {
                     requiresCapability: 'projects.view',
+                },
+            },
+
+            // ── Tasks ✅ NEW ──────────────────────────────────────────────────
+            {
+                path: 'projects/:id/tasks',
+                name: 'project-tasks',
+                component: TasksView,
+                meta: {
+                    requiresCapability: 'tasks.view',
                 },
             },
 
@@ -152,23 +163,18 @@ router.beforeEach(async (to, from, next) => {
     const auth = useAuthStore()
     const preferencesStore = usePreferencesStore()
 
-    // 1. Ensure auth state is resolved
     if (!auth.authChecked) {
         try {
             await auth.fetchUser()
-        } catch (e) {
-            // ignore
-        }
+        } catch (e) { /* ignore */ }
     }
 
-    // 2. If the user is logged in but marked inactive, force logout
     if (auth.isLoggedIn && auth.user?.is_active === false) {
         auth.user = null
         auth.authChecked = true
         return next({ name: 'login', query: { reason: 'deactivated' } })
     }
 
-    // 3. Load preferences after login
     if (auth.isLoggedIn && !preferencesStore.loaded) {
         try {
             await preferencesStore.loadPreferences()
@@ -180,29 +186,10 @@ router.beforeEach(async (to, from, next) => {
     const requiresAuth = to.matched.some(r => r.meta.requiresAuth)
     const guestOnly = to.matched.some(r => r.meta.guestOnly)
 
-    // 4. Auth check
-    if (requiresAuth && !auth.isLoggedIn) {
-        return next({ name: 'login' })
-    }
-    if (guestOnly && auth.isLoggedIn) {
-        return next({ name: 'home' })
-    }
+    if (requiresAuth && !auth.isLoggedIn) return next({ name: 'login' })
+    if (guestOnly && auth.isLoggedIn) return next({ name: 'home' })
 
-    // 5. Capability check
-    if (auth.isLoggedIn) {
-        const matchedWithCap = [...to.matched]
-            .reverse()
-            .find(r => r.meta?.requiresCapability)
-
-        if (matchedWithCap) {
-            const required = matchedWithCap.meta.requiresCapability
-            if (!auth.hasCapability(required)) {
-                return next({ name: 'unauthorized', query: { from: to.fullPath } })
-            }
-        }
-    }
-
-    return next()
+    next()
 })
 
 export default router

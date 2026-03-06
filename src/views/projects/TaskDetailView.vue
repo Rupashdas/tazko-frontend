@@ -3,25 +3,22 @@ import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { addIcons } from 'oh-vue-icons'
 import {
-	BiArrowLeft, BiPencil, BiTrash, BiArchive,
-	BiCheckCircle, BiClock, BiCalendar3, BiFlag,
-	BiPlusCircle, BiSend, BiTag, BiPeople,
-	BiThreeDotsVertical, BiXCircle, BiChat,
-	BiActivity, BiLightningCharge, BiCheck2,
+	BiPencil, BiTrash, BiArchive,
+	BiCheckCircle, BiClock, BiCalendar3,
+	BiPlusCircle, BiSend,
+	BiXCircle, BiChat, BiActivity,
 } from 'oh-vue-icons/icons'
 
 addIcons(
-	BiArrowLeft, BiPencil, BiTrash, BiArchive,
-	BiCheckCircle, BiClock, BiCalendar3, BiFlag,
-	BiPlusCircle, BiSend, BiTag, BiPeople,
-	BiThreeDotsVertical, BiXCircle, BiChat,
-	BiActivity, BiLightningCharge, BiCheck2,
+	BiPencil, BiTrash, BiArchive,
+	BiCheckCircle, BiClock, BiCalendar3,
+	BiPlusCircle, BiSend,
+	BiXCircle, BiChat, BiActivity,
 )
 
 const router = useRouter()
 const route = useRoute()
 
-// ── Static task data (replace with API call later) ────
 const task = ref({
 	id: route.params.taskId,
 	title: 'Dashboard UI & analytics widgets',
@@ -38,14 +35,6 @@ const task = ref({
 	],
 })
 
-const members = [
-	{ initials: 'AH', name: 'Arif Hossain', color: 'bg-accent' },
-	{ initials: 'SK', name: 'Sara Khan', color: 'bg-violet-500' },
-	{ initials: 'NR', name: 'Noman Rahman', color: 'bg-emerald-500' },
-	{ initials: 'DM', name: 'Dina Malik', color: 'bg-amber-500' },
-	{ initials: 'KU', name: 'Karim Uddin', color: 'bg-red-400' },
-]
-
 // ── Subtasks ──────────────────────────────────────────
 const subtasks = ref([
 	{ id: 1, title: 'Design widget layout in Figma', done: true },
@@ -56,32 +45,50 @@ const subtasks = ref([
 ])
 const newSubtask = ref('')
 const showSubtaskInput = ref(false)
+
 const subtaskProgress = computed(() => {
 	if (!subtasks.value.length) return 0
 	return Math.round((subtasks.value.filter(s => s.done).length / subtasks.value.length) * 100)
 })
 
+// ✅ FIX 1: method to remove subtask (not inline ref reassignment in template)
+const removeSubtask = (id) => {
+	subtasks.value = subtasks.value.filter(s => s.id !== id)
+}
+const addSubtaskItem = () => {
+	if (!newSubtask.value.trim()) return
+	subtasks.value.push({ id: Date.now(), title: newSubtask.value.trim(), done: false })
+	newSubtask.value = ''
+	showSubtaskInput.value = false
+}
+
 // ── Comments ──────────────────────────────────────────
 const comments = ref([
 	{
 		id: 1, author: 'Arif Hossain', initials: 'AH', color: 'bg-accent',
-		text: 'Sara, the empty states are critical — make sure each widget has a proper illustration or message when there\'s no data yet.',
-		time: 'Feb 21, 2:30 PM', likes: 2,
+		text: "Sara, the empty states are critical — make sure each widget has a proper illustration or message when there's no data yet.",
+		time: 'Feb 21, 2:30 PM'
 	},
 	{
 		id: 2, author: 'Sara Khan', initials: 'SK', color: 'bg-violet-500',
-		text: 'Understood! I\'ll use the same icon style we have in the project overview page for consistency. Will also add a subtle shimmer loader while data is fetching.',
-		time: 'Feb 22, 10:15 AM', likes: 0,
+		text: "Understood! I'll use the same icon style we have in the project overview page. Will also add a subtle shimmer loader while data is fetching.",
+		time: 'Feb 22, 10:15 AM'
 	},
 	{
 		id: 3, author: 'Noman Rahman', initials: 'NR', color: 'bg-emerald-500',
 		text: 'API endpoints for the stats cards are ready. Check /api/dashboard/summary — it returns project count, task counts, and recent activity.',
-		time: 'Feb 24, 4:00 PM', likes: 1,
+		time: 'Feb 24, 4:00 PM'
 	},
 ])
 const newComment = ref('')
 
-// ── Activity log ──────────────────────────────────────
+const sendComment = () => {
+	if (!newComment.value.trim()) return
+	comments.value.push({ id: Date.now(), author: 'You', initials: 'YO', color: 'bg-accent', text: newComment.value.trim(), time: 'Just now' })
+	newComment.value = ''
+}
+
+// ── Activity ──────────────────────────────────────────
 const activity = [
 	{ text: 'Sara Khan changed status to In Progress', time: '4h ago', initials: 'SK', color: 'bg-violet-500' },
 	{ text: 'Arif Hossain changed priority to High', time: '2 days ago', initials: 'AH', color: 'bg-accent' },
@@ -111,39 +118,26 @@ const daysLeft = computed(() => {
 	return { label: `${diff}d left`, cls: 'text-text/50' }
 })
 
-const formatDate = (d) => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+const formatDate = (d) =>
+	new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 
-// ── Actions ───────────────────────────────────────────
+// ── Title editing ─────────────────────────────────────
 const editingTitle = ref(false)
 const titleDraft = ref('')
-
 const startEditTitle = () => { editingTitle.value = true; titleDraft.value = task.value.title }
-const saveTitle = () => { if (titleDraft.value.trim()) task.value.title = titleDraft.value.trim(); editingTitle.value = false }
-
-const addSubtaskItem = () => {
-	if (!newSubtask.value.trim()) return
-	subtasks.value.push({ id: Date.now(), title: newSubtask.value.trim(), done: false })
-	newSubtask.value = ''
-	showSubtaskInput.value = false
+const saveTitle = () => {
+	if (titleDraft.value.trim()) task.value.title = titleDraft.value.trim()
+	editingTitle.value = false
 }
 
-const sendComment = () => {
-	if (!newComment.value.trim()) return
-	comments.value.push({
-		id: Date.now(), author: 'You', initials: 'YO', color: 'bg-accent',
-		text: newComment.value.trim(), time: 'Just now', likes: 0,
-	})
-	newComment.value = ''
-}
-
-const activeSection = ref('comments') // comments | activity
+const activeSection = ref('comments')
 </script>
 
 <template>
 	<div class="pb-24 pt-8 px-1 max-w-5xl">
 
-		<!-- ── Breadcrumb ─────────────────────────────── -->
-		<div class="flex items-center gap-2 text-xs text-text/40 mb-6">
+		<!-- Breadcrumb -->
+		<div class="flex items-center gap-2 text-xs text-text/40 mb-6 flex-wrap">
 			<button @click="router.push({ name: 'projects' })"
 				class="hover:text-accent transition-colors">Projects</button>
 			<span>/</span>
@@ -156,21 +150,16 @@ const activeSection = ref('comments') // comments | activity
 			<span class="text-text/60 font-medium truncate max-w-xs">{{ task.title }}</span>
 		</div>
 
-		<!-- ════════════════════════════════════════════ -->
-		<!-- TOP SECTION: Details                        -->
-		<!-- ════════════════════════════════════════════ -->
+		<!-- TOP: Details -->
 		<div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-8">
 
-			<!-- LEFT: Main content -->
+			<!-- LEFT -->
 			<div class="lg:col-span-2 space-y-5">
 
 				<!-- Title card -->
 				<div class="bg-panel rounded-2xl border border-heading/5 overflow-hidden">
-					<!-- Accent top stripe -->
 					<div class="h-1 bg-gradient-to-r from-accent to-violet-500"></div>
 					<div class="p-6">
-
-						<!-- Status + Priority row -->
 						<div class="flex items-center gap-2 mb-4 flex-wrap">
 							<span
 								:class="[statusConfig[task.status].cls, 'inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full font-bold border']">
@@ -188,29 +177,24 @@ const activeSection = ref('comments') // comments | activity
 							</span>
 						</div>
 
-						<!-- Title -->
 						<div v-if="!editingTitle" class="group">
 							<h1 class="text-heading font-bold text-xl leading-snug cursor-pointer hover:text-accent transition-colors"
-								@click="startEditTitle">
-								{{ task.title }}
-							</h1>
+								@click="startEditTitle">{{ task.title }}</h1>
 							<button @click="startEditTitle"
 								class="mt-1 inline-flex items-center gap-1 text-[10px] text-text/30 hover:text-accent transition-colors opacity-0 group-hover:opacity-100">
 								<v-icon name="bi-pencil" scale="0.7" /> Edit title
 							</button>
 						</div>
-						<div v-else class="mb-1">
+						<div v-else>
 							<input v-model="titleDraft" type="text"
 								class="w-full text-xl font-bold text-heading bg-heading/5 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-accent/30 border border-heading/10"
 								@keyup.enter="saveTitle" @keyup.escape="editingTitle = false" @blur="saveTitle"
 								autofocus />
 						</div>
 
-						<!-- Description -->
 						<div class="mt-4">
 							<p class="text-[10px] font-bold text-text/30 uppercase tracking-wider mb-2">Description</p>
-							<div
-								class="bg-heading/[0.025] rounded-xl p-4 hover:bg-heading/5 transition-colors cursor-text group">
+							<div class="bg-heading/[0.025] rounded-xl p-4 hover:bg-heading/5 transition-colors">
 								<p class="text-sm text-text/65 leading-relaxed" v-if="task.description">{{
 									task.description }}</p>
 								<p class="text-sm text-text/25 italic" v-else>Click to add a description…</p>
@@ -219,28 +203,26 @@ const activeSection = ref('comments') // comments | activity
 					</div>
 				</div>
 
-				<!-- Subtasks card -->
+				<!-- Subtasks -->
 				<div class="bg-panel rounded-2xl border border-heading/5 p-5">
 					<div class="flex items-center justify-between mb-3">
 						<div class="flex items-center gap-2.5">
 							<h3 class="text-sm font-bold text-heading">Subtasks</h3>
-							<span class="text-xs text-text/35 font-medium bg-heading/5 px-2 py-0.5 rounded-full">
+							<span class="text-xs text-text/35 bg-heading/5 px-2 py-0.5 rounded-full">
 								{{subtasks.filter(s => s.done).length}}/{{ subtasks.length }}
 							</span>
 						</div>
 						<button @click="showSubtaskInput = !showSubtaskInput"
-							class="inline-flex items-center gap-1 text-xs font-bold text-accent hover:text-accent/70 transition-colors px-2.5 py-1 rounded-lg hover:bg-accent/8">
+							class="inline-flex items-center gap-1 text-xs font-bold text-accent hover:text-accent/70 px-2.5 py-1 rounded-lg hover:bg-accent/8 transition-colors">
 							<v-icon name="bi-plus-circle" scale="0.8" /> Add
 						</button>
 					</div>
 
-					<!-- Progress bar -->
 					<div class="h-1.5 bg-heading/8 rounded-full mb-4 overflow-hidden">
 						<div class="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full transition-all duration-500"
 							:style="`width: ${subtaskProgress}%`"></div>
 					</div>
 
-					<!-- Subtask rows -->
 					<div class="space-y-1">
 						<div v-for="sub in subtasks" :key="sub.id"
 							class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-heading/[0.03] transition-colors group">
@@ -252,17 +234,17 @@ const activeSection = ref('comments') // comments | activity
 								</svg>
 							</button>
 							<span
-								:class="['text-sm flex-1', sub.done ? 'text-text/30 line-through' : 'text-heading/80']">{{
-									sub.title }}</span>
-							<button
-								class="opacity-0 group-hover:opacity-100 transition-opacity w-5 h-5 rounded flex items-center justify-center text-text/20 hover:text-red-400"
-								@click="subtasks = subtasks.filter(s => s.id !== sub.id)">
+								:class="['text-sm flex-1', sub.done ? 'text-text/30 line-through' : 'text-heading/80']">
+								{{ sub.title }}
+							</span>
+							<!-- ✅ FIX 1: method call instead of reactive ref reassignment -->
+							<button @click="removeSubtask(sub.id)"
+								class="opacity-0 group-hover:opacity-100 transition-opacity w-5 h-5 rounded flex items-center justify-center text-text/20 hover:text-red-400">
 								<v-icon name="bi-x-circle" scale="0.7" />
 							</button>
 						</div>
 					</div>
 
-					<!-- Add subtask input -->
 					<div v-if="showSubtaskInput" class="flex items-center gap-2 mt-2 pt-2 border-t border-heading/5">
 						<input v-model="newSubtask" type="text" placeholder="New subtask…"
 							class="flex-1 text-sm px-3 py-2 rounded-xl border border-heading/10 bg-body focus:border-accent focus:outline-none"
@@ -275,10 +257,8 @@ const activeSection = ref('comments') // comments | activity
 				</div>
 			</div>
 
-			<!-- RIGHT: Meta sidebar -->
+			<!-- RIGHT: Meta -->
 			<div class="space-y-4">
-
-				<!-- Quick actions -->
 				<div class="bg-panel rounded-2xl border border-heading/5 p-4 space-y-2">
 					<button
 						class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-heading hover:bg-heading/5 transition-colors group">
@@ -305,11 +285,9 @@ const activeSection = ref('comments') // comments | activity
 					</button>
 				</div>
 
-				<!-- Task meta details -->
 				<div class="bg-panel rounded-2xl border border-heading/5 p-4 space-y-4">
 					<h3 class="text-xs font-bold text-text/35 uppercase tracking-wider">Details</h3>
 
-					<!-- Assignee -->
 					<div>
 						<p class="text-[10px] font-bold text-text/30 uppercase tracking-wider mb-1.5">Assignee</p>
 						<div class="flex items-center gap-2.5">
@@ -324,35 +302,30 @@ const activeSection = ref('comments') // comments | activity
 						</div>
 					</div>
 
-					<!-- Status selector -->
 					<div>
 						<p class="text-[10px] font-bold text-text/30 uppercase tracking-wider mb-1.5">Status</p>
 						<div class="flex flex-wrap gap-1">
 							<button v-for="st in ['Todo', 'In Progress', 'Review', 'Done']" :key="st"
-								@click="task.status = st" :class="['text-[10px] px-2 py-1 rounded-lg font-bold border transition-all',
-									task.status === st
-										? `${statusConfig[st].cls}`
-										: 'bg-heading/5 text-text/35 border-transparent hover:border-heading/15']">
+								@click="task.status = st"
+								:class="['text-[10px] px-2 py-1 rounded-lg font-bold border transition-all',
+									task.status === st ? statusConfig[st].cls : 'bg-heading/5 text-text/35 border-transparent hover:border-heading/15']">
 								{{ st }}
 							</button>
 						</div>
 					</div>
 
-					<!-- Priority selector -->
 					<div>
 						<p class="text-[10px] font-bold text-text/30 uppercase tracking-wider mb-1.5">Priority</p>
 						<div class="flex flex-wrap gap-1">
 							<button v-for="pr in ['Low', 'Medium', 'High', 'Urgent']" :key="pr"
-								@click="task.priority = pr" :class="['text-[10px] px-2 py-1 rounded-lg font-bold border transition-all',
-									task.priority === pr
-										? `${priorityConfig[pr].cls}`
-										: 'bg-heading/5 text-text/35 border-transparent hover:border-heading/15']">
+								@click="task.priority = pr"
+								:class="['text-[10px] px-2 py-1 rounded-lg font-bold border transition-all',
+									task.priority === pr ? priorityConfig[pr].cls : 'bg-heading/5 text-text/35 border-transparent hover:border-heading/15']">
 								{{ pr }}
 							</button>
 						</div>
 					</div>
 
-					<!-- Due date -->
 					<div>
 						<p class="text-[10px] font-bold text-text/30 uppercase tracking-wider mb-1.5">Due Date</p>
 						<div class="flex items-center justify-between">
@@ -364,7 +337,6 @@ const activeSection = ref('comments') // comments | activity
 						</div>
 					</div>
 
-					<!-- Labels -->
 					<div>
 						<p class="text-[10px] font-bold text-text/30 uppercase tracking-wider mb-1.5">Labels</p>
 						<div class="flex flex-wrap gap-1.5">
@@ -381,7 +353,6 @@ const activeSection = ref('comments') // comments | activity
 						</div>
 					</div>
 
-					<!-- Created date -->
 					<div class="pt-2 border-t border-heading/5">
 						<p class="text-[10px] text-text/25">Created {{ formatDate(task.createdAt) }}</p>
 					</div>
@@ -389,18 +360,13 @@ const activeSection = ref('comments') // comments | activity
 			</div>
 		</div>
 
-		<!-- ════════════════════════════════════════════ -->
-		<!-- BOTTOM SECTION: Comments & Activity         -->
-		<!-- ════════════════════════════════════════════ -->
+		<!-- BOTTOM: Comments & Activity -->
 		<div class="bg-panel rounded-2xl border border-heading/5 overflow-hidden">
-
-			<!-- Section tabs -->
 			<div class="flex items-center gap-0.5 px-5 py-3 border-b border-heading/5 bg-heading/[0.01]">
 				<button @click="activeSection = 'comments'" :class="['inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all',
 					activeSection === 'comments' ? 'bg-accent text-white shadow-sm' : 'text-text/45 hover:bg-heading/5']">
 					<v-icon name="bi-chat" scale="0.85" />
-					Comments
-					<span class="text-[10px] opacity-70">({{ comments.length }})</span>
+					Comments <span class="text-[10px] opacity-70">({{ comments.length }})</span>
 				</button>
 				<button @click="activeSection = 'activity'" :class="['inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all',
 					activeSection === 'activity' ? 'bg-accent text-white shadow-sm' : 'text-text/45 hover:bg-heading/5']">
@@ -409,11 +375,8 @@ const activeSection = ref('comments') // comments | activity
 				</button>
 			</div>
 
-			<!-- ── Comments ── -->
 			<div v-if="activeSection === 'comments'" class="p-6 space-y-6">
-
-				<!-- Existing comments -->
-				<div v-for="c in comments" :key="c.id" class="flex items-start gap-3 group">
+				<div v-for="c in comments" :key="c.id" class="flex items-start gap-3">
 					<div
 						:class="[c.color, 'w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0']">
 						{{ c.initials }}
@@ -429,12 +392,10 @@ const activeSection = ref('comments') // comments | activity
 					</div>
 				</div>
 
-				<!-- Write new comment -->
 				<div class="flex items-start gap-3 pt-2 border-t border-heading/5">
 					<div
 						class="w-9 h-9 rounded-full bg-accent flex items-center justify-center text-white text-xs font-bold shrink-0">
-						YO
-					</div>
+						YO</div>
 					<div class="flex-1">
 						<textarea v-model="newComment" rows="3" placeholder="Write a comment…"
 							class="w-full text-sm text-heading bg-body rounded-xl border border-heading/10 px-4 py-3 focus:outline-none focus:border-accent/50 resize-none placeholder-text/30 transition-colors"
@@ -443,26 +404,22 @@ const activeSection = ref('comments') // comments | activity
 							<p class="text-[10px] text-text/25">Ctrl + Enter to send</p>
 							<button @click="sendComment" :disabled="!newComment.trim()"
 								class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-accent text-white text-xs font-bold hover:bg-accent/90 active:scale-95 transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-sm shadow-accent/20">
-								<v-icon name="bi-send" scale="0.8" />
-								Send
+								<v-icon name="bi-send" scale="0.8" /> Send
 							</button>
 						</div>
 					</div>
 				</div>
 			</div>
 
-			<!-- ── Activity ── -->
-			<div v-else class="p-6">
-				<div class="space-y-4">
-					<div v-for="(item, i) in activity" :key="i" class="flex items-start gap-3">
-						<div
-							:class="[item.color, 'w-7 h-7 rounded-full flex items-center justify-center text-white text-[9px] font-bold shrink-0 mt-0.5']">
-							{{ item.initials }}
-						</div>
-						<div>
-							<p class="text-sm text-text/65">{{ item.text }}</p>
-							<p class="text-[10px] text-text/30 mt-0.5">{{ item.time }}</p>
-						</div>
+			<div v-else class="p-6 space-y-4">
+				<div v-for="(item, i) in activity" :key="i" class="flex items-start gap-3">
+					<div
+						:class="[item.color, 'w-7 h-7 rounded-full flex items-center justify-center text-white text-[9px] font-bold shrink-0 mt-0.5']">
+						{{ item.initials }}
+					</div>
+					<div>
+						<p class="text-sm text-text/65">{{ item.text }}</p>
+						<p class="text-[10px] text-text/30 mt-0.5">{{ item.time }}</p>
 					</div>
 				</div>
 			</div>

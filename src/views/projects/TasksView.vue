@@ -105,7 +105,6 @@ const totalTasks = computed(() => tasks.value.length)
 const doneCount = computed(() => tasks.value.filter(t => t.status === 'Done').length)
 const activeCount = computed(() => tasks.value.filter(t => t.status === 'In Progress').length)
 const overdueCount = computed(() => tasks.value.filter(t => new Date(t.due) < new Date() && t.status !== 'Done').length)
-const reviewCount = computed(() => tasks.value.filter(t => t.status === 'Review').length)
 
 const daysLeft = (due) => {
 	const diff = Math.ceil((new Date(due) - new Date()) / 86400000)
@@ -263,7 +262,7 @@ const openTask = (task) => {
 		<!-- Filter chips -->
 		<div v-if="activeFilterCount > 0 || searchQuery" class="flex items-center gap-2 mb-4 flex-wrap">
 			<span class="text-xs text-text/35">{{ filteredTasks.length }} result{{ filteredTasks.length !== 1 ? 's' : ''
-			}}</span>
+				}}</span>
 			<button @click="clearFilters"
 				class="inline-flex items-center gap-1 text-xs font-semibold text-accent hover:text-accent/70 transition-colors">
 				<v-icon name="bi-x-circle" scale="0.7" /> Clear filters
@@ -382,9 +381,9 @@ const openTask = (task) => {
 
 		<!-- ── Create Task Modal ──────────────────────── -->
 		<Transition name="modal">
-			<div v-if="showCreateModal" class="fixed inset-0 z-50 flex items-center justify-center p-4"
-				@click.self="showCreateModal = false">
-				<div class="absolute inset-0 bg-heading/50 backdrop-blur-sm"></div>
+			<div v-if="showCreateModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+				<!-- ✅ FIX 2: click handler on backdrop itself, not parent with .self -->
+				<div class="absolute inset-0 bg-heading/50 backdrop-blur-sm" @click="showCreateModal = false"></div>
 				<div class="relative bg-panel rounded-2xl shadow-2xl w-full max-w-lg z-10 overflow-hidden">
 					<div
 						class="bg-gradient-to-r from-accent/10 to-violet-500/10 border-b border-heading/8 px-6 pt-5 pb-4">

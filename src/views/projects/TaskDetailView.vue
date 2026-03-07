@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import RichTextEditor from '@/components/shared/RichTextEditor.vue'
 import { addIcons } from 'oh-vue-icons'
 import {
 	BiArrowLeft, BiPencil, BiTrash, BiArchive,
@@ -96,6 +97,9 @@ const addSubtaskItem = () => {
 // ── Comments ──────────────────────────────────────────
 const activeSection = ref('comments')
 const newComment = ref('')
+const commentEditorRef = ref(null)
+const commentEditorFocused = ref(false)
+
 const comments = ref([
 	{
 		id: 1, author: 'Arif Hossain', initials: 'AH', color: 'bg-accent',
@@ -115,14 +119,15 @@ const comments = ref([
 ])
 
 const sendComment = () => {
-	if (!newComment.value.trim()) return
+	if (!commentEditorRef.value || commentEditorRef.value.isEmpty()) return
+	const html = commentEditorRef.value.getHTML()
 	comments.value.push({
 		id: Date.now(), author: 'You', initials: 'YO', color: 'bg-accent',
-		text: newComment.value.trim(), time: 'Just now', likes: 0,
+		text: html, time: 'Just now', likes: 0,
 	})
-	newComment.value = ''
+	commentEditorRef.value.clear()
+	commentEditorFocused.value = false
 }
-
 // ── Activity ──────────────────────────────────────────
 const activity = [
 	{ initials: 'SK', color: 'bg-violet-500', text: 'Changed status from Todo → In Progress', time: 'Feb 22, 9:00 AM', type: 'status' },
@@ -137,11 +142,22 @@ const titleDraft = ref('')
 const startEditTitle = () => { editingTitle.value = true; titleDraft.value = task.value.title }
 const saveTitle = () => { if (titleDraft.value.trim()) task.value.title = titleDraft.value.trim(); editingTitle.value = false }
 
-// ── Inline description edit ───────────────────────────
+// ── Inline description edit (rich text) ───────────────
 const editingDesc = ref(false)
 const descDraft = ref('')
-const startEditDesc = () => { editingDesc.value = true; descDraft.value = task.value.description }
-const saveDesc = () => { task.value.description = descDraft.value.trim(); editingDesc.value = false }
+const descEditorRef = ref(null)
+
+const startEditDesc = () => {
+	editingDesc.value = true
+	descDraft.value = task.value.description
+}
+
+const saveDesc = () => {
+	if (descEditorRef.value) {
+		task.value.description = descEditorRef.value.getHTML()
+	}
+	editingDesc.value = false
+}
 
 // ── Utils ──────────────────────────────────────────────
 const formatDate = (d) => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
@@ -236,19 +252,22 @@ const activityTypeIcon = { status: '🔄', assign: '👤', priority: '🚩', cre
 					<!-- Editable description -->
 					<div>
 						<p class="text-[10px] font-bold text-text/30 uppercase tracking-widest mb-2">Description</p>
+
+						<!-- View mode -->
 						<div v-if="!editingDesc" @click="startEditDesc"
 							class="group cursor-pointer rounded-xl bg-heading/[0.025] hover:bg-heading/[0.045] border border-transparent hover:border-heading/8 px-4 py-3 transition-all">
-							<p v-if="task.description" class="text-sm text-text/60 leading-relaxed">
-								{{ task.description }}
-							</p>
+							<div v-if="task.description && task.description !== '<p></p>'"
+								class="text-sm text-text/60 leading-relaxed prose-sm" v-html="task.description" />
 							<p v-else class="text-sm text-text/25 italic">
 								Click to add a description…
 							</p>
 						</div>
+
+						<!-- Edit mode -->
 						<div v-else class="space-y-2">
-							<textarea v-model="descDraft" rows="5"
-								class="w-full text-sm text-heading bg-heading/[0.03] border border-accent/30 rounded-xl px-4 py-3 focus:outline-none focus:border-accent/60 resize-none transition-colors leading-relaxed"
-								autofocus />
+							<RichTextEditor ref="descEditorRef" v-model="descDraft" placeholder="Describe this task…"
+								:show-toolbar="true" :enable-mention="true" :users="members" min-height="120px"
+								:autofocus="true" />
 							<div class="flex items-center gap-2">
 								<button @click="saveDesc"
 									class="px-3.5 py-1.5 rounded-lg bg-accent text-white text-xs font-bold hover:bg-accent/90 transition-colors">
@@ -354,23 +373,24 @@ const activityTypeIcon = { status: '🔄', assign: '👤', priority: '🚩', cre
 					<!-- Comments panel -->
 					<div v-if="activeSection === 'comments'" class="p-5 space-y-5">
 						<!-- Existing comments -->
-						<div v-for="c in comments" :key="c.id" class="flex items-start gap-3 group">
+						<div v-for="comment in comments" :key="comment.id" class="flex items-start gap-3 group">
 							<div
-								:class="[c.color, 'w-8 h-8 rounded-full flex items-center justify-center text-white text-[11px] font-bold shrink-0 shadow-sm']">
-								{{ c.initials }}
+								:class="[comment.color, 'w-8 h-8 rounded-full flex items-center justify-center text-white text-[11px] font-bold shrink-0 shadow-sm']">
+								{{ comment.initials }}
 							</div>
 							<div class="flex-1 min-w-0">
 								<div class="flex items-center gap-2 mb-1.5">
-									<span class="text-sm font-bold text-heading">{{ c.author }}</span>
-									<span class="text-[11px] text-text/30">{{ c.time }}</span>
-									<button v-if="c.likes"
+									<span class="text-sm font-bold text-heading">{{ comment.author }}</span>
+									<span class="text-[11px] text-text/30">{{ comment.time }}</span>
+									<button v-if="comment.likes"
 										class="ml-auto inline-flex items-center gap-1 text-[11px] text-text/35 hover:text-accent transition-colors opacity-0 group-hover:opacity-100">
-										👍 {{ c.likes }}
+										👍 {{ comment.likes }}
 									</button>
 								</div>
 								<div
 									class="bg-heading/[0.03] rounded-2xl rounded-tl-none px-4 py-3 border border-heading/[0.06]">
-									<p class="text-sm text-text/70 leading-relaxed">{{ c.text }}</p>
+									<div class="text-sm text-text/70 leading-relaxed rich-content"
+										v-html="comment.text" />
 								</div>
 							</div>
 						</div>
@@ -381,30 +401,34 @@ const activityTypeIcon = { status: '🔄', assign: '👤', priority: '🚩', cre
 								class="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-white text-[11px] font-bold shrink-0">
 								YO
 							</div>
-							<div class="flex-1">
-								<textarea v-model="newComment" rows="3" placeholder="Write a comment…"
-									class="w-full text-sm text-heading bg-heading/[0.03] rounded-2xl border border-heading/8 px-4 py-3 focus:outline-none focus:border-accent/40 resize-none placeholder-text/30 transition-colors leading-relaxed"
-									@keydown.ctrl.enter="sendComment" />
-								<div class="flex items-center justify-between mt-2">
-									<div class="flex items-center gap-1">
-										<button
-											class="p-1.5 rounded-lg text-text/25 hover:text-text/80 hover:bg-heading/5 transition-colors">
-											<v-icon name="bi-paperclip" scale="0.85" />
-										</button>
-										<button
-											class="p-1.5 rounded-lg text-text/25 hover:text-text/80 hover:bg-heading/5 transition-colors">
-											<v-icon name="bi-emoji-smile" scale="0.85" />
-										</button>
+							<div class="flex-1 space-y-2">
+								<RichTextEditor ref="commentEditorRef" v-model="newComment"
+									placeholder="Write a comment… (use @ to mention someone)"
+									:show-toolbar="commentEditorFocused" :enable-mention="true" :users="members"
+									min-height="120px" @focus="commentEditorFocused = true" />
+								<Transition name="fade">
+									<div v-if="commentEditorFocused" class="flex items-center justify-between">
+										<div class="flex items-center gap-1">
+											<button
+												class="p-1.5 rounded-lg text-text/25 hover:text-text/80 hover:bg-heading/5 transition-colors">
+												<v-icon name="bi-paperclip" scale="0.85" />
+											</button>
+											<button
+												class="p-1.5 rounded-lg text-text/25 hover:text-text/80 hover:bg-heading/5 transition-colors">
+												<v-icon name="bi-emoji-smile" scale="0.85" />
+											</button>
+											<span class="text-[10px] text-text/25 ml-1">@ to mention</span>
+										</div>
+										<div class="flex items-center gap-2">
+											<span class="text-[10px] text-text/25">Ctrl+Enter</span>
+											<button @click="sendComment"
+												class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-accent text-white text-xs font-bold hover:bg-accent/90 active:scale-95 transition-all shadow-sm shadow-accent/20">
+												<v-icon name="bi-send" scale="0.8" />
+												Send
+											</button>
+										</div>
 									</div>
-									<div class="flex items-center gap-2">
-										<span class="text-[10px] text-text/25">Ctrl+Enter to send</span>
-										<button @click="sendComment" :disabled="!newComment.trim()"
-											class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-accent text-white text-xs font-bold hover:bg-accent/90 active:scale-95 transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-sm shadow-accent/20">
-											<v-icon name="bi-send" scale="0.8" />
-											Send
-										</button>
-									</div>
-								</div>
+								</Transition>
 							</div>
 						</div>
 					</div>

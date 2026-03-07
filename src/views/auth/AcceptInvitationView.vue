@@ -107,9 +107,7 @@ const submit = async () => {
 						d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
 				</svg>
 			</div>
-			<h2 class="font-display text-heading mb-2" style="font-size:1.8rem; line-height:1.15;">
-				Invalid Invitation
-			</h2>
+			<h2 class="auth-title mb-2">Invalid Invitation</h2>
 			<p class="text-sm text-text/60 leading-relaxed mb-8">
 				This invitation link is invalid or has expired.<br>
 				Please ask your admin to send a new one.
@@ -127,9 +125,7 @@ const submit = async () => {
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
 				</svg>
 			</div>
-			<h2 class="font-display text-heading mb-2" style="font-size:1.8rem; line-height:1.15;">
-				You're in! 🎉
-			</h2>
+			<h2 class="auth-title mb-2">You're in! 🎉</h2>
 			<p class="text-sm text-text/60 leading-relaxed mb-8">
 				Your account has been created successfully.<br>
 				You can now sign in with your email and password.
@@ -149,9 +145,7 @@ const submit = async () => {
 							d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M9 7a4 4 0 100 8 4 4 0 000-8zM19 8l2 2m0 0l2-2m-2 2V5" />
 					</svg>
 				</div>
-				<h2 class="font-display text-heading" style="font-size:2rem; letter-spacing:0.01em; line-height:1.1;">
-					Accept Invitation
-				</h2>
+				<h2 class="auth-title">Accept Invitation</h2>
 				<p class="mt-2 text-sm text-text/60 leading-relaxed">
 					You've been invited by <strong class="text-heading/80">{{ invitation.invited_by }}</strong>.
 					Set a password to create your account.
@@ -166,7 +160,7 @@ const submit = async () => {
 				</div>
 				<div class="min-w-0">
 					<p class="text-sm font-semibold text-heading leading-tight truncate">{{ invitation.name }}</p>
-					<p class="text-xs text-text/45 mt-0.5 truncate">{{ invitation.email }}</p>
+					<p class="text-xs text-text/50 mt-0.5 truncate">{{ invitation.email }}</p>
 				</div>
 				<span v-if="invitation.role"
 					class="ml-auto text-xs font-semibold px-2.5 py-1 rounded-lg bg-accent/10 text-accent shrink-0">

@@ -162,7 +162,7 @@ function getModuleIcon(module) {
 					<div class="flex justify-between items-center">
 						<div>
 							<p class="sidebar-eyebrow">System</p>
-						<h2 class="sidebar-title">Roles</h2>
+							<h2 class="sidebar-title">Roles</h2>
 						</div>
 						<button v-if="canCreate" @click="showAddRole = true"
 							class="w-8 h-8 rounded-lg bg-accent text-white flex items-center justify-center hover:bg-accent/80 transition-all active:scale-95 shadow-sm"
@@ -221,10 +221,10 @@ function getModuleIcon(module) {
 				<div
 					class="px-4 sm:px-8 pt-5 pb-4 border-b border-heading/10 flex items-start justify-between gap-4 shrink-0 bg-body">
 					<div class="min-w-0">
-						<h1 class="text-lg sm:text-xl font-bold text-heading truncate">
+						<h1 class="text-base font-bold text-heading truncate">
 							{{ roleStore.selectedRole?.label || 'Select a Role' }}
 						</h1>
-						<p v-if="roleStore.selectedRole" class="text-sm text-text/80 mt-0.5 font-mono truncate">
+						<p v-if="roleStore.selectedRole" class="text-sm text-text/50 mt-0.5 font-mono truncate">
 							{{ roleStore.selectedRole.name }}
 						</p>
 					</div>

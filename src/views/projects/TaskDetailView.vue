@@ -201,15 +201,15 @@ const activityTypeIcon = { status: '🔄', assign: '👤', priority: '🚩', cre
 						<div class="flex-1" />
 						<!-- Action buttons -->
 						<button
-							class="p-1.5 rounded-lg text-text/35 hover:text-heading hover:bg-heading/5 transition-colors">
+							class="p-1.5 rounded-lg text-text/50 hover:text-heading hover:bg-heading/5 transition-colors">
 							<v-icon name="bi-pencil" scale="0.85" />
 						</button>
 						<button
-							class="p-1.5 rounded-lg text-text/35 hover:text-amber-500 hover:bg-amber-500/8 transition-colors">
+							class="p-1.5 rounded-lg text-text/50 hover:text-amber-500 hover:bg-amber-500/8 transition-colors">
 							<v-icon name="bi-archive" scale="0.85" />
 						</button>
 						<button
-							class="p-1.5 rounded-lg text-text/35 hover:text-red-500 hover:bg-red-500/8 transition-colors">
+							class="p-1.5 rounded-lg text-text/50 hover:text-red-500 hover:bg-red-500/8 transition-colors">
 							<v-icon name="bi-trash" scale="0.85" />
 						</button>
 					</div>
@@ -220,7 +220,7 @@ const activityTypeIcon = { status: '🔄', assign: '👤', priority: '🚩', cre
 							@click="startEditTitle">
 							<h1 class="text-xl font-bold text-heading leading-snug flex-1">{{ task.title }}</h1>
 							<v-icon name="bi-pencil" scale="0.8"
-								class="text-text/20 group-hover:text-accent mt-1 shrink-0 transition-colors" />
+								class="text-text/50 group-hover:text-accent mt-1 shrink-0 transition-colors" />
 						</div>
 						<div v-else class="flex items-start gap-2">
 							<input v-model="titleDraft"
@@ -238,7 +238,7 @@ const activityTypeIcon = { status: '🔄', assign: '👤', priority: '🚩', cre
 						<p class="text-[10px] font-bold text-text/30 uppercase tracking-widest mb-2">Description</p>
 						<div v-if="!editingDesc" @click="startEditDesc"
 							class="group cursor-pointer rounded-xl bg-heading/[0.025] hover:bg-heading/[0.045] border border-transparent hover:border-heading/8 px-4 py-3 transition-all">
-							<p v-if="task.description" class="text-sm text-text/65 leading-relaxed">
+							<p v-if="task.description" class="text-sm text-text/60 leading-relaxed">
 								{{ task.description }}
 							</p>
 							<p v-else class="text-sm text-text/25 italic">
@@ -423,7 +423,7 @@ const activityTypeIcon = { status: '🔄', assign: '👤', priority: '🚩', cre
 										{{ item.initials }}
 									</div>
 									<div class="flex-1 pt-0.5">
-										<p class="text-sm text-text/65">{{ item.text }}</p>
+										<p class="text-sm text-text/60">{{ item.text }}</p>
 										<p class="text-[10px] text-text/30 mt-0.5">{{ item.time }}</p>
 									</div>
 								</div>

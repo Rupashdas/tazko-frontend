@@ -71,10 +71,8 @@ const handleSignup = async () => {
 
         <!-- Header -->
         <div class="mb-8">
-            <h2 class="font-display text-heading" style="font-size: 2rem; letter-spacing: 0.01em; line-height: 1.1;">
-                Create your account
-            </h2>
-            <p class="mt-2 text-sm text-text/70 leading-relaxed">
+            <h2 class="auth-title">Create your account</h2>
+            <p class="mt-2 text-sm text-text/60 leading-relaxed">
                 Already have an account?
                 <router-link :to="{ name: 'login' }"
                     class="font-semibold text-accent hover:text-accent/80 transition-colors ml-1">

@@ -79,21 +79,21 @@ watch(() => route.fullPath, () => {
                     <ul class="flex items-center gap-1">
                         <li>
                             <router-link :to="{ name: 'home' }"
-                                class="flex items-center gap-2 px-4 py-2 rounded-lg text-base font-medium transition-all duration-150"
+                                class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-150"
                                 :class="route.name === 'home' ? 'bg-accent/10 text-accent' : 'text-text hover:bg-heading/6 hover:text-heading'">
                                 <v-icon name="co-home" scale="0.9" /> Home
                             </router-link>
                         </li>
                         <li>
                             <router-link :to="{ name: 'projects' }"
-                                class="flex items-center gap-2 px-4 py-2 rounded-lg text-base font-medium transition-all duration-150"
+                                class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-150"
                                 :class="route.name === 'projects' ? 'bg-accent/10 text-accent' : 'text-text hover:bg-heading/6 hover:text-heading'">
                                 <v-icon name="bi-folder2-open" scale="0.9" /> Projects
                             </router-link>
                         </li>
                         <li>
                             <router-link :to="{ name: 'pings' }"
-                                class="flex items-center gap-2 px-4 py-2 rounded-lg text-base font-medium transition-all duration-150"
+                                class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-150"
                                 :class="route.name === 'pings' ? 'bg-accent/10 text-accent' : 'text-text hover:bg-heading/6 hover:text-heading'">
                                 <v-icon name="bi-chat-dots" scale="0.9" /> Pings
                             </router-link>
@@ -123,7 +123,7 @@ watch(() => route.fullPath, () => {
                             <div class="hidden sm:block text-left">
                                 <p class="text-sm font-semibold text-heading leading-tight">{{ auth.user?.name || 'User'
                                 }}</p>
-                                <p class="text-xs text-text leading-tight">{{ auth.user?.roles?.[0]?.label ||
+                                <p class="text-xs text-text/60 leading-tight">{{ auth.user?.roles?.[0]?.label ||
                                     'Member' }}</p>
                             </div>
                             <svg xmlns="http://www.w3.org/2000/svg"
@@ -149,7 +149,8 @@ watch(() => route.fullPath, () => {
                                     <div class="min-w-0">
                                         <h4 class="text-base font-bold text-heading truncate">{{ auth.user?.name ||
                                             'User' }}</h4>
-                                        <p class="text-sm text-text truncate">{{ auth.user?.roles?.[0]?.label ||
+                                        <p class="text-xs text-text/60 truncate mt-0.5">{{ auth.user?.roles?.[0]?.label
+                                            ||
                                             'Member' }}</p>
                                         <p v-if="auth.user?.email" class="text-xs text-text truncate mt-0.5">{{
                                             auth.user.email }}</p>
@@ -166,7 +167,7 @@ watch(() => route.fullPath, () => {
                                         </span>
                                         <div>
                                             <p class="text-sm font-semibold text-heading">Edit Profile</p>
-                                            <p class="text-xs text-text">Update your personal info</p>
+                                            <p class="text-xs text-text/50">Update your personal info</p>
                                         </div>
                                     </router-link>
 
@@ -178,7 +179,7 @@ watch(() => route.fullPath, () => {
                                         </span>
                                         <div>
                                             <p class="text-sm font-semibold text-heading">Preferences</p>
-                                            <p class="text-xs text-text">Theme & display settings</p>
+                                            <p class="text-xs text-text/50">Theme & display settings</p>
                                         </div>
                                     </router-link>
 
@@ -191,7 +192,7 @@ watch(() => route.fullPath, () => {
                                         </span>
                                         <div>
                                             <p class="text-sm font-semibold text-heading">System Settings</p>
-                                            <p class="text-xs text-text">Manage users & roles</p>
+                                            <p class="text-xs text-text/50">Manage users & roles</p>
                                         </div>
                                     </router-link>
                                 </div>
@@ -220,14 +221,14 @@ watch(() => route.fullPath, () => {
                     <ul class="flex flex-col gap-1">
                         <li>
                             <router-link :to="{ name: 'home' }"
-                                class="flex items-center gap-3 px-3 py-3 rounded-xl text-base font-medium transition-all"
+                                class="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-all"
                                 :class="route.name === 'home' ? 'bg-accent/10 text-accent' : 'text-text hover:bg-heading/6 hover:text-heading'">
                                 <v-icon name="si-homeadvisor" scale="1" /> Home
                             </router-link>
                         </li>
                         <li>
                             <router-link :to="{ name: 'pings' }"
-                                class="flex items-center gap-3 px-3 py-3 rounded-xl text-base font-medium transition-all"
+                                class="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-all"
                                 :class="route.name === 'pings' ? 'bg-accent/10 text-accent' : 'text-text hover:bg-heading/6 hover:text-heading'">
                                 <v-icon name="bi-chat-dots" scale="1" /> Pings
                             </router-link>

@@ -83,9 +83,7 @@ const submit = async () => {
                         d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
             </div>
-            <h2 class="font-display text-heading mb-3" style="font-size: 1.8rem; line-height: 1.15;">
-                Password updated!
-            </h2>
+            <h2 class="auth-title mb-3">Password updated!</h2>
             <p class="text-sm text-text/60 mb-6 leading-relaxed">
                 Your password has been changed successfully.<br>Redirecting you to sign in…
             </p>
@@ -109,10 +107,7 @@ const submit = async () => {
                     </svg>
                 </div>
 
-                <h2 class="font-display text-heading"
-                    style="font-size: 2rem; letter-spacing: 0.01em; line-height: 1.1;">
-                    Set new password
-                </h2>
+                <h2 class="auth-title">Set new password</h2>
                 <p class="mt-2 text-sm text-text/60 leading-relaxed">
                     Choose a strong, unique password to protect your account.
                 </p>

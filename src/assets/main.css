@@ -69,6 +69,13 @@
     .sidebar-eyebrow {
         @apply text-xs font-semibold uppercase tracking-widest text-text/40 mb-1;
     }
+
+    .auth-title {
+        @apply font-display text-heading font-bold leading-tight;
+        font-size: 2rem;
+        letter-spacing: 0.01em;
+        line-height: 1.1;
+    }
 }
 
 @layer base {

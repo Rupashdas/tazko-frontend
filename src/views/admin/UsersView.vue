@@ -312,7 +312,7 @@ const handleCancel = async () => {
 											<span v-if="isOwnAccount(user.id)"
 												class="shrink-0 text-xs font-bold px-2 py-0.5 rounded-md bg-accent/15 text-accent">You</span>
 										</div>
-										<p class="text-sm text-text/45 mt-0.5 truncate">{{ user.email }}</p>
+										<p class="text-sm text-text/50 mt-0.5 truncate">{{ user.email }}</p>
 									</div>
 								</div>
 							</td>
@@ -375,8 +375,8 @@ const handleCancel = async () => {
 						</tr>
 						<tr v-if="filteredUsers.length === 0">
 							<td colspan="5" class="px-7 py-16 text-center">
-								<p class="text-lg text-text/40 font-medium">No users found</p>
-								<p class="text-base text-text/30 mt-1">Try adjusting your search or filter</p>
+								<p class="text-sm font-semibold text-text/50">No users found</p>
+								<p class="text-xs text-text/40 mt-0.5">Try adjusting your search or filter</p>
 							</td>
 						</tr>
 					</tbody>
@@ -398,7 +398,7 @@ const handleCancel = async () => {
 							<span v-if="isOwnAccount(user.id)"
 								class="text-xs font-bold px-2 py-0.5 rounded-md bg-accent/15 text-accent shrink-0">You</span>
 						</div>
-						<p class="text-sm text-text/45 truncate mt-0.5">{{ user.email }}</p>
+						<p class="text-sm text-text/50 truncate mt-0.5">{{ user.email }}</p>
 						<div class="flex items-center gap-2 mt-1.5 flex-wrap">
 							<span v-if="getPrimaryRole(user)"
 								class="inline-flex px-2 py-0.5 rounded-lg text-xs font-semibold"

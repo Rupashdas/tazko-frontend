@@ -74,9 +74,8 @@ const saveDateTime = async () => {
 
 		<!-- Page Header -->
 		<div class="mb-6 md:mb-8">
-			<!-- page-title already correct, just keeping leading-tight -->
-			<h1 class="text-2xl sm:text-3xl font-bold text-heading leading-tight">Preferences</h1>
-			<!-- FIX: page-subtitle (was text-base text-text/80 — too large + too bright) -->
+			<p class="page-eyebrow">User</p>
+			<h1 class="page-title">Preferences</h1>
 			<p class="page-subtitle">Customize your workspace to feel just right.</p>
 		</div>
 

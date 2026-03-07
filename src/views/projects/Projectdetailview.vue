@@ -207,7 +207,8 @@ const recentActivity = [
 						</div>
 						<div class="min-w-0 flex-1">
 							<div class="flex items-center gap-2.5 flex-wrap mb-2">
-								<h1 class="text-2xl font-bold text-heading leading-none">{{ project.name }}</h1>
+								<h1 class="text-2xl sm:text-3xl font-bold text-heading leading-tight">{{ project.name }}
+								</h1>
 								<span
 									:class="[statusConfig[project.status]?.cls, 'inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full font-bold border border-current/10']">
 									<span
@@ -219,7 +220,7 @@ const recentActivity = [
 									{{ project.priority }}
 								</span>
 							</div>
-							<p class="text-sm text-text/80 leading-relaxed max-w-2xl mb-4">{{ project.description }}</p>
+							<p class="text-sm text-text/50 leading-relaxed max-w-2xl mb-4">{{ project.description }}</p>
 
 							<!-- Progress + dates row -->
 							<div class="flex flex-wrap items-center gap-5">

@@ -3,7 +3,7 @@ import { RouterLink } from "vue-router";
 import Logo from "./icons/Logo.vue";
 import { addIcons } from "oh-vue-icons";
 import { useAuthStore } from '@/stores/useAuthStore'
-import { SiHomeadvisor, BiChatDots, LaUserCircleSolid, CoSettings, MdLogoutOutlined, LaUserEditSolid, BiPalette, MdMenuRound, MdCloseRound } from
+import { CoHome, BiChatDots, LaUserCircleSolid, CoSettings, MdLogoutOutlined, LaUserEditSolid, BiPalette, MdMenuRound, MdCloseRound } from
     "oh-vue-icons/icons";
 import { useRouter } from 'vue-router'
 import { useRoute } from 'vue-router'
@@ -12,7 +12,7 @@ import { useToast } from "@/utils/toast.js"
 
 const { errorToast } = useToast()
 
-addIcons(SiHomeadvisor, BiChatDots, LaUserCircleSolid, CoSettings, MdLogoutOutlined, LaUserEditSolid, BiPalette, MdMenuRound, MdCloseRound);
+addIcons(CoHome, BiChatDots, LaUserCircleSolid, CoSettings, MdLogoutOutlined, LaUserEditSolid, BiPalette, MdMenuRound, MdCloseRound);
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -81,7 +81,14 @@ watch(() => route.fullPath, () => {
                             <router-link :to="{ name: 'home' }"
                                 class="flex items-center gap-2 px-4 py-2 rounded-lg text-base font-medium transition-all duration-150"
                                 :class="route.name === 'home' ? 'bg-accent/10 text-accent' : 'text-text hover:bg-heading/6 hover:text-heading'">
-                                <v-icon name="si-homeadvisor" scale="0.9" /> Home
+                                <v-icon name="co-home" scale="0.9" /> Home
+                            </router-link>
+                        </li>
+                        <li>
+                            <router-link :to="{ name: 'projects' }"
+                                class="flex items-center gap-2 px-4 py-2 rounded-lg text-base font-medium transition-all duration-150"
+                                :class="route.name === 'projects' ? 'bg-accent/10 text-accent' : 'text-text hover:bg-heading/6 hover:text-heading'">
+                                <v-icon name="bi-folder2-open" scale="0.9" /> Projects
                             </router-link>
                         </li>
                         <li>
@@ -112,15 +119,15 @@ watch(() => route.fullPath, () => {
                             @click="toggleDropdown">
                             <img v-if="auth.user?.avatar" :src="auth.user.avatar" alt="Avatar"
                                 class="w-9 h-9 object-cover rounded-full border-2 border-accent/30 shrink-0" />
-                            <v-icon class="w-9 h-9 text-text/60" v-else name="la-user-circle-solid" />
+                            <v-icon class="w-9 h-9 text-text" v-else name="la-user-circle-solid" />
                             <div class="hidden sm:block text-left">
                                 <p class="text-sm font-semibold text-heading leading-tight">{{ auth.user?.name || 'User'
                                 }}</p>
-                                <p class="text-xs text-text/50 leading-tight">{{ auth.user?.roles?.[0]?.label ||
+                                <p class="text-xs text-text leading-tight">{{ auth.user?.roles?.[0]?.label ||
                                     'Member' }}</p>
                             </div>
                             <svg xmlns="http://www.w3.org/2000/svg"
-                                class="hidden sm:block w-4 h-4 text-text/40 transition-transform duration-200"
+                                class="hidden sm:block w-4 h-4 text-text transition-transform duration-200"
                                 :class="dropdownOpen ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none"
                                 stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
                                 <polyline points="6 9 12 15 18 9" />
@@ -137,14 +144,14 @@ watch(() => route.fullPath, () => {
                                     <div class="shrink-0">
                                         <img v-if="auth.user?.avatar" :src="auth.user.avatar" alt="Avatar"
                                             class="w-14 h-14 object-cover rounded-full border-2 border-accent/30" />
-                                        <v-icon class="w-14 h-14 text-text/40" v-else name="la-user-circle-solid" />
+                                        <v-icon class="w-14 h-14 text-text" v-else name="la-user-circle-solid" />
                                     </div>
                                     <div class="min-w-0">
                                         <h4 class="text-base font-bold text-heading truncate">{{ auth.user?.name ||
                                             'User' }}</h4>
-                                        <p class="text-sm text-text/60 truncate">{{ auth.user?.roles?.[0]?.label ||
+                                        <p class="text-sm text-text truncate">{{ auth.user?.roles?.[0]?.label ||
                                             'Member' }}</p>
-                                        <p v-if="auth.user?.email" class="text-xs text-text/40 truncate mt-0.5">{{
+                                        <p v-if="auth.user?.email" class="text-xs text-text truncate mt-0.5">{{
                                             auth.user.email }}</p>
                                     </div>
                                 </div>
@@ -159,7 +166,7 @@ watch(() => route.fullPath, () => {
                                         </span>
                                         <div>
                                             <p class="text-sm font-semibold text-heading">Edit Profile</p>
-                                            <p class="text-xs text-text/45">Update your personal info</p>
+                                            <p class="text-xs text-text">Update your personal info</p>
                                         </div>
                                     </router-link>
 
@@ -171,7 +178,7 @@ watch(() => route.fullPath, () => {
                                         </span>
                                         <div>
                                             <p class="text-sm font-semibold text-heading">Preferences</p>
-                                            <p class="text-xs text-text/45">Theme & display settings</p>
+                                            <p class="text-xs text-text">Theme & display settings</p>
                                         </div>
                                     </router-link>
 
@@ -184,7 +191,7 @@ watch(() => route.fullPath, () => {
                                         </span>
                                         <div>
                                             <p class="text-sm font-semibold text-heading">System Settings</p>
-                                            <p class="text-xs text-text/45">Manage users & roles</p>
+                                            <p class="text-xs text-text">Manage users & roles</p>
                                         </div>
                                     </router-link>
                                 </div>

@@ -78,7 +78,7 @@ const getRoleBadge = (roleName) => {
 
 const getStatusBadge = (status) => {
 	const map = { pending: 'bg-amber-100 text-amber-700', expired: 'bg-red-100 text-red-600', accepted: 'bg-emerald-100 text-emerald-700' }
-	return map[status] ?? 'bg-heading/8 text-text/50'
+	return map[status] ?? 'bg-heading/8 text-text/80'
 }
 
 const formatDate = (d) => d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'
@@ -210,13 +210,14 @@ const handleCancel = async () => {
 </script>
 
 <template>
-	<div class="space-y-5">
+	<div class="space-y-5 relative">
 
 		<!-- Loading overlay -->
 		<Transition name="fade">
-			<div v-if="userStore.loading.page" class="flex items-center justify-center py-16">
-				<div class="w-8 h-8 rounded-full border-4 border-accent border-t-transparent animate-spin" />
-				<p class="ml-3 text-base text-text/60 font-medium">Loading users…</p>
+			<div v-if="userStore.loading.page"
+				class="absolute inset-0 bg-panel/80 backdrop-blur-sm flex flex-col items-center justify-center z-40 rounded-xl gap-3">
+				<div class="w-10 h-10 rounded-full border-3 border-accent border-t-transparent animate-spin" />
+				<p class="text-sm text-text/60 font-medium">Loading users…</p>
 			</div>
 		</Transition>
 
@@ -333,7 +334,7 @@ const handleCancel = async () => {
 								</span>
 							</td>
 							<td class="px-4 py-4">
-								<span class="text-base text-text/50">{{ formatDate(user.created_at) }}</span>
+								<span class="text-base text-text/80">{{ formatDate(user.created_at) }}</span>
 							</td>
 							<td class="px-7 py-4 text-right">
 								<div class="flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
@@ -494,7 +495,7 @@ const handleCancel = async () => {
 										{{ getInitials(inv.invited_by) }}
 									</div>
 									<span class="text-base text-text/70 font-medium truncate">{{ inv.invited_by
-										}}</span>
+									}}</span>
 								</div>
 							</td>
 							<td class="px-4 py-4">
@@ -507,7 +508,7 @@ const handleCancel = async () => {
 								</span>
 							</td>
 							<td class="px-4 py-4">
-								<span class="text-base text-text/50">{{ formatDate(inv.expires_at) }}</span>
+								<span class="text-base text-text/80">{{ formatDate(inv.expires_at) }}</span>
 							</td>
 							<td class="px-7 py-4 text-right">
 								<div
@@ -568,7 +569,7 @@ const handleCancel = async () => {
 								<div class="min-w-0">
 									<div class="flex items-center gap-1.5 flex-wrap">
 										<p class="text-base font-bold text-heading leading-tight">{{ selectedUser.name
-											}}</p>
+										}}</p>
 										<span v-if="isOwnAccount(selectedUser.id)"
 											class="shrink-0 text-xs font-bold px-2 py-0.5 rounded-md bg-accent/15 text-accent">You</span>
 										<span v-if="isSuperAdminUser(selectedUser)"
@@ -597,7 +598,7 @@ const handleCancel = async () => {
 									<div class="flex items-center justify-between">
 										<span class="text-base text-text/60">Name</span>
 										<span class="text-base font-semibold text-heading">{{ selectedUser.name
-											}}</span>
+										}}</span>
 									</div>
 									<div class="flex items-center justify-between">
 										<span class="text-base text-text/60">Email</span>
@@ -614,14 +615,14 @@ const handleCancel = async () => {
 										<input v-model="editName" type="text" class="input-field text-base"
 											:class="{ 'border-red-400': editErrors.name }" />
 										<p v-if="editErrors.name" class="text-red-500 text-sm mt-1">{{ editErrors.name
-											}}</p>
+										}}</p>
 									</div>
 									<div>
 										<label class="block text-sm font-semibold text-text/60 mb-1.5">Email</label>
 										<input v-model="editEmail" type="email" class="input-field text-base"
 											:class="{ 'border-red-400': editErrors.email }" />
 										<p v-if="editErrors.email" class="text-red-500 text-sm mt-1">{{ editErrors.email
-											}}</p>
+										}}</p>
 									</div>
 									<div class="flex gap-2">
 										<button @click="editMode = false"

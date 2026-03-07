@@ -210,7 +210,7 @@ const createProject = () => {
 			<div>
 				<p class="text-xs font-bold text-accent/70 tracking-[0.2em] uppercase mb-1.5">Workspace</p>
 				<h1 class="text-heading leading-none mb-2">Projects</h1>
-				<p class="text-sm text-text/50">Manage your team's work across all active projects.</p>
+				<p class="text-sm text-text/80">Manage your team's work across all active projects.</p>
 			</div>
 			<button @click.stop="showCreateModal = true"
 				class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-accent text-white text-sm font-semibold hover:bg-accent/90 active:scale-95 transition-all shadow-lg shadow-accent/25">
@@ -431,7 +431,7 @@ const createProject = () => {
 							{{ m.initials }}
 						</div>
 						<div v-if="project.members.length > 3"
-							class="w-7 h-7 rounded-full bg-heading/10 flex items-center justify-center text-[9px] font-bold border-2 border-panel text-text/50">
+							class="w-7 h-7 rounded-full bg-heading/10 flex items-center justify-center text-[9px] font-bold border-2 border-panel text-text/80">
 							+{{ project.members.length - 3 }}
 						</div>
 					</div>
@@ -488,7 +488,7 @@ const createProject = () => {
 											class="text-sm font-semibold text-heading group-hover:text-accent transition-colors">
 											{{ project.name }}</p>
 										<p class="text-[10px] text-text/40 line-clamp-1 max-w-xs">{{ project.description
-											}}</p>
+										}}</p>
 									</div>
 								</div>
 							</td>
@@ -512,12 +512,12 @@ const createProject = () => {
 										<div :class="[progressColor(project.progress), 'h-full rounded-full transition-all']"
 											:style="`width: ${project.progress}%`"></div>
 									</div>
-									<span class="text-[10px] font-bold text-text/50 w-8 text-right">{{ project.progress
-										}}%</span>
+									<span class="text-[10px] font-bold text-text/80 w-8 text-right">{{ project.progress
+									}}%</span>
 								</div>
 							</td>
 							<td class="px-4 py-4">
-								<span class="text-xs text-text/50 font-medium">{{ project.taskCounts.done }}/{{
+								<span class="text-xs text-text/80 font-medium">{{ project.taskCounts.done }}/{{
 									project.taskCounts.total }}</span>
 							</td>
 							<td class="px-4 py-4">
@@ -528,7 +528,7 @@ const createProject = () => {
 										{{ m.initials }}
 									</div>
 									<div v-if="project.members.length > 3"
-										class="w-6 h-6 rounded-full bg-heading/10 border-2 border-panel flex items-center justify-center text-[8px] font-bold text-text/50">
+										class="w-6 h-6 rounded-full bg-heading/10 border-2 border-panel flex items-center justify-center text-[8px] font-bold text-text/80">
 										+{{ project.members.length - 3 }}
 									</div>
 								</div>
@@ -594,28 +594,28 @@ const createProject = () => {
 					<!-- Modal body -->
 					<div class="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
 						<div>
-							<label class="block text-xs font-bold text-text/50 uppercase tracking-wider mb-1.5">Project
+							<label class="block text-xs font-bold text-text/80 uppercase tracking-wider mb-1.5">Project
 								Name *</label>
 							<input v-model="newProject.name" type="text" placeholder="e.g. Marketing Website"
 								class="input-field rounded-xl border-heading/15 focus:border-accent" />
 						</div>
 						<div>
 							<label
-								class="block text-xs font-bold text-text/50 uppercase tracking-wider mb-1.5">Description</label>
+								class="block text-xs font-bold text-text/80 uppercase tracking-wider mb-1.5">Description</label>
 							<textarea v-model="newProject.description" rows="2"
 								placeholder="Brief description of the project…"
 								class="input-field rounded-xl border-heading/15 focus:border-accent resize-none"></textarea>
 						</div>
 						<div>
 							<label
-								class="block text-xs font-bold text-text/50 uppercase tracking-wider mb-1.5">Goal</label>
+								class="block text-xs font-bold text-text/80 uppercase tracking-wider mb-1.5">Goal</label>
 							<input v-model="newProject.goal" type="text" placeholder="What does success look like?"
 								class="input-field rounded-xl border-heading/15 focus:border-accent" />
 						</div>
 						<div class="grid grid-cols-2 gap-3">
 							<div>
 								<label
-									class="block text-xs font-bold text-text/50 uppercase tracking-wider mb-1.5">Priority</label>
+									class="block text-xs font-bold text-text/80 uppercase tracking-wider mb-1.5">Priority</label>
 								<select v-model="newProject.priority" class="input-field rounded-xl border-heading/15">
 									<option>Urgent</option>
 									<option>High</option>
@@ -625,7 +625,7 @@ const createProject = () => {
 							</div>
 							<div>
 								<label
-									class="block text-xs font-bold text-text/50 uppercase tracking-wider mb-1.5">Status</label>
+									class="block text-xs font-bold text-text/80 uppercase tracking-wider mb-1.5">Status</label>
 								<select v-model="newProject.status" class="input-field rounded-xl border-heading/15">
 									<option>Planning</option>
 									<option>In Progress</option>
@@ -636,13 +636,13 @@ const createProject = () => {
 						<div class="grid grid-cols-2 gap-3">
 							<div>
 								<label
-									class="block text-xs font-bold text-text/50 uppercase tracking-wider mb-1.5">Start
+									class="block text-xs font-bold text-text/80 uppercase tracking-wider mb-1.5">Start
 									Date</label>
 								<input v-model="newProject.startDate" type="date"
 									class="input-field rounded-xl border-heading/15" />
 							</div>
 							<div>
-								<label class="block text-xs font-bold text-text/50 uppercase tracking-wider mb-1.5">End
+								<label class="block text-xs font-bold text-text/80 uppercase tracking-wider mb-1.5">End
 									Date</label>
 								<input v-model="newProject.endDate" type="date"
 									class="input-field rounded-xl border-heading/15" />
@@ -653,7 +653,7 @@ const createProject = () => {
 					<!-- Modal footer -->
 					<div class="px-6 py-4 border-t border-heading/8 flex items-center gap-3 bg-heading/[0.01]">
 						<button @click="showCreateModal = false"
-							class="flex-1 py-2.5 rounded-xl border border-heading/15 text-sm font-semibold text-text/50 hover:bg-heading/5 transition-colors">
+							class="flex-1 py-2.5 rounded-xl border border-heading/15 text-sm font-semibold text-text/80 hover:bg-heading/5 transition-colors">
 							Cancel
 						</button>
 						<button @click="createProject" :disabled="!newProject.name.trim()"

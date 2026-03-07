@@ -224,7 +224,7 @@ function getModuleIcon(module) {
 						<h1 class="text-lg sm:text-xl font-bold text-heading truncate">
 							{{ roleStore.selectedRole?.label || 'Select a Role' }}
 						</h1>
-						<p v-if="roleStore.selectedRole" class="text-sm text-text/50 mt-0.5 font-mono truncate">
+						<p v-if="roleStore.selectedRole" class="text-sm text-text/80 mt-0.5 font-mono truncate">
 							{{ roleStore.selectedRole.name }}
 						</p>
 					</div>
@@ -273,7 +273,7 @@ function getModuleIcon(module) {
 					class="flex lg:hidden items-center gap-2 px-4 py-2 border-b border-heading/6 shrink-0">
 					<div class="w-2 h-2 rounded-full shrink-0"
 						:class="coveragePercent > 66 ? 'bg-emerald-400' : coveragePercent > 33 ? 'bg-yellow-400' : 'bg-red-400'" />
-					<span class="text-xs text-text/50 font-medium">
+					<span class="text-xs text-text/80 font-medium">
 						{{ selectedPermissionsCount }} of {{ totalPermissions }} permissions ({{ coveragePercent }}%)
 					</span>
 				</div>
@@ -383,7 +383,7 @@ function getModuleIcon(module) {
 												<polyline points="20 6 9 17 4 12" />
 											</svg>
 										</div>
-										<span class="text-xs text-text/50 font-medium">All</span>
+										<span class="text-xs text-text/80 font-medium">All</span>
 									</label>
 
 									<!-- Collapse chevron -->

@@ -133,7 +133,7 @@ const greeting = computed(() => {
                 <h1 class="text-heading leading-none">
                     {{ greeting }}, {{ auth.user?.name?.split(' ')[0] ?? 'there' }} 👋
                 </h1>
-                <p class="text-text/50 mt-2 text-sm">
+                <p class="text-text/80 mt-2 text-sm">
                     Here's what's happening across your workspace today.
                 </p>
             </div>
@@ -154,7 +154,7 @@ const greeting = computed(() => {
                     </div>
                 </div>
                 <p class="text-3xl font-display font-bold text-heading">{{ stat.value }}</p>
-                <p class="text-xs text-text/50 mt-0.5">{{ stat.label }}</p>
+                <p class="text-xs text-text/80 mt-0.5">{{ stat.label }}</p>
                 <p class="text-xs mt-2 font-medium" :class="stat.color">{{ stat.delta }}</p>
             </div>
         </div>
@@ -284,11 +284,11 @@ const greeting = computed(() => {
                         <div class="flex items-center gap-1">
                             <button @click="prevMonth"
                                 class="w-7 h-7 rounded-lg hover:bg-heading/5 flex items-center justify-center transition-colors">
-                                <v-icon name="bi-chevron-left" scale="0.8" class="text-text/50" />
+                                <v-icon name="bi-chevron-left" scale="0.8" class="text-text/80" />
                             </button>
                             <button @click="nextMonth"
                                 class="w-7 h-7 rounded-lg hover:bg-heading/5 flex items-center justify-center transition-colors">
-                                <v-icon name="bi-chevron-right" scale="0.8" class="text-text/50" />
+                                <v-icon name="bi-chevron-right" scale="0.8" class="text-text/80" />
                             </button>
                         </div>
                     </div>

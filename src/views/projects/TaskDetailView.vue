@@ -255,7 +255,7 @@ const activityTypeIcon = { status: '🔄', assign: '👤', priority: '🚩', cre
 									Save
 								</button>
 								<button @click="editingDesc = false"
-									class="px-3 py-1.5 rounded-lg border border-heading/10 text-text/50 text-xs hover:text-heading transition-colors">
+									class="px-3 py-1.5 rounded-lg border border-heading/10 text-text/80 text-xs hover:text-heading transition-colors">
 									Cancel
 								</button>
 							</div>
@@ -388,11 +388,11 @@ const activityTypeIcon = { status: '🔄', assign: '👤', priority: '🚩', cre
 								<div class="flex items-center justify-between mt-2">
 									<div class="flex items-center gap-1">
 										<button
-											class="p-1.5 rounded-lg text-text/25 hover:text-text/50 hover:bg-heading/5 transition-colors">
+											class="p-1.5 rounded-lg text-text/25 hover:text-text/80 hover:bg-heading/5 transition-colors">
 											<v-icon name="bi-paperclip" scale="0.85" />
 										</button>
 										<button
-											class="p-1.5 rounded-lg text-text/25 hover:text-text/50 hover:bg-heading/5 transition-colors">
+											class="p-1.5 rounded-lg text-text/25 hover:text-text/80 hover:bg-heading/5 transition-colors">
 											<v-icon name="bi-emoji-smile" scale="0.85" />
 										</button>
 									</div>

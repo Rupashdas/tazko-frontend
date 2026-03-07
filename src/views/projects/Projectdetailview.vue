@@ -219,7 +219,7 @@ const recentActivity = [
 									{{ project.priority }}
 								</span>
 							</div>
-							<p class="text-sm text-text/50 leading-relaxed max-w-2xl mb-4">{{ project.description }}</p>
+							<p class="text-sm text-text/80 leading-relaxed max-w-2xl mb-4">{{ project.description }}</p>
 
 							<!-- Progress + dates row -->
 							<div class="flex flex-wrap items-center gap-5">
@@ -256,7 +256,7 @@ const recentActivity = [
 										{{ m.initials }}
 									</div>
 									<div v-if="project.members.length > 4"
-										class="w-6 h-6 rounded-full border-2 border-panel bg-heading/10 flex items-center justify-center text-text/50 text-[9px] font-bold">
+										class="w-6 h-6 rounded-full border-2 border-panel bg-heading/10 flex items-center justify-center text-text/80 text-[9px] font-bold">
 										+{{ project.members.length - 4 }}
 									</div>
 								</div>
@@ -327,7 +327,7 @@ const recentActivity = [
 							<div v-for="(count, label, i) in { 'Done': doneCount, 'In Progress': inProgressCount, 'To Do': todoCount }"
 								:key="label">
 								<div class="flex items-center justify-between mb-1">
-									<span class="text-[11px] font-semibold text-text/50">{{ label }}</span>
+									<span class="text-[11px] font-semibold text-text/80">{{ label }}</span>
 									<span class="text-[11px] text-text/35 tabular-nums">{{ count }}/{{ totalTasks
 									}}</span>
 								</div>
@@ -464,7 +464,7 @@ const recentActivity = [
 						<!-- Status filter -->
 						<select v-model="statusFilter"
 							:class="['appearance-none pl-3 pr-7 py-2 rounded-xl border text-sm focus:outline-none transition-colors cursor-pointer',
-								statusFilter !== 'All' ? 'border-accent/30 bg-accent/8 text-accent font-semibold' : 'border-heading/8 bg-heading/3 text-text/50 hover:text-text/80']">
+								statusFilter !== 'All' ? 'border-accent/30 bg-accent/8 text-accent font-semibold' : 'border-heading/8 bg-heading/3 text-text/80 hover:text-text/80']">
 							<option v-for="s in ['All', 'Todo', 'In Progress', 'Review', 'Done']" :key="s" :value="s">
 								{{ s === 'All' ? 'All Status' : s }}
 							</option>
@@ -473,7 +473,7 @@ const recentActivity = [
 						<!-- Priority filter -->
 						<select v-model="priorityFilter"
 							:class="['appearance-none pl-3 pr-7 py-2 rounded-xl border text-sm focus:outline-none transition-colors cursor-pointer',
-								priorityFilter !== 'All' ? 'border-accent/30 bg-accent/8 text-accent font-semibold' : 'border-heading/8 bg-heading/3 text-text/50 hover:text-text/80']">
+								priorityFilter !== 'All' ? 'border-accent/30 bg-accent/8 text-accent font-semibold' : 'border-heading/8 bg-heading/3 text-text/80 hover:text-text/80']">
 							<option v-for="p in ['All', 'Urgent', 'High', 'Medium', 'Low']" :key="p" :value="p">
 								{{ p === 'All' ? 'All Priority' : p }}
 							</option>
@@ -519,7 +519,7 @@ const recentActivity = [
 							Save
 						</button>
 						<button @click="showAddTask = false; newTaskTitle = ''"
-							class="px-3 py-2 rounded-xl border border-heading/10 text-text/50 text-sm hover:text-heading transition-colors">
+							class="px-3 py-2 rounded-xl border border-heading/10 text-text/80 text-sm hover:text-heading transition-colors">
 							Cancel
 						</button>
 					</div>

@@ -42,7 +42,7 @@ const isActive = (name) => name && route.matched.some(r => r.name === name)
 </script>
 
 <template>
-	<div class="mt-6 md:mt-10 mb-24 px-4 max-w-7xl mx-auto">
+	<div class="mt-6 md:mt-10 mb-24 px-4">
 
 		<!-- Page Header (mobile) -->
 		<div class="mb-4 md:mb-6">

@@ -95,7 +95,7 @@ const submit = async () => {
 		<!-- ── Checking token ── -->
 		<div v-if="checking" class="flex flex-col items-center justify-center py-16 gap-4">
 			<div class="w-8 h-8 border-2 border-accent/30 border-t-accent rounded-full animate-spin" />
-			<p class="text-sm text-text/50">Verifying invitation…</p>
+			<p class="text-sm text-text/80">Verifying invitation…</p>
 		</div>
 
 		<!-- ── Invalid / expired ── -->
@@ -202,7 +202,7 @@ const submit = async () => {
 							<div v-for="i in 4" :key="i" class="flex-1 h-1.5 rounded-full transition-all duration-300"
 								:class="i <= passwordStrength.score ? passwordStrength.color : 'bg-heading/10'" />
 						</div>
-						<span class="text-[11px] font-semibold text-text/50">{{ passwordStrength.label }}</span>
+						<span class="text-[11px] font-semibold text-text/80">{{ passwordStrength.label }}</span>
 					</div>
 
 					<!-- Requirements -->

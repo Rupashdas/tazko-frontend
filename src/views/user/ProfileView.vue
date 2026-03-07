@@ -144,7 +144,7 @@ const removeAvatar = async () => {
 		<!-- Page Header -->
 		<div class="mb-6 md:mb-8">
 			<h1 class="text-2xl sm:text-3xl font-bold text-heading">My Profile</h1>
-			<p class="text-text/50 mt-1.5 text-base">Manage your personal information and account security.</p>
+			<p class="text-text/80 mt-1.5 text-base">Manage your personal information and account security.</p>
 		</div>
 
 		<form @submit.prevent="handleProfileSave">
@@ -182,8 +182,8 @@ const removeAvatar = async () => {
 						</div>
 
 						<!-- Name preview -->
-						<h3 class="font-bold text-heading text-lg leading-tight">{{ displayName }}</h3>
-						<p class="text-sm text-text/50 mt-1">{{ title || 'No title set' }}</p>
+						<h3 class="font-bold text-heading text-xl leading-tight">{{ displayName }}</h3>
+						<p class="text-sm text-text/80 mt-1">{{ title || 'No title set' }}</p>
 
 						<!-- Change avatar button -->
 						<button v-if="canUpdateProfile" type="button" @click="showModal = true"
@@ -208,7 +208,7 @@ const removeAvatar = async () => {
 
 					<!-- Quick Info Card -->
 					<div class="bg-panel border border-heading/8 rounded-2xl p-5 shadow-sm space-y-3">
-						<p class="text-sm font-bold text-text/40 uppercase tracking-widest">Quick Info</p>
+						<p class="text-sm font-bold text-text/80 uppercase tracking-widest">Quick Info</p>
 						<div class="flex items-center gap-3">
 							<div
 								class="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center shrink-0">
@@ -221,7 +221,7 @@ const removeAvatar = async () => {
 								</svg>
 							</div>
 							<div class="min-w-0">
-								<p class="text-xs text-text/40 leading-none">Email</p>
+								<p class="text-xs text-text/80 leading-none">Email</p>
 								<p class="text-sm font-semibold text-heading truncate mt-0.5">{{ email || '—' }}</p>
 							</div>
 						</div>
@@ -236,7 +236,7 @@ const removeAvatar = async () => {
 								</svg>
 							</div>
 							<div class="min-w-0">
-								<p class="text-xs text-text/40 leading-none">Phone</p>
+								<p class="text-xs text-text/80 leading-none">Phone</p>
 								<p class="text-sm font-semibold text-heading truncate mt-0.5">{{ phone || '—' }}</p>
 							</div>
 						</div>
@@ -251,7 +251,7 @@ const removeAvatar = async () => {
 								</svg>
 							</div>
 							<div class="min-w-0">
-								<p class="text-xs text-text/40 leading-none">Location</p>
+								<p class="text-xs text-text/80 leading-none">Location</p>
 								<p class="text-sm font-semibold text-heading truncate mt-0.5">{{ location || '—' }}</p>
 							</div>
 						</div>
@@ -266,7 +266,7 @@ const removeAvatar = async () => {
 								</svg>
 							</div>
 							<div class="min-w-0">
-								<p class="text-xs text-text/40 leading-none">Role</p>
+								<p class="text-xs text-text/80 leading-none">Role</p>
 								<p class="text-sm font-semibold text-heading truncate mt-0.5">{{
 									auth.user?.roles?.[0]?.label || '—' }}</p>
 							</div>
@@ -279,7 +279,7 @@ const removeAvatar = async () => {
 
 					<!-- Section: Basic Info -->
 					<div class="bg-panel border border-heading/8 rounded-2xl shadow-sm overflow-hidden">
-						<div class="px-5 md:px-6 py-4 border-b border-heading/6 flex items-center gap-3">
+						<div class="px-5 md:px-6 py-5 border-b border-heading/6 flex items-center gap-3">
 							<div class="w-9 h-9 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
 								<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-accent" viewBox="0 0 24 24"
 									fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
@@ -288,8 +288,8 @@ const removeAvatar = async () => {
 								</svg>
 							</div>
 							<div>
-								<h2 class="text-base font-bold text-heading leading-none">Basic Information</h2>
-								<p class="text-sm text-text/40 mt-0.5">Your public profile details</p>
+								<h6 class="text-md font-bold text-heading leading-none">Basic Information</h6>
+								<p class="text-sm text-text/80 mt-0.5">Your public profile details</p>
 							</div>
 						</div>
 
@@ -385,7 +385,7 @@ const removeAvatar = async () => {
 					<!-- Section: Security -->
 					<div v-if="canChangePassword"
 						class="bg-panel border border-heading/8 rounded-2xl shadow-sm overflow-hidden">
-						<div class="px-5 md:px-6 py-4 border-b border-heading/6 flex items-center gap-3">
+						<div class="px-5 md:px-6 py-5 border-b border-heading/6 flex items-center gap-3">
 							<div class="w-9 h-9 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
 								<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-amber-500"
 									viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
@@ -395,8 +395,8 @@ const removeAvatar = async () => {
 								</svg>
 							</div>
 							<div>
-								<h2 class="text-base font-bold text-heading leading-none">Change Password</h2>
-								<p class="text-sm text-text/40 mt-0.5">Leave blank to keep your current password</p>
+								<h6 class="text-md font-bold text-heading leading-none">Change Password</h6>
+								<p class="text-sm text-text/80 mt-0.5">Leave blank to keep your current password</p>
 							</div>
 						</div>
 
@@ -484,7 +484,7 @@ const removeAvatar = async () => {
 								</svg>
 							</div>
 							<div>
-								<h2 class="text-base font-bold text-heading/40 leading-none">Change Password</h2>
+								<h6 class="font-bold text-heading/40 leading-none">Change Password</h6>
 								<p class="text-sm text-text/30 mt-0.5">You do not have permission to change your
 									password</p>
 							</div>

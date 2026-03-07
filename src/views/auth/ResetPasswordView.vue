@@ -156,7 +156,7 @@ const submit = async () => {
                             <div v-for="i in 4" :key="i" class="flex-1 h-1.5 rounded-full transition-all duration-300"
                                 :class="i <= passwordStrength.score ? passwordStrength.color : 'bg-heading/10'" />
                         </div>
-                        <span class="text-[11px] font-semibold text-text/50">{{ passwordStrength.label }}</span>
+                        <span class="text-[11px] font-semibold text-text/80">{{ passwordStrength.label }}</span>
                     </div>
 
                     <!-- Requirements -->
@@ -239,7 +239,7 @@ const submit = async () => {
                 </button>
 
                 <router-link :to="{ name: 'login' }"
-                    class="text-center text-[13px] font-medium text-text/50 hover:text-accent transition-colors">
+                    class="text-center text-[13px] font-medium text-text/80 hover:text-accent transition-colors">
                     ← Back to sign in
                 </router-link>
 

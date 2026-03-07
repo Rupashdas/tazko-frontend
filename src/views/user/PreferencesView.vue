@@ -75,7 +75,7 @@ const saveDateTime = async () => {
 		<!-- Page Header -->
 		<div class="mb-6 md:mb-8">
 			<h1 class="text-2xl sm:text-3xl font-bold text-heading leading-tight">Preferences</h1>
-			<p class="text-text/50 mt-1.5 text-base">Customize your workspace to feel just right.</p>
+			<p class="text-text/80 mt-1.5 text-base">Customize your workspace to feel just right.</p>
 		</div>
 
 		<!-- ─── SECTION 1: COLOR PALETTE ─────────────────────────── -->

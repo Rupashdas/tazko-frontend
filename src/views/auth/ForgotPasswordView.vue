@@ -77,7 +77,7 @@ const resetForm = () => {
                     Try a different email
                 </button>
                 <router-link :to="{ name: 'login' }"
-                    class="text-sm font-medium text-text/50 hover:text-accent transition-colors text-center">
+                    class="text-sm font-medium text-text/80 hover:text-accent transition-colors text-center">
                     ← Back to sign in
                 </router-link>
             </div>
@@ -89,7 +89,7 @@ const resetForm = () => {
             <div class="mb-8">
                 <!-- Back link -->
                 <router-link :to="{ name: 'login' }"
-                    class="inline-flex items-center gap-1.5 text-[13px] font-medium text-text/50 hover:text-accent transition-colors mb-6">
+                    class="inline-flex items-center gap-1.5 text-[13px] font-medium text-text/80 hover:text-accent transition-colors mb-6">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                     </svg>

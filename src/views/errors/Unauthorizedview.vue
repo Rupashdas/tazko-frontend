@@ -18,9 +18,9 @@ const auth = useAuthStore()
 			</svg>
 		</div>
 
-		<!-- Text -->
-		<h1 class="text-3xl font-bold text-heading mb-2">Access Denied</h1>
-		<p class="text-text/60 text-base max-w-sm mb-1">
+		<!-- FIX: responsive page-title class instead of hardcoded text-3xl -->
+		<h1 class="page-title mb-2">Access Denied</h1>
+		<p class="text-text/60 text-sm max-w-sm mb-1">
 			You don't have permission to view this page.
 		</p>
 		<p class="text-text/40 text-sm max-w-sm mb-8">
@@ -30,7 +30,7 @@ const auth = useAuthStore()
 		<!-- Actions -->
 		<div class="flex items-center gap-3">
 			<button @click="router.back()"
-				class="px-5 py-2.5 rounded-xl border border-heading/15 text-sm font-medium text-text hover:bg-heading/5 transition">
+				class="px-5 py-2.5 rounded-xl border border-heading/15 text-sm font-medium text-text hover:bg-heading/6 transition">
 				← Go Back
 			</button>
 			<router-link :to="{ name: 'home' }"

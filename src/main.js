@@ -7,7 +7,7 @@ import { OhVueIcon } from "oh-vue-icons";
 import Toastify from 'toastify-js'
 
 import "toastify-js/src/toastify.css"
-import "@fontsource/barlow-condensed/700.css"
+import '@fontsource-variable/plus-jakarta-sans'
 import '@fontsource-variable/manrope';
 
 import { OverlayScrollbars } from 'overlayscrollbars';

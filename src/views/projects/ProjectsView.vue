@@ -28,13 +28,11 @@ const priorityFilter = ref('All')
 const showCreateModal = ref(false)
 const openMenuId = ref(null)
 
-// New project form state
 const newProject = ref({ name: '', description: '', goal: '', priority: 'High', status: 'Planning', startDate: '', endDate: '' })
 
 const statuses = ['All', 'Planning', 'In Progress', 'On Hold', 'Completed']
 const priorities = ['All', 'Urgent', 'High', 'Medium', 'Low']
 
-// Project accent colors — each project gets a unique stripe
 const projectColors = [
 	'from-violet-500 to-indigo-500',
 	'from-rose-500 to-pink-500',
@@ -98,18 +96,17 @@ const projects = ref([
 		priority: 'Medium',
 		progress: 5,
 		startDate: '2026-04-01',
-		endDate: '2026-12-01',
+		endDate: '2026-09-30',
 		members: [
-			{ name: 'Noman R', initials: 'NR', color: 'bg-emerald-500' },
 			{ name: 'Sara K', initials: 'SK', color: 'bg-violet-500' },
-			{ name: 'Arif H', initials: 'AH', color: 'bg-accent' },
+			{ name: 'Dina M', initials: 'DM', color: 'bg-amber-500' },
 		],
-		taskCounts: { total: 8, done: 0 },
+		taskCounts: { total: 10, done: 0 },
 	},
 	{
 		id: 5,
 		name: 'Design System',
-		description: 'Component library, style guide, and Figma design tokens.',
+		description: 'Component library, tokens, and design guidelines.',
 		status: 'On Hold',
 		priority: 'Medium',
 		progress: 38,
@@ -147,11 +144,9 @@ const filteredProjects = computed(() => {
 	})
 })
 
-// Stats
 const totalProjects = computed(() => projects.value.length)
 const activeCount = computed(() => projects.value.filter(p => p.status === 'In Progress').length)
 const completedCount = computed(() => projects.value.filter(p => p.status === 'Completed').length)
-const onHoldCount = computed(() => projects.value.filter(p => p.status === 'On Hold').length)
 const avgProgress = computed(() => Math.round(projects.value.reduce((a, p) => a + p.progress, 0) / projects.value.length))
 
 const statusConfig = {
@@ -208,9 +203,12 @@ const createProject = () => {
 		<!-- ── Header ─────────────────────────────────── -->
 		<div class="mb-8 flex items-end justify-between gap-4 flex-wrap">
 			<div>
-				<p class="text-xs font-bold text-accent/70 tracking-[0.2em] uppercase mb-1.5">Workspace</p>
-				<h1 class="text-heading leading-none mb-2">Projects</h1>
-				<p class="text-sm text-text/80">Manage your team's work across all active projects.</p>
+				<!-- FIX: page-eyebrow (was font-bold + wrong color/tracking) -->
+				<p class="page-eyebrow">Workspace</p>
+				<!-- FIX: page-title (was missing size class — rendered at 56px!) -->
+				<h1 class="page-title">Projects</h1>
+				<!-- FIX: page-subtitle (was text-sm text-text/80) -->
+				<p class="page-subtitle">Manage your team's work across all active projects.</p>
 			</div>
 			<button @click.stop="showCreateModal = true"
 				class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-accent text-white text-sm font-semibold hover:bg-accent/90 active:scale-95 transition-all shadow-lg shadow-accent/25">
@@ -221,41 +219,42 @@ const createProject = () => {
 
 		<!-- ── Stat Cards ─────────────────────────────── -->
 		<div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-			<div class="bg-panel rounded-2xl border border-heading/5 p-4 flex items-center gap-3">
+			<div class="bg-panel rounded-2xl border border-heading/8 p-4 flex items-center gap-3">
 				<div class="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
 					<v-icon name="md-folderspecial-outlined" class="text-accent" scale="1.1" />
 				</div>
 				<div>
 					<p class="text-2xl font-bold text-heading leading-none">{{ totalProjects }}</p>
-					<p class="text-xs text-text/40 mt-0.5">Total</p>
+					<!-- FIX: /40 → /60 for stat labels -->
+					<p class="text-xs text-text/60 mt-0.5">Total</p>
 				</div>
 			</div>
-			<div class="bg-panel rounded-2xl border border-heading/5 p-4 flex items-center gap-3">
+			<div class="bg-panel rounded-2xl border border-heading/8 p-4 flex items-center gap-3">
 				<div class="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
 					<v-icon name="bi-lightning-charge" class="text-blue-500" scale="1.0" />
 				</div>
 				<div>
 					<p class="text-2xl font-bold text-heading leading-none">{{ activeCount }}</p>
-					<p class="text-xs text-text/40 mt-0.5">Active</p>
+					<p class="text-xs text-text/60 mt-0.5">Active</p>
 				</div>
 			</div>
-			<div class="bg-panel rounded-2xl border border-heading/5 p-4 flex items-center gap-3">
+			<div class="bg-panel rounded-2xl border border-heading/8 p-4 flex items-center gap-3">
 				<div class="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center shrink-0">
 					<v-icon name="bi-check-circle" class="text-emerald-500" scale="1.1" />
 				</div>
 				<div>
 					<p class="text-2xl font-bold text-heading leading-none">{{ completedCount }}</p>
-					<p class="text-xs text-text/40 mt-0.5">Completed</p>
+					<p class="text-xs text-text/60 mt-0.5">Completed</p>
 				</div>
 			</div>
-			<div class="bg-panel rounded-2xl border border-heading/5 p-4 flex items-center gap-3">
+			<div class="bg-panel rounded-2xl border border-heading/8 p-4 flex items-center gap-3">
 				<div class="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center shrink-0">
 					<v-icon name="bi-graph-up" class="text-violet-500" scale="1.0" />
 				</div>
 				<div>
 					<p class="text-2xl font-bold text-heading leading-none">{{ avgProgress }}<span
 							class="text-sm font-medium text-text/40">%</span></p>
-					<p class="text-xs text-text/40 mt-0.5">Avg Progress</p>
+					<p class="text-xs text-text/60 mt-0.5">Avg Progress</p>
 				</div>
 			</div>
 		</div>
@@ -265,32 +264,31 @@ const createProject = () => {
 			<div class="relative flex-1 min-w-48">
 				<v-icon name="bi-search" class="absolute left-3 top-1/2 -translate-y-1/2 text-text/30" scale="0.85" />
 				<input v-model="searchQuery" type="text" placeholder="Search projects…"
-					class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-heading/10 bg-panel text-sm text-heading placeholder-text/30 focus:outline-none focus:border-accent/50 transition-colors" />
-				<button v-if="searchQuery" @click="searchQuery = ''"
-					class="absolute right-3 top-1/2 -translate-y-1/2 text-text/30 hover:text-text/70 transition-colors">
-					<v-icon name="bi-x-circle" scale="0.85" />
-				</button>
+					class="w-full pl-9 pr-4 py-2.5 bg-panel border border-heading/10 rounded-xl text-sm text-heading placeholder:text-text/30 focus:outline-none focus:border-accent/40 focus:ring-2 focus:ring-accent/10 transition-all" />
 			</div>
 
+			<!-- Status filter -->
 			<div class="relative">
 				<select v-model="statusFilter"
-					class="appearance-none pl-3 pr-8 py-2.5 rounded-xl border border-heading/10 bg-panel text-sm text-text/70 focus:outline-none focus:border-accent/50 transition-colors cursor-pointer">
+					class="appearance-none pl-3 pr-8 py-2.5 bg-panel border border-heading/10 rounded-xl text-sm text-text/70 focus:outline-none focus:border-accent/40 transition-all cursor-pointer">
 					<option v-for="s in statuses" :key="s">{{ s }}</option>
 				</select>
-				<v-icon name="bi-chevron-down" scale="0.75"
-					class="absolute right-2.5 top-1/2 -translate-y-1/2 text-text/40 pointer-events-none" />
+				<v-icon name="bi-chevron-down"
+					class="absolute right-2.5 top-1/2 -translate-y-1/2 text-text/30 pointer-events-none" scale="0.75" />
 			</div>
 
+			<!-- Priority filter -->
 			<div class="relative">
 				<select v-model="priorityFilter"
-					class="appearance-none pl-3 pr-8 py-2.5 rounded-xl border border-heading/10 bg-panel text-sm text-text/70 focus:outline-none focus:border-accent/50 transition-colors cursor-pointer">
+					class="appearance-none pl-3 pr-8 py-2.5 bg-panel border border-heading/10 rounded-xl text-sm text-text/70 focus:outline-none focus:border-accent/40 transition-all cursor-pointer">
 					<option v-for="p in priorities" :key="p">{{ p }}</option>
 				</select>
-				<v-icon name="bi-chevron-down" scale="0.75"
-					class="absolute right-2.5 top-1/2 -translate-y-1/2 text-text/40 pointer-events-none" />
+				<v-icon name="bi-chevron-down"
+					class="absolute right-2.5 top-1/2 -translate-y-1/2 text-text/30 pointer-events-none" scale="0.75" />
 			</div>
 
-			<div class="flex items-center gap-1 bg-panel border border-heading/10 rounded-xl p-1 ml-auto">
+			<!-- View toggle -->
+			<div class="flex items-center gap-1 bg-panel border border-heading/10 rounded-xl p-1">
 				<button @click="viewMode = 'grid'"
 					:class="['w-8 h-8 rounded-lg flex items-center justify-center transition-all', viewMode === 'grid' ? 'bg-accent text-white shadow-sm' : 'text-text/40 hover:text-text/70']">
 					<v-icon name="bi-grid-3x3-gap" scale="0.9" />
@@ -328,8 +326,10 @@ const createProject = () => {
 			<div class="w-20 h-20 bg-accent/10 rounded-3xl flex items-center justify-center mx-auto mb-5">
 				<v-icon name="md-folderspecial-outlined" class="text-accent" scale="2" />
 			</div>
-			<h3 class="text-lg font-bold text-heading mb-2">No projects found</h3>
-			<p class="text-sm text-text/40 mb-6">Try adjusting your filters or create a new project.</p>
+			<!-- FIX: section-title (was text-lg) -->
+			<h3 class="section-title mb-2">No projects found</h3>
+			<!-- FIX: page-subtitle (consistent opacity) -->
+			<p class="page-subtitle mb-6">Try adjusting your filters or create a new project.</p>
 			<button @click="statusFilter = 'All'; priorityFilter = 'All'; searchQuery = ''"
 				class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-heading/10 text-sm font-semibold text-text/60 hover:bg-heading/5 transition-colors">
 				Clear filters
@@ -339,7 +339,7 @@ const createProject = () => {
 		<!-- ── GRID VIEW ──────────────────────────────── -->
 		<div v-else-if="viewMode === 'grid'" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
 			<div v-for="(project, idx) in filteredProjects" :key="project.id"
-				class="bg-panel rounded-2xl border border-heading/5 hover:shadow-xl hover:shadow-heading/5 hover:-translate-y-0.5 hover:border-accent/15 transition-all duration-200 group overflow-hidden flex flex-col cursor-pointer"
+				class="bg-panel rounded-2xl border border-heading/8 hover:shadow-xl hover:shadow-heading/5 hover:-translate-y-0.5 hover:border-accent/20 transition-all duration-200 group overflow-hidden flex flex-col cursor-pointer"
 				@click="router.push({ name: 'project-detail', params: { id: project.id } })">
 
 				<!-- Color stripe -->
@@ -390,8 +390,8 @@ const createProject = () => {
 						</div>
 					</div>
 
-					<h3 class="font-bold text-heading text-sm mb-1 group-hover:text-accent transition-colors">{{
-						project.name }}</h3>
+					<!-- FIX: section-title (was font-bold text-heading text-sm — inconsistent) -->
+					<h3 class="section-title mb-1 group-hover:text-accent transition-colors">{{ project.name }}</h3>
 					<p class="text-xs text-text/45 leading-relaxed line-clamp-2 mb-4">{{ project.description }}</p>
 
 					<!-- Progress -->
@@ -423,7 +423,7 @@ const createProject = () => {
 				</div>
 
 				<!-- Card footer -->
-				<div class="px-5 py-3 border-t border-heading/5 flex items-center justify-between bg-heading/[0.015]">
+				<div class="px-5 py-3 border-t border-heading/8 flex items-center justify-between bg-heading/[0.015]">
 					<div class="flex -space-x-2">
 						<div v-for="(m, i) in project.members.slice(0, 3)" :key="i"
 							:class="[m.color, 'w-7 h-7 rounded-full flex items-center justify-center text-white text-[9px] font-bold border-2 border-panel']"
@@ -444,11 +444,11 @@ const createProject = () => {
 		</div>
 
 		<!-- ── LIST VIEW ──────────────────────────────── -->
-		<div v-else class="bg-panel rounded-2xl border border-heading/5 overflow-hidden">
+		<div v-else class="bg-panel rounded-2xl border border-heading/8 overflow-hidden">
 			<div class="overflow-x-auto">
 				<table class="w-full">
 					<thead>
-						<tr class="border-b border-heading/5 bg-heading/[0.02]">
+						<tr class="border-b border-heading/8 bg-heading/[0.02]">
 							<th
 								class="text-left px-5 py-3.5 text-[10px] font-bold text-text/40 uppercase tracking-wider">
 								Project</th>
@@ -548,6 +548,11 @@ const createProject = () => {
 										<div v-if="openMenuId === project.id"
 											class="absolute right-0 top-full mt-1 w-40 bg-panel rounded-xl border border-heading/10 shadow-xl z-20 overflow-hidden">
 											<button
+												@click="router.push({ name: 'project-detail', params: { id: project.id } })"
+												class="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-text/70 hover:bg-heading/5 transition-colors">
+												<v-icon name="bi-arrow-right" scale="0.85" /> Open
+											</button>
+											<button
 												class="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-text/70 hover:bg-heading/5 transition-colors">
 												<v-icon name="bi-pencil" scale="0.85" /> Edit
 											</button>
@@ -555,6 +560,7 @@ const createProject = () => {
 												class="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-text/70 hover:bg-heading/5 transition-colors">
 												<v-icon name="bi-archive" scale="0.85" /> Archive
 											</button>
+											<div class="h-px bg-heading/5 mx-2"></div>
 											<button
 												class="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors">
 												<v-icon name="bi-trash" scale="0.85" /> Delete
@@ -576,7 +582,6 @@ const createProject = () => {
 				<div class="absolute inset-0 bg-heading/50 backdrop-blur-sm"></div>
 				<div class="relative bg-panel rounded-2xl shadow-2xl w-full max-w-lg z-10 overflow-hidden">
 
-					<!-- Modal header with gradient -->
 					<div
 						class="bg-gradient-to-r from-accent/10 to-violet-500/10 border-b border-heading/8 px-6 pt-6 pb-5">
 						<div class="flex items-center justify-between">
@@ -591,7 +596,6 @@ const createProject = () => {
 						</div>
 					</div>
 
-					<!-- Modal body -->
 					<div class="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
 						<div>
 							<label class="block text-xs font-bold text-text/80 uppercase tracking-wider mb-1.5">Project
@@ -650,7 +654,6 @@ const createProject = () => {
 						</div>
 					</div>
 
-					<!-- Modal footer -->
 					<div class="px-6 py-4 border-t border-heading/8 flex items-center gap-3 bg-heading/[0.01]">
 						<button @click="showCreateModal = false"
 							class="flex-1 py-2.5 rounded-xl border border-heading/15 text-sm font-semibold text-text/80 hover:bg-heading/5 transition-colors">

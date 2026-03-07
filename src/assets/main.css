@@ -3,7 +3,7 @@
 
 @theme {
     --font-sans: 'Manrope Variable', ui-sans-serif, system-ui, sans-serif;
-    --font-display: 'Barlow Condensed', ui-serif, Georgia, serif;
+    --font-display: 'Plus Jakarta Sans Variable', ui-sans-serif, system-ui, sans-serif;
 
     --color-body: #f0f4ff;
     --color-heading: #1a1f4e;
@@ -11,6 +11,7 @@
     --color-accent: #6c63ff;
     --color-panel: #ffffff;
 }
+
 @layer components {
     .tazko-btn {
         @apply inline-flex items-center justify-center px-6 py-3
@@ -25,10 +26,51 @@
         background: var(--color-accent);
         color: white;
     }
+
     .container {
         @apply mx-auto px-5;
     }
+
+    /* ── Page Header System ─────────────────────────────────── */
+
+    /* Small eyebrow label above page title (e.g. "Admin", "Workspace") */
+    .page-eyebrow {
+        @apply text-xs font-semibold uppercase tracking-widest text-text/50 mb-1;
+    }
+
+    /* Main page title — use on <h1> inside page headers */
+    .page-title {
+        @apply text-2xl sm:text-3xl font-bold text-heading leading-tight;
+    }
+
+    /* Subtitle / description under the page title */
+    .page-subtitle {
+        @apply text-sm text-text/60 mt-1.5;
+    }
+
+    /* ── Section / Card Header System ──────────────────────── */
+
+    /* Section or card heading — use on <h2>/<h3> inside cards */
+    .section-title {
+        @apply text-base font-bold text-heading leading-none;
+    }
+
+    /* Small descriptor below a section title */
+    .section-desc {
+        @apply text-xs text-text/50 mt-0.5;
+    }
+
+    /* Sidebar-specific heading (slightly larger for sidebar hierarchy) */
+    .sidebar-title {
+        @apply text-lg font-bold text-heading leading-tight;
+    }
+
+    /* Sidebar eyebrow label */
+    .sidebar-eyebrow {
+        @apply text-xs font-semibold uppercase tracking-widest text-text/40 mb-1;
+    }
 }
+
 @layer base {
     body {
         @apply font-sans antialiased;
@@ -37,7 +79,7 @@
     }
 
     h1, h2, h3, h4, h5, h6 {
-        @apply font-display ;
+        @apply font-display;
         font-weight: 700;
         letter-spacing: 0.02em;
     }
@@ -46,51 +88,46 @@
         max-width: 100%;
         height: auto;
     }
-    a{
-        @apply text-accent
+
+    a {
+        @apply text-accent;
     }
-    h1{
-        font-size: 56px;
-    }
-    h2{
-        font-size: 40px;
-    }
-    h3{
-        font-size: 36px;
-    }
-    h4{
-        font-size: 24px;
-    }
-    h5{
-        font-size: 20px;
-    }
-    h6{
-        font-size: 18px;
-    }
+
+    h1 { font-size: 56px; }
+    h2 { font-size: 40px; }
+    h3 { font-size: 36px; }
+    h4 { font-size: 24px; }
+    h5 { font-size: 20px; }
+    h6 { font-size: 18px; }
+
     select option {
         background: var(--color-panel);
     }
-    .input-field{
+
+    .input-field {
         @apply w-full px-4 py-3 rounded-sm border focus:border-accent border-heading focus:outline-none text-sm leading-tight;
     }
-    .input-field.radius-left-0{
+
+    .input-field.radius-left-0 {
         border-top-left-radius: 0;
         border-bottom-left-radius: 0;
     }
-
 }
 
-.toast-close{
+.toast-close {
     color: var(--color-heading);
 }
+
 .os-scrollbar-handle {
     background: var(--color-accent);
 }
-.os-scrollbar-handle:hover{
+
+.os-scrollbar-handle:hover {
     background: var(--color-accent);
     cursor: grabbing;
 }
-body>.os-scrollbar {
+
+body > .os-scrollbar {
     z-index: 9999;
-    background-color: var(--color-panel)
+    background-color: var(--color-panel);
 }

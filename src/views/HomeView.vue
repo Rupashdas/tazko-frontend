@@ -4,48 +4,36 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/useAuthStore'
 import { addIcons } from 'oh-vue-icons'
 import {
-    MdFolderspecialOutlined,
-    BiCheckCircle,
-    BiClock,
-    BiExclamationCircle,
-    BiPlusCircle,
-    BiChevronLeft,
-    BiChevronRight,
-    BiArrowRight,
-    BiPeople,
-    BiCalendar3,
-    BiLightningCharge,
-    BiThreeDotsVertical,
-    BiFlag,
+    BiPlusCircle, BiClock, BiCheckCircle, BiPeople,
+    BiChevronLeft, BiChevronRight, BiLayoutWtf,
+    BiListTask, BiBarChart, MdFolderspecialOutlined,
+    BiLightningCharge, BiActivity, BiCalendar3,
+    BiFlag, BiArrowRight, BiStar,
 } from 'oh-vue-icons/icons'
 
 addIcons(
-    MdFolderspecialOutlined,
-    BiCheckCircle, BiClock, BiExclamationCircle,
-    BiPlusCircle, BiChevronLeft, BiChevronRight, BiArrowRight,
-    BiPeople, BiCalendar3, BiLightningCharge,
-    BiThreeDotsVertical, BiFlag
+    BiPlusCircle, BiClock, BiCheckCircle, BiPeople,
+    BiChevronLeft, BiChevronRight, BiLayoutWtf,
+    BiListTask, BiBarChart, MdFolderspecialOutlined,
+    BiLightningCharge, BiActivity, BiCalendar3,
+    BiFlag, BiArrowRight, BiStar,
 )
 
 const router = useRouter()
 const auth = useAuthStore()
 
-// ── Calendar ─────────────────────────────────────────
 const today = new Date()
 const currentMonth = ref(today.getMonth())
 const currentYear = ref(today.getFullYear())
 
-const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December']
 const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
 const calendarDays = computed(() => {
-    const first = new Date(currentYear.value, currentMonth.value, 1)
-    const last = new Date(currentYear.value, currentMonth.value + 1, 0)
-    const days = []
-    // leading blanks
-    for (let i = 0; i < first.getDay(); i++) days.push(null)
-    for (let d = 1; d <= last.getDate(); d++) days.push(d)
-    return days
+    const first = new Date(currentYear.value, currentMonth.value, 1).getDay()
+    const last = new Date(currentYear.value, currentMonth.value + 1, 0).getDate()
+    return [...Array(first).fill(null), ...Array.from({ length: last }, (_, i) => i + 1)]
 })
 
 const prevMonth = () => {
@@ -57,7 +45,6 @@ const nextMonth = () => {
     else currentMonth.value++
 }
 
-// Days with events (static)
 const eventDays = [3, 7, 12, 15, 18, 22, 25, 28]
 const hasEvent = (d) => d && eventDays.includes(d)
 const isToday = (d) => d === today.getDate() && currentMonth.value === today.getMonth() && currentYear.value === today.getFullYear()
@@ -74,29 +61,28 @@ const stats = [
 const assignments = [
     { id: 1, title: 'Design system audit for dashboard UI', project: 'Tazko App', priority: 'High', due: 'Today', status: 'In Progress', progress: 65 },
     { id: 2, title: 'API integration for authentication module', project: 'Backend Core', priority: 'Urgent', due: 'Tomorrow', status: 'Todo', progress: 0 },
-    { id: 3, title: 'Write unit tests for user service', project: 'Tazko App', priority: 'Medium', due: 'Mar 10', status: 'In Progress', progress: 40 },
-    { id: 4, title: 'Review and merge PR #42 – role permissions', project: 'Backend Core', priority: 'High', due: 'Mar 11', status: 'Review', progress: 90 },
-    { id: 5, title: 'Update onboarding flow documentation', project: 'Docs', priority: 'Low', due: 'Mar 15', status: 'Todo', progress: 0 },
+    { id: 3, title: 'Write unit tests for task service', project: 'Backend Core', priority: 'Medium', due: 'Mar 12', status: 'In Progress', progress: 30 },
 ]
 
 const priorityConfig = {
-    Urgent: { cls: 'bg-red-500/15 text-red-500', dot: 'bg-red-500' },
-    High: { cls: 'bg-amber-500/15 text-amber-600', dot: 'bg-amber-500' },
-    Medium: { cls: 'bg-blue-500/15 text-blue-500', dot: 'bg-blue-500' },
-    Low: { cls: 'bg-slate-400/15 text-slate-500', dot: 'bg-slate-400' },
+    Low: { cls: 'bg-slate-100 text-slate-600' },
+    Medium: { cls: 'bg-blue-100 text-blue-600' },
+    High: { cls: 'bg-amber-100 text-amber-700' },
+    Urgent: { cls: 'bg-red-100 text-red-600' },
 }
+
 const statusConfig = {
     'Todo': { cls: 'bg-slate-100 text-slate-500' },
     'In Progress': { cls: 'bg-accent/10 text-accent' },
-    'Review': { cls: 'bg-violet-500/10 text-violet-500' },
-    'Done': { cls: 'bg-emerald-500/10 text-emerald-600' },
+    'Review': { cls: 'bg-violet-100 text-violet-600' },
+    'Done': { cls: 'bg-emerald-100 text-emerald-600' },
 }
 
-// ── Quick Nav ──────────────────────────────────────────
+// ── Quick Links ───────────────────────────────────────
 const quickLinks = [
-    { label: 'All Projects', icon: 'md-folderspecial-outlined', color: 'text-accent', bg: 'bg-accent/10', route: 'projects' },
-    { label: 'My Tasks', icon: 'bi-check-circle', color: 'text-emerald-600', bg: 'bg-emerald-500/10', route: 'home' },
-    { label: 'Schedule', icon: 'bi-calendar3', color: 'text-violet-600', bg: 'bg-violet-500/10', route: 'home' },
+    { label: 'Projects', icon: 'md-folderspecial-outlined', color: 'text-accent', bg: 'bg-accent/10', route: 'projects' },
+    { label: 'My Tasks', icon: 'bi-list-task', color: 'text-emerald-600', bg: 'bg-emerald-500/10', route: 'home' },
+    { label: 'Reports', icon: 'bi-bar-chart', color: 'text-violet-600', bg: 'bg-violet-500/10', route: 'home' },
     { label: 'Team', icon: 'bi-people', color: 'text-amber-600', bg: 'bg-amber-500/10', route: 'home' },
 ]
 
@@ -127,13 +113,14 @@ const greeting = computed(() => {
     <div class="pb-20 pt-8 px-1">
 
         <!-- ── Greeting ─────────────────────────────── -->
+        <!-- FIX: added page-title class, consistent eyebrow & subtitle -->
         <div class="mb-8 flex items-end justify-between">
             <div>
-                <p class="text-sm font-semibold text-accent/80 tracking-widest uppercase mb-1">Dashboard</p>
-                <h1 class="text-heading leading-none">
+                <p class="page-eyebrow">Dashboard</p>
+                <h1 class="page-title">
                     {{ greeting }}, {{ auth.user?.name?.split(' ')[0] ?? 'there' }} 👋
                 </h1>
-                <p class="text-text/80 mt-2 text-sm">
+                <p class="page-subtitle">
                     Here's what's happening across your workspace today.
                 </p>
             </div>
@@ -147,14 +134,14 @@ const greeting = computed(() => {
         <!-- ── Stats Row ──────────────────────────────── -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <div v-for="stat in stats" :key="stat.label"
-                class="bg-panel rounded-2xl p-5 border border-heading/5 hover:shadow-md transition-all group">
+                class="bg-panel rounded-2xl p-5 border border-heading/8 hover:shadow-md transition-all group">
                 <div class="flex items-start justify-between mb-4">
                     <div :class="[stat.bg, 'w-10 h-10 rounded-xl flex items-center justify-center']">
                         <v-icon :name="stat.icon" :class="stat.color" scale="1.1" />
                     </div>
                 </div>
                 <p class="text-3xl font-display font-bold text-heading">{{ stat.value }}</p>
-                <p class="text-xs text-text/80 mt-0.5">{{ stat.label }}</p>
+                <p class="text-xs text-text/60 mt-0.5">{{ stat.label }}</p>
                 <p class="text-xs mt-2 font-medium" :class="stat.color">{{ stat.delta }}</p>
             </div>
         </div>
@@ -166,93 +153,80 @@ const greeting = computed(() => {
             <div class="xl:col-span-2 flex flex-col gap-6">
 
                 <!-- Your Assignments -->
-                <div class="bg-panel rounded-2xl border border-heading/5 overflow-hidden">
-                    <div class="px-6 py-5 flex items-center justify-between border-b border-heading/5">
+                <!-- FIX: section-title class, section-desc class -->
+                <div class="bg-panel rounded-2xl border border-heading/8 overflow-hidden">
+                    <div class="px-6 py-5 flex items-center justify-between border-b border-heading/8">
                         <div>
-                            <h2 class="text-base font-bold text-heading">Your Assignments</h2>
-                            <p class="text-xs text-text/40 mt-0.5">Tasks assigned to you</p>
+                            <h2 class="section-title">Your Assignments</h2>
+                            <p class="section-desc">Tasks assigned to you</p>
                         </div>
                         <button
-                            class="text-xs text-accent font-semibold flex items-center gap-1 hover:gap-2 transition-all">
-                            View all <v-icon name="bi-arrow-right" scale="0.85" />
+                            class="text-xs text-accent font-semibold flex items-center gap-1 hover:text-accent/70 transition-colors">
+                            View all <v-icon name="bi-arrow-right" scale="0.8" />
                         </button>
                     </div>
-
                     <div class="divide-y divide-heading/5">
                         <div v-for="task in assignments" :key="task.id"
-                            class="px-6 py-4 hover:bg-heading/[0.02] transition-colors group cursor-pointer">
-                            <div class="flex items-start gap-3">
-                                <!-- Progress ring placeholder -->
-                                <div class="mt-0.5 shrink-0">
-                                    <div
-                                        class="w-5 h-5 rounded-full border-2 border-heading/20 group-hover:border-accent transition-colors">
-                                    </div>
+                            class="px-6 py-4 hover:bg-heading/5 transition-colors cursor-pointer">
+                            <div class="flex items-start justify-between gap-3 mb-2">
+                                <p class="text-sm font-semibold text-heading leading-snug flex-1">{{ task.title }}</p>
+                                <span
+                                    :class="[priorityConfig[task.priority].cls, 'text-xs px-2 py-0.5 rounded-full font-semibold shrink-0']">
+                                    {{ task.priority }}
+                                </span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs text-text/50">{{ task.project }}</span>
+                                <div class="flex items-center gap-2">
+                                    <span
+                                        :class="[statusConfig[task.status].cls, 'text-xs px-2 py-0.5 rounded-full font-medium']">
+                                        {{ task.status }}
+                                    </span>
+                                    <span class="text-xs text-text/40">{{ task.due }}</span>
                                 </div>
-                                <div class="flex-1 min-w-0">
-                                    <p class="text-sm font-semibold text-heading leading-snug truncate">{{ task.title }}
-                                    </p>
-                                    <div class="flex items-center gap-2 mt-1.5 flex-wrap">
-                                        <span class="text-xs text-text/40">{{ task.project }}</span>
-                                        <span class="w-1 h-1 rounded-full bg-text/20"></span>
-                                        <span
-                                            :class="[priorityConfig[task.priority].cls, 'text-xs px-2 py-0.5 rounded-full font-semibold']">
-                                            {{ task.priority }}
-                                        </span>
-                                        <span
-                                            :class="[statusConfig[task.status].cls, 'text-xs px-2 py-0.5 rounded-full font-medium']">
-                                            {{ task.status }}
-                                        </span>
-                                        <span class="text-xs text-text/40 ml-auto">{{ task.due }}</span>
-                                    </div>
-                                    <!-- Progress bar -->
-                                    <div v-if="task.progress > 0"
-                                        class="mt-2 h-1 bg-heading/10 rounded-full overflow-hidden">
-                                        <div class="h-full rounded-full bg-accent transition-all"
-                                            :style="{ width: task.progress + '%' }"></div>
-                                    </div>
-                                </div>
+                            </div>
+                            <div v-if="task.progress > 0" class="mt-2 h-1 bg-heading/8 rounded-full overflow-hidden">
+                                <div class="h-full rounded-full bg-accent" :style="{ width: task.progress + '%' }" />
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Recent Projects -->
-                <div class="bg-panel rounded-2xl border border-heading/5 overflow-hidden">
-                    <div class="px-6 py-5 flex items-center justify-between border-b border-heading/5">
+                <div class="bg-panel rounded-2xl border border-heading/8 overflow-hidden">
+                    <div class="px-6 py-5 flex items-center justify-between border-b border-heading/8">
                         <div>
-                            <h2 class="text-base font-bold text-heading">Recent Projects</h2>
-                            <p class="text-xs text-text/40 mt-0.5">Your active workspaces</p>
+                            <h2 class="section-title">Recent Projects</h2>
+                            <p class="section-desc">Your active workspaces</p>
                         </div>
                         <button @click="router.push({ name: 'projects' })"
-                            class="text-xs text-accent font-semibold flex items-center gap-1 hover:gap-2 transition-all">
-                            All projects <v-icon name="bi-arrow-right" scale="0.85" />
+                            class="text-xs text-accent font-semibold flex items-center gap-1 hover:text-accent/70 transition-colors">
+                            View all <v-icon name="bi-arrow-right" scale="0.8" />
                         </button>
                     </div>
-                    <div class="divide-y divide-heading/5">
+                    <div class="p-5 space-y-3">
                         <div v-for="project in recentProjects" :key="project.id"
-                            @click="router.push({ name: 'project-detail', params: { id: project.id } })"
-                            class="px-6 py-4 hover:bg-heading/[0.02] transition-colors cursor-pointer group">
-                            <div class="flex items-center gap-4">
-                                <!-- Color avatar -->
-                                <div class="w-9 h-9 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
-                                    <v-icon name="md-folderspecial-outlined" class="text-accent" scale="1" />
+                            class="flex items-center gap-4 p-3 rounded-xl hover:bg-heading/5 transition-colors cursor-pointer"
+                            @click="router.push({ name: 'project-detail', params: { id: project.id } })">
+                            <div
+                                class="w-9 h-9 rounded-xl bg-gradient-to-br from-accent to-violet-500 flex items-center justify-center shrink-0">
+                                <v-icon name="md-folderspecial-outlined" class="text-white" scale="0.9" />
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center justify-between mb-1">
+                                    <p class="text-sm font-bold text-heading">{{ project.name }}</p>
+                                    <span
+                                        :class="[priorityConfig[project.priority].cls, 'text-xs px-2 py-0.5 rounded-full font-semibold']">
+                                        {{ project.priority }}
+                                    </span>
                                 </div>
-                                <div class="flex-1 min-w-0">
-                                    <div class="flex items-center justify-between mb-1">
-                                        <p class="text-sm font-bold text-heading">{{ project.name }}</p>
-                                        <span
-                                            :class="[priorityConfig[project.priority].cls, 'text-xs px-2 py-0.5 rounded-full font-semibold']">
-                                            {{ project.priority }}
-                                        </span>
+                                <div class="flex items-center gap-3">
+                                    <div class="flex-1 h-1.5 bg-heading/8 rounded-full overflow-hidden">
+                                        <div class="h-full rounded-full bg-accent"
+                                            :style="{ width: project.progress + '%' }"></div>
                                     </div>
-                                    <div class="flex items-center gap-3">
-                                        <div class="flex-1 h-1.5 bg-heading/10 rounded-full overflow-hidden">
-                                            <div class="h-full rounded-full bg-accent"
-                                                :style="{ width: project.progress + '%' }"></div>
-                                        </div>
-                                        <span class="text-xs text-text/40 shrink-0">{{ project.progress }}%</span>
-                                        <span class="text-xs text-text/30 shrink-0">{{ project.members }} members</span>
-                                    </div>
+                                    <span class="text-xs text-text/50 shrink-0">{{ project.progress }}%</span>
+                                    <span class="text-xs text-text/40 shrink-0">{{ project.members }} members</span>
                                 </div>
                             </div>
                         </div>
@@ -266,29 +240,31 @@ const greeting = computed(() => {
                 <!-- Quick Nav -->
                 <div class="grid grid-cols-2 gap-3">
                     <button v-for="link in quickLinks" :key="link.label" @click="router.push({ name: link.route })"
-                        class="bg-panel rounded-2xl p-4 border border-heading/5 hover:shadow-md hover:border-accent/20 transition-all active:scale-95 text-left group">
+                        class="bg-panel rounded-2xl p-4 border border-heading/8 hover:shadow-md hover:border-accent/20 transition-all active:scale-95 text-left group">
                         <div :class="[link.bg, 'w-9 h-9 rounded-xl flex items-center justify-center mb-3']">
                             <v-icon :name="link.icon" :class="link.color" scale="1" />
                         </div>
+                        <!-- FIX: consistent text-xs font-bold for quick link labels -->
                         <p class="text-xs font-bold text-heading">{{ link.label }}</p>
                     </button>
                 </div>
 
                 <!-- Calendar -->
-                <div class="bg-panel rounded-2xl border border-heading/5 p-5">
+                <div class="bg-panel rounded-2xl border border-heading/8 p-5">
                     <!-- Month nav -->
+                    <!-- FIX: section-title for month heading -->
                     <div class="flex items-center justify-between mb-4">
-                        <h2 class="text-sm font-bold text-heading">
+                        <h2 class="section-title">
                             {{ monthNames[currentMonth] }} {{ currentYear }}
                         </h2>
                         <div class="flex items-center gap-1">
                             <button @click="prevMonth"
-                                class="w-7 h-7 rounded-lg hover:bg-heading/5 flex items-center justify-center transition-colors">
-                                <v-icon name="bi-chevron-left" scale="0.8" class="text-text/80" />
+                                class="w-7 h-7 rounded-lg hover:bg-heading/6 flex items-center justify-center transition-colors">
+                                <v-icon name="bi-chevron-left" scale="0.8" class="text-text/60" />
                             </button>
                             <button @click="nextMonth"
-                                class="w-7 h-7 rounded-lg hover:bg-heading/5 flex items-center justify-center transition-colors">
-                                <v-icon name="bi-chevron-right" scale="0.8" class="text-text/80" />
+                                class="w-7 h-7 rounded-lg hover:bg-heading/6 flex items-center justify-center transition-colors">
+                                <v-icon name="bi-chevron-right" scale="0.8" class="text-text/60" />
                             </button>
                         </div>
                     </div>
@@ -307,7 +283,9 @@ const greeting = computed(() => {
                             class="aspect-square flex flex-col items-center justify-center relative">
                             <div v-if="day" :class="[
                                 'w-8 h-8 rounded-full flex flex-col items-center justify-center text-xs font-semibold transition-all cursor-pointer',
-                                isToday(day) ? 'bg-accent text-white shadow-md shadow-accent/30' : 'hover:bg-heading/5 text-text/70'
+                                isToday(day)
+                                    ? 'bg-accent text-white shadow-md shadow-accent/30'
+                                    : 'hover:bg-heading/6 text-text/70'
                             ]">
                                 {{ day }}
                                 <span v-if="hasEvent(day) && !isToday(day)"
@@ -318,17 +296,18 @@ const greeting = computed(() => {
                 </div>
 
                 <!-- Upcoming Events -->
-                <div class="bg-panel rounded-2xl border border-heading/5 overflow-hidden">
-                    <div class="px-5 py-4 border-b border-heading/5">
-                        <h2 class="text-sm font-bold text-heading">Upcoming Events</h2>
+                <!-- FIX: section-title class for "Upcoming Events" heading -->
+                <div class="bg-panel rounded-2xl border border-heading/8 overflow-hidden">
+                    <div class="px-5 py-4 border-b border-heading/8">
+                        <h2 class="section-title">Upcoming Events</h2>
                     </div>
                     <div class="p-3 flex flex-col gap-2">
                         <div v-for="event in upcomingEvents" :key="event.title"
-                            class="flex items-center gap-3 p-3 rounded-xl hover:bg-heading/[0.03] transition-colors cursor-pointer">
+                            class="flex items-center gap-3 p-3 rounded-xl hover:bg-heading/5 transition-colors cursor-pointer">
                             <div :class="[event.color, 'w-1.5 h-10 rounded-full shrink-0']"></div>
                             <div>
                                 <p class="text-xs font-semibold text-heading leading-snug">{{ event.title }}</p>
-                                <p class="text-[11px] text-text/40 mt-0.5">{{ event.time }}</p>
+                                <p class="text-[11px] text-text/50 mt-0.5">{{ event.time }}</p>
                             </div>
                         </div>
                     </div>

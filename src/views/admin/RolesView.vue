@@ -161,8 +161,8 @@ function getModuleIcon(module) {
 				<div class="px-5 pt-5 pb-4 border-b border-heading/10 shrink-0">
 					<div class="flex justify-between items-center">
 						<div>
-							<p class="text-xs font-semibold uppercase tracking-widest text-text/40 mb-1">System</p>
-							<h2 class="text-lg font-bold text-heading leading-tight">Roles</h2>
+							<p class="sidebar-eyebrow">System</p>
+						<h2 class="sidebar-title">Roles</h2>
 						</div>
 						<button v-if="canCreate" @click="showAddRole = true"
 							class="w-8 h-8 rounded-lg bg-accent text-white flex items-center justify-center hover:bg-accent/80 transition-all active:scale-95 shadow-sm"
@@ -448,9 +448,8 @@ function getModuleIcon(module) {
 							<div
 								class="px-5 pt-5 pb-4 border-b border-heading/10 flex items-center justify-between shrink-0">
 								<div>
-									<p class="text-xs font-semibold uppercase tracking-widest text-text/40 mb-1">System
-									</p>
-									<h2 class="text-lg font-bold text-heading">Roles</h2>
+									<p class="sidebar-eyebrow">System</p>
+									<h2 class="sidebar-title">Roles</h2>
 								</div>
 								<div class="flex items-center gap-2">
 									<button v-if="canCreate" @click="showAddRole = true; mobileSidebarOpen = false"

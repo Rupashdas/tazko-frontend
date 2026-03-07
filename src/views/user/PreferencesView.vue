@@ -74,8 +74,10 @@ const saveDateTime = async () => {
 
 		<!-- Page Header -->
 		<div class="mb-6 md:mb-8">
+			<!-- page-title already correct, just keeping leading-tight -->
 			<h1 class="text-2xl sm:text-3xl font-bold text-heading leading-tight">Preferences</h1>
-			<p class="text-text/80 mt-1.5 text-base">Customize your workspace to feel just right.</p>
+			<!-- FIX: page-subtitle (was text-base text-text/80 — too large + too bright) -->
+			<p class="page-subtitle">Customize your workspace to feel just right.</p>
 		</div>
 
 		<!-- ─── SECTION 1: COLOR PALETTE ─────────────────────────── -->
@@ -85,8 +87,10 @@ const saveDateTime = async () => {
 					<v-icon name="bi-palette" class="text-accent" scale="1" />
 				</div>
 				<div>
-					<h2 class="text-lg font-bold text-heading leading-none">Color Palette</h2>
-					<p class="text-sm text-text/40 mt-0.5">Choose a theme that fits your style</p>
+					<!-- FIX: section-title (was text-lg font-bold) -->
+					<h2 class="section-title">Color Palette</h2>
+					<!-- FIX: section-desc (was text-sm text-text/40) -->
+					<p class="section-desc">Choose a theme that fits your style</p>
 				</div>
 			</div>
 
@@ -156,8 +160,10 @@ const saveDateTime = async () => {
 						<v-icon name="md-disabledvisible-outlined" class="text-accent" scale="1" />
 					</div>
 					<div>
-						<h2 class="text-lg font-bold text-heading leading-none">Appearance</h2>
-						<p class="text-sm text-text/40 mt-0.5">How the interface looks</p>
+						<!-- FIX: section-title (was text-lg font-bold) -->
+						<h2 class="section-title">Appearance</h2>
+						<!-- FIX: section-desc -->
+						<p class="section-desc">How the interface looks</p>
 					</div>
 				</div>
 
@@ -182,8 +188,10 @@ const saveDateTime = async () => {
 
 						<div class="py-2.5 px-3 flex items-center justify-between bg-panel">
 							<div>
-								<p class="text-sm font-bold text-heading leading-none">{{ option.label }}</p>
-								<p class="text-xs text-text/40 mt-0.5 leading-none">{{ option.desc }}</p>
+								<!-- FIX: section-title for option labels (was text-sm font-bold) -->
+								<p class="section-title leading-none">{{ option.label }}</p>
+								<!-- FIX: section-desc for option desc -->
+								<p class="section-desc leading-none mt-0.5">{{ option.desc }}</p>
 							</div>
 							<div class="w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors"
 								:class="appearance === option.value ? 'border-accent' : 'border-heading/20'">
@@ -204,8 +212,10 @@ const saveDateTime = async () => {
 							<v-icon name="md-avtimer" class="text-accent" scale="1" />
 						</div>
 						<div>
-							<h2 class="text-lg font-bold text-heading leading-none">Date & Time</h2>
-							<p class="text-sm text-text/40 mt-0.5">Regional formatting preferences</p>
+							<!-- FIX: section-title (was text-lg font-bold) -->
+							<h2 class="section-title">Date & Time</h2>
+							<!-- FIX: section-desc -->
+							<p class="section-desc">Regional formatting preferences</p>
 						</div>
 					</div>
 
@@ -214,12 +224,14 @@ const saveDateTime = async () => {
 						<!-- Timezone -->
 						<div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6">
 							<div class="sm:w-40 shrink-0">
-								<p class="text-base font-semibold text-heading">Timezone</p>
-								<p class="text-sm text-text/40 mt-0.5">Your local time</p>
+								<!-- FIX: text-sm (was text-base too large) -->
+								<p class="text-sm font-semibold text-heading">Timezone</p>
+								<!-- FIX: section-desc -->
+								<p class="section-desc">Your local time</p>
 							</div>
 							<div class="flex-1 relative">
 								<select v-model="timezone"
-									class="w-full appearance-none bg-body border border-heading/12 text-text text-base rounded-xl px-4 py-3 pr-10 focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all cursor-pointer">
+									class="w-full appearance-none bg-body border border-heading/12 text-text text-sm rounded-xl px-4 py-3 pr-10 focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all cursor-pointer">
 									<option v-for="tz in TIMEZONES" :key="tz.value" :value="tz.value">{{ tz.label }}
 									</option>
 								</select>
@@ -238,8 +250,10 @@ const saveDateTime = async () => {
 						<!-- First Day of Week -->
 						<div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6">
 							<div class="sm:w-40 shrink-0">
-								<p class="text-base font-semibold text-heading">Week starts</p>
-								<p class="text-sm text-text/40 mt-0.5">First day of week</p>
+								<!-- FIX: text-sm (was text-base) -->
+								<p class="text-sm font-semibold text-heading">Week starts</p>
+								<!-- FIX: section-desc -->
+								<p class="section-desc">First day of week</p>
 							</div>
 							<div class="flex gap-1.5 flex-wrap">
 								<button v-for="opt in WEEK_START_OPTIONS" :key="opt.value" type="button"
@@ -258,8 +272,10 @@ const saveDateTime = async () => {
 						<!-- Time Format -->
 						<div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6">
 							<div class="sm:w-40 shrink-0">
-								<p class="text-base font-semibold text-heading">Time format</p>
-								<p class="text-sm text-text/40 mt-0.5">Clock display style</p>
+								<!-- FIX: text-sm (was text-base) -->
+								<p class="text-sm font-semibold text-heading">Time format</p>
+								<!-- FIX: section-desc -->
+								<p class="section-desc">Clock display style</p>
 							</div>
 							<div class="flex gap-2 flex-wrap">
 								<button v-for="opt in TIME_FORMAT_OPTIONS" :key="opt.value" type="button"
@@ -276,9 +292,10 @@ const saveDateTime = async () => {
 					</div>
 
 					<!-- Save Button -->
+					<!-- FIX: text-sm (was text-base too large) -->
 					<div class="mt-6 pt-5 border-t border-heading/6 flex justify-end">
 						<button type="submit" :disabled="saving"
-							class="inline-flex items-center gap-2 px-7 py-3.5 bg-accent text-white text-base font-semibold rounded-xl shadow-sm hover:bg-accent/85 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50">
+							class="inline-flex items-center gap-2 px-7 py-3.5 bg-accent text-white text-sm font-semibold rounded-xl shadow-sm hover:bg-accent/85 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50">
 							<svg v-if="saving" class="w-4 h-4 animate-spin" xmlns="http://www.w3.org/2000/svg"
 								fill="none" viewBox="0 0 24 24">
 								<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"

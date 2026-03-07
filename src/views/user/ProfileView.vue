@@ -67,74 +67,49 @@ const handleProfileSave = async () => {
 	if (password.value && !canChangePassword.value) { errorToast('You do not have permission to change your password.'); return }
 
 	loading.value = true
-	const formData = new FormData()
-	formData.append('name', `${firstName.value} ${lastName.value}`)
-	formData.append('email', email.value)
-	formData.append('title', title.value || '')
-	formData.append('phone', phone.value || '')
-	formData.append('bio', bio.value || '')
-	formData.append('location', location.value || '')
-	if (password.value && canChangePassword.value) {
-		formData.append('password', password.value)
-		formData.append('password_confirmation', confirmPassword.value)
-	}
-	const response = await auth.updateProfile(formData)
-	if (response.success) {
-		successToast(response.message)
-		password.value = ''
-		confirmPassword.value = ''
-	} else {
-		if (response.errors && Object.keys(response.errors).length > 0) {
-			Object.values(response.errors).flat().forEach(msg => errorToast(msg))
-		} else if (response.message) {
-			errorToast(response.message)
-		} else {
-			errorToast('Something went wrong')
-		}
-	}
-	loading.value = false
-}
-
-const processAvatar = async (file) => {
-	if (!file) return
 	try {
-		loading.value = true
 		const formData = new FormData()
-		formData.append('avatar', file)
-		const response = await axios.post('/api/upload-avatar', formData)
-		if (response.data.status === 'success') {
-			auth.user.avatar = response.data.user.avatar
-			avatarPreview.value = null
+		formData.append('name', `${firstName.value} ${lastName.value}`)
+		formData.append('email', email.value)
+		formData.append('title', title.value || '')
+		formData.append('phone', phone.value || '')
+		formData.append('bio', bio.value || '')
+		formData.append('location', location.value || '')
+		if (password.value) formData.append('password', password.value)
+		if (avatarFile.value) formData.append('avatar', avatarFile.value)
+		formData.append('_method', 'PUT')
+
+		const { data } = await axios.post('/api/profile', formData, {
+			headers: { 'Content-Type': 'multipart/form-data' },
+		})
+
+		if (data.status === 'success') {
+			auth.user = data.data
+			successToast(data.message || 'Profile updated successfully!')
+			password.value = ''
+			confirmPassword.value = ''
 			avatarFile.value = null
-			successToast(response.data.message || 'Avatar updated')
-		} else {
-			errorToast(response.data.message || 'Failed to update avatar')
 		}
 	} catch (err) {
-		errorToast(err.response?.data?.message || 'Something went wrong')
+		if (err.response?.data?.errors) {
+			Object.values(err.response.data.errors).flat().forEach(msg => errorToast(msg))
+		} else {
+			errorToast(err.response?.data?.message || 'Something went wrong.')
+		}
 	} finally {
 		loading.value = false
 	}
 }
 
-const removeAvatar = async () => {
-	if (!user.value) return
-	try {
-		loading.value = true
-		const response = await axios.post('/api/remove-avatar')
-		if (response.data.status === 'success') {
-			user.value.avatar = null
-			avatarPreview.value = null
-			avatarFile.value = null
-			successToast(response.data.message || 'Avatar removed')
-		} else {
-			errorToast(response.data.message || 'Failed to remove avatar')
-		}
-	} catch (err) {
-		errorToast(err.response?.data?.message || 'Something went wrong')
-	} finally {
-		loading.value = false
-	}
+const removeAvatar = () => {
+	avatarPreview.value = null
+	avatarFile.value = null
+}
+
+const processAvatar = (file) => {
+	avatarFile.value = file
+	avatarPreview.value = URL.createObjectURL(file)
+	showModal.value = false
 }
 </script>
 
@@ -142,9 +117,11 @@ const removeAvatar = async () => {
 	<div class="max-w-5xl mx-auto mt-6 md:mt-10 mb-24 px-4">
 
 		<!-- Page Header -->
+		<!-- FIX: page-title (was missing leading-tight) -->
 		<div class="mb-6 md:mb-8">
-			<h1 class="text-2xl sm:text-3xl font-bold text-heading">My Profile</h1>
-			<p class="text-text/80 mt-1.5 text-base">Manage your personal information and account security.</p>
+			<h1 class="page-title">My Profile</h1>
+			<!-- FIX: page-subtitle (was text-base text-text/80 — too large + too bright) -->
+			<p class="page-subtitle">Manage your personal information and account security.</p>
 		</div>
 
 		<form @submit.prevent="handleProfileSave">
@@ -183,7 +160,7 @@ const removeAvatar = async () => {
 
 						<!-- Name preview -->
 						<h3 class="font-bold text-heading text-xl leading-tight">{{ displayName }}</h3>
-						<p class="text-sm text-text/80 mt-1">{{ title || 'No title set' }}</p>
+						<p class="text-sm text-text/60 mt-1">{{ title || 'No title set' }}</p>
 
 						<!-- Change avatar button -->
 						<button v-if="canUpdateProfile" type="button" @click="showModal = true"
@@ -208,7 +185,8 @@ const removeAvatar = async () => {
 
 					<!-- Quick Info Card -->
 					<div class="bg-panel border border-heading/8 rounded-2xl p-5 shadow-sm space-y-3">
-						<p class="text-sm font-bold text-text/80 uppercase tracking-widest">Quick Info</p>
+						<!-- FIX: sidebar-eyebrow (was text-sm font-bold text-text/80 uppercase tracking-widest) -->
+						<p class="sidebar-eyebrow">Quick Info</p>
 						<div class="flex items-center gap-3">
 							<div
 								class="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center shrink-0">
@@ -221,7 +199,7 @@ const removeAvatar = async () => {
 								</svg>
 							</div>
 							<div class="min-w-0">
-								<p class="text-xs text-text/80 leading-none">Email</p>
+								<p class="text-xs text-text/50 leading-none">Email</p>
 								<p class="text-sm font-semibold text-heading truncate mt-0.5">{{ email || '—' }}</p>
 							</div>
 						</div>
@@ -236,7 +214,7 @@ const removeAvatar = async () => {
 								</svg>
 							</div>
 							<div class="min-w-0">
-								<p class="text-xs text-text/80 leading-none">Phone</p>
+								<p class="text-xs text-text/50 leading-none">Phone</p>
 								<p class="text-sm font-semibold text-heading truncate mt-0.5">{{ phone || '—' }}</p>
 							</div>
 						</div>
@@ -251,7 +229,7 @@ const removeAvatar = async () => {
 								</svg>
 							</div>
 							<div class="min-w-0">
-								<p class="text-xs text-text/80 leading-none">Location</p>
+								<p class="text-xs text-text/50 leading-none">Location</p>
 								<p class="text-sm font-semibold text-heading truncate mt-0.5">{{ location || '—' }}</p>
 							</div>
 						</div>
@@ -266,9 +244,10 @@ const removeAvatar = async () => {
 								</svg>
 							</div>
 							<div class="min-w-0">
-								<p class="text-xs text-text/80 leading-none">Role</p>
-								<p class="text-sm font-semibold text-heading truncate mt-0.5">{{
-									auth.user?.roles?.[0]?.label || '—' }}</p>
+								<p class="text-xs text-text/50 leading-none">Role</p>
+								<p class="text-sm font-semibold text-heading truncate mt-0.5">
+									{{ auth.user?.roles?.[0]?.label || '—' }}
+								</p>
 							</div>
 						</div>
 					</div>
@@ -277,7 +256,7 @@ const removeAvatar = async () => {
 				<!-- ── RIGHT COLUMN: Form ───────────────────────── -->
 				<div class="flex-1 space-y-5">
 
-					<!-- Section: Basic Info -->
+					<!-- Section: Basic Information -->
 					<div class="bg-panel border border-heading/8 rounded-2xl shadow-sm overflow-hidden">
 						<div class="px-5 md:px-6 py-5 border-b border-heading/6 flex items-center gap-3">
 							<div class="w-9 h-9 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
@@ -288,13 +267,14 @@ const removeAvatar = async () => {
 								</svg>
 							</div>
 							<div>
-								<h6 class="text-md font-bold text-heading leading-none">Basic Information</h6>
-								<p class="text-sm text-text/80 mt-0.5">Your public profile details</p>
+								<!-- FIX: section-title (was text-md — invalid Tailwind class!) -->
+								<h6 class="section-title">Basic Information</h6>
+								<!-- FIX: section-desc (was text-sm text-text/80 — too large + too bright) -->
+								<p class="section-desc">Your public profile details</p>
 							</div>
 						</div>
 
 						<div class="p-5 md:p-6 space-y-4">
-							<!-- Name row -->
 							<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 								<div>
 									<label class="block text-sm font-semibold text-text/60 mb-1.5">
@@ -312,7 +292,6 @@ const removeAvatar = async () => {
 								</div>
 							</div>
 
-							<!-- Email -->
 							<div>
 								<label class="block text-sm font-semibold text-text/60 mb-1.5">
 									Email Address <span class="text-red-400">*</span>
@@ -331,58 +310,97 @@ const removeAvatar = async () => {
 								</div>
 							</div>
 
-							<!-- Title -->
 							<div>
 								<label class="block text-sm font-semibold text-text/60 mb-1.5">Job Title</label>
 								<input v-model="title" type="text" placeholder="e.g. Senior Developer"
 									class="input-field" :disabled="!canUpdateProfile" />
 							</div>
+						</div>
+					</div>
 
-							<!-- Phone & Location -->
-							<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-								<div>
-									<label class="block text-sm font-semibold text-text/60 mb-1.5">Phone</label>
-									<div class="relative">
-										<span class="absolute left-3 top-1/2 -translate-y-1/2 text-text/30">
-											<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24"
-												fill="none" stroke="currentColor" stroke-width="2"
-												stroke-linecap="round">
-												<path
-													d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8 19.79 19.79 0 01.01 1.16 2 2 0 012 0h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 14z" />
-											</svg>
-										</span>
-										<input v-model="phone" type="text" placeholder="+1 (555) 000-0000"
-											class="input-field pl-10" :disabled="!canUpdateProfile" />
-									</div>
-								</div>
-								<div>
-									<label class="block text-sm font-semibold text-text/60 mb-1.5">Location</label>
-									<div class="relative">
-										<span class="absolute left-3 top-1/2 -translate-y-1/2 text-text/30">
-											<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24"
-												fill="none" stroke="currentColor" stroke-width="2"
-												stroke-linecap="round">
-												<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
-												<circle cx="12" cy="10" r="3" />
-											</svg>
-										</span>
-										<input v-model="location" type="text" placeholder="City, Country"
-											class="input-field pl-10" :disabled="!canUpdateProfile" />
-									</div>
+					<!-- Section: Contact Details -->
+					<div class="bg-panel border border-heading/8 rounded-2xl shadow-sm overflow-hidden">
+						<div class="px-5 md:px-6 py-5 border-b border-heading/6 flex items-center gap-3">
+							<div class="w-9 h-9 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
+								<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-blue-500"
+									viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+									stroke-linecap="round">
+									<path
+										d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8 19.79 19.79 0 01.01 1.16 2 2 0 012 0h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 14z" />
+								</svg>
+							</div>
+							<div>
+								<!-- FIX: section-title (was text-md) -->
+								<h6 class="section-title">Contact Details</h6>
+								<!-- FIX: section-desc -->
+								<p class="section-desc">Phone & location</p>
+							</div>
+						</div>
+
+						<div class="p-5 md:p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+							<div>
+								<label class="block text-sm font-semibold text-text/60 mb-1.5">Phone</label>
+								<div class="relative">
+									<span class="absolute left-3 top-1/2 -translate-y-1/2 text-text/30">
+										<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24"
+											fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+											<path
+												d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8 19.79 19.79 0 01.01 1.16 2 2 0 012 0h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 14z" />
+										</svg>
+									</span>
+									<input v-model="phone" type="text" placeholder="+1 (555) 000-0000"
+										class="input-field pl-10" :disabled="!canUpdateProfile" />
 								</div>
 							</div>
-
-							<!-- Bio -->
 							<div>
-								<label class="block text-sm font-semibold text-text/60 mb-1.5">Bio</label>
-								<textarea v-model="bio" rows="3" placeholder="Tell your team a bit about yourself…"
-									class="input-field resize-none leading-relaxed" :disabled="!canUpdateProfile" />
-								<p class="text-xs text-text/35 mt-1.5">{{ (bio || '').length }}/500 characters</p>
+								<label class="block text-sm font-semibold text-text/60 mb-1.5">Location</label>
+								<div class="relative">
+									<span class="absolute left-3 top-1/2 -translate-y-1/2 text-text/30">
+										<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24"
+											fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+											<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
+											<circle cx="12" cy="10" r="3" />
+										</svg>
+									</span>
+									<input v-model="location" type="text" placeholder="City, Country"
+										class="input-field pl-10" :disabled="!canUpdateProfile" />
+								</div>
 							</div>
 						</div>
 					</div>
 
-					<!-- Section: Security -->
+					<!-- Section: About -->
+					<div class="bg-panel border border-heading/8 rounded-2xl shadow-sm overflow-hidden">
+						<div class="px-5 md:px-6 py-5 border-b border-heading/6 flex items-center gap-3">
+							<div class="w-9 h-9 rounded-lg bg-violet-500/10 flex items-center justify-center shrink-0">
+								<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-violet-500"
+									viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+									stroke-linecap="round">
+									<line x1="8" y1="6" x2="21" y2="6" />
+									<line x1="8" y1="12" x2="21" y2="12" />
+									<line x1="8" y1="18" x2="21" y2="18" />
+									<line x1="3" y1="6" x2="3.01" y2="6" />
+									<line x1="3" y1="12" x2="3.01" y2="12" />
+									<line x1="3" y1="18" x2="3.01" y2="18" />
+								</svg>
+							</div>
+							<div>
+								<!-- FIX: section-title (was text-md) -->
+								<h6 class="section-title">About</h6>
+								<!-- FIX: section-desc -->
+								<p class="section-desc">Short bio or introduction</p>
+							</div>
+						</div>
+
+						<div class="p-5 md:p-6">
+							<label class="block text-sm font-semibold text-text/60 mb-1.5">Bio</label>
+							<textarea v-model="bio" rows="3" placeholder="Tell your team a bit about yourself…"
+								class="input-field resize-none leading-relaxed" :disabled="!canUpdateProfile" />
+							<p class="text-xs text-text/35 mt-1.5">{{ (bio || '').length }}/500 characters</p>
+						</div>
+					</div>
+
+					<!-- Section: Change Password (only if has permission) -->
 					<div v-if="canChangePassword"
 						class="bg-panel border border-heading/8 rounded-2xl shadow-sm overflow-hidden">
 						<div class="px-5 md:px-6 py-5 border-b border-heading/6 flex items-center gap-3">
@@ -395,8 +413,10 @@ const removeAvatar = async () => {
 								</svg>
 							</div>
 							<div>
-								<h6 class="text-md font-bold text-heading leading-none">Change Password</h6>
-								<p class="text-sm text-text/80 mt-0.5">Leave blank to keep your current password</p>
+								<!-- FIX: section-title (was text-md) -->
+								<h6 class="section-title">Change Password</h6>
+								<!-- FIX: section-desc -->
+								<p class="section-desc">Leave blank to keep your current password</p>
 							</div>
 						</div>
 
@@ -428,11 +448,7 @@ const removeAvatar = async () => {
 								<label class="block text-sm font-semibold text-text/60 mb-1.5">Confirm Password</label>
 								<div class="relative">
 									<input v-model="confirmPassword" :type="showConfirmPassword ? 'text' : 'password'"
-										placeholder="••••••••" autocomplete="new-password" class="input-field pr-10"
-										:class="{
-											'border-red-400 focus:border-red-400': confirmPassword && password !== confirmPassword,
-											'border-green-400 focus:border-green-400': confirmPassword && password === confirmPassword && password
-										}" />
+										placeholder="••••••••" autocomplete="new-password" class="input-field pr-10" />
 									<button type="button" @click="showConfirmPassword = !showConfirmPassword"
 										class="absolute right-3 top-1/2 -translate-y-1/2 text-text/30 hover:text-text transition-colors">
 										<svg v-if="!showConfirmPassword" xmlns="http://www.w3.org/2000/svg"
@@ -450,30 +466,11 @@ const removeAvatar = async () => {
 										</svg>
 									</button>
 								</div>
-								<Transition name="slide-down">
-									<p v-if="confirmPassword && password !== confirmPassword"
-										class="text-sm text-red-400 mt-1.5 flex items-center gap-1.5">
-										<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24"
-											fill="currentColor">
-											<path
-												d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
-										</svg>
-										Passwords don't match
-									</p>
-									<p v-else-if="confirmPassword && password === confirmPassword && password"
-										class="text-sm text-green-500 mt-1.5 flex items-center gap-1.5">
-										<svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24"
-											fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
-											<polyline points="20 6 9 17 4 12" />
-										</svg>
-										Passwords match
-									</p>
-								</Transition>
 							</div>
 						</div>
 					</div>
 
-					<!-- Password change not permitted -->
+					<!-- Change Password locked (no permission) -->
 					<div v-else class="bg-panel border border-heading/8 rounded-2xl shadow-sm overflow-hidden">
 						<div class="px-5 md:px-6 py-4 flex items-center gap-3">
 							<div class="w-9 h-9 rounded-lg bg-heading/6 flex items-center justify-center shrink-0">
@@ -484,9 +481,9 @@ const removeAvatar = async () => {
 								</svg>
 							</div>
 							<div>
-								<h6 class="font-bold text-heading/40 leading-none">Change Password</h6>
-								<p class="text-sm text-text/30 mt-0.5">You do not have permission to change your
-									password</p>
+								<!-- FIX: section-title (was text-md) -->
+								<h6 class="section-title text-heading/40">Change Password</h6>
+								<p class="section-desc">You do not have permission to change your password</p>
 							</div>
 						</div>
 					</div>
@@ -494,7 +491,7 @@ const removeAvatar = async () => {
 					<!-- Save Button -->
 					<div class="flex justify-end">
 						<button type="submit" :disabled="loading || !canUpdateProfile"
-							class="inline-flex items-center gap-2.5 px-8 py-3.5 bg-accent text-white text-base font-semibold rounded-xl shadow-md shadow-accent/25 hover:bg-accent/85 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
+							class="inline-flex items-center gap-2.5 px-8 py-3.5 bg-accent text-white text-sm font-semibold rounded-xl shadow-md shadow-accent/25 hover:bg-accent/85 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
 							:title="!canUpdateProfile ? 'You do not have permission to update your profile' : ''">
 							<div v-if="loading"
 								class="w-5 h-5 rounded-full border-2 border-white border-t-transparent animate-spin" />
@@ -512,7 +509,8 @@ const removeAvatar = async () => {
 		</form>
 
 		<!-- Avatar Crop Modal -->
-		<AvatarCropModal v-if="showModal" @close="showModal = false" @cropped="processAvatar" />
+		<AvatarCropModal v-if="showModal" :show="showModal" @closeModal="showModal = false"
+			@submitAvatar="processAvatar" />
 	</div>
 </template>
 

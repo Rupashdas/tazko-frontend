@@ -19,7 +19,7 @@ import UnauthorizedView from '@/views/errors/Unauthorizedview.vue';
 import HomeView from '@/views/HomeView.vue';
 import PingsView from '@/views/PingsView.vue';
 import ProjectsView from '@/views/projects/ProjectsView.vue';
-import ProjectDetailView from '@/views/projects/ProjectDetailView.vue';
+import ProjectDetailView from '@/views/projects/Projectdetailview.vue'
 import TaskDetailView from '@/views/projects/TaskDetailView.vue';
 
 import AcceptInvitationView from '@/views/auth/AcceptInvitationView.vue';

@@ -3,7 +3,7 @@ import { RouterLink } from "vue-router";
 import Logo from "./icons/Logo.vue";
 import { addIcons } from "oh-vue-icons";
 import { useAuthStore } from '@/stores/useAuthStore'
-import { CoHome, BiChatDots, LaUserCircleSolid, CoSettings, MdLogoutOutlined, LaUserEditSolid, BiPalette, MdMenuRound, MdCloseRound } from
+import { CoHome, BiChatDots, LaUserCircleSolid, CoSettings, MdLogoutOutlined, LaUserEditSolid, BiPalette, MdMenuRound, MdCloseRound, BiFolder2Open } from
     "oh-vue-icons/icons";
 import { useRouter } from 'vue-router'
 import { useRoute } from 'vue-router'
@@ -12,7 +12,7 @@ import { useToast } from "@/utils/toast.js"
 
 const { errorToast } = useToast()
 
-addIcons(CoHome, BiChatDots, LaUserCircleSolid, CoSettings, MdLogoutOutlined, LaUserEditSolid, BiPalette, MdMenuRound, MdCloseRound);
+addIcons(CoHome, BiChatDots, LaUserCircleSolid, CoSettings, MdLogoutOutlined, LaUserEditSolid, BiPalette, MdMenuRound, MdCloseRound, BiFolder2Open);
 
 const router = useRouter()
 const auth = useAuthStore()
